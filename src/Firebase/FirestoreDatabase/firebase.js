@@ -1,6 +1,5 @@
-import { initializeApp } from "firebase/app";
+import db from "../Config";
 import {
-	getFirestore,
 	onSnapshot,
 	query,
 	where,
@@ -15,19 +14,6 @@ import {
 	increment,
 	deleteDoc,
 } from "firebase/firestore";
-
-const firebaseConfig = {
-	apiKey: "AIzaSyCnS10Dnxo_VV0CmL6Y1cZTzDHBS8u2CSw",
-	authDomain: "cards-game-9d1ca.firebaseapp.com",
-	projectId: "cards-game-9d1ca",
-	storageBucket: "cards-game-9d1ca.firebasestorage.app",
-	messagingSenderId: "13098124469",
-	appId: "1:13098124469:web:e2d97b04dd444c20e66afc",
-	measurementId: "G-FRSCERXRYW",
-};
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 let gamesCollectionRef = collection(db, "games");
 //let gameDocRef = doc(db, "games", "game"); //docId is 'game'

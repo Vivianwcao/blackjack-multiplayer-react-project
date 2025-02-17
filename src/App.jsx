@@ -3,11 +3,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import {
-	OnAuthStateChangedListener,
-	SetAuthPersistence,
 	SignInWithGoogle,
 	Logout,
-} from "./Firebase/Auth";
+} from "./Firebase/FirebaseAuthentification/Auth";
+import {
+	SetAuthPersistence,
+	OnAuthStateChangedListener,
+} from "./Firebase/FirebaseAuthentification/setAuthPersistence";
 const App = () => {
 	const [user, setUser] = useState(null);
 

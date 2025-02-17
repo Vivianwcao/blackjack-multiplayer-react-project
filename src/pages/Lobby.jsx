@@ -12,7 +12,7 @@ import {
 	createHand,
 	updateHand,
 	deleteAllPlayers,
-} from "../Firebase/firebase";
+} from "../Firebase/FirestoreDatabase/firebase";
 import {
 	onSnapshot,
 	query,
