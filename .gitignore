@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # .gitignore
-Config.js
+.env
