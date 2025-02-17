@@ -1,4 +1,4 @@
-import db from "../Config";
+import { db } from "../Config";
 import {
 	onSnapshot,
 	query,
