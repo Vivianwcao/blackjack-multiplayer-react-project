@@ -5,7 +5,7 @@ import { auth } from "../Config";
 export const SignInWithGoogle = async () => {
 	try {
 		const result = await signInWithPopup(auth, provider);
-		console.log("User signed in:", result.user);
+		console.log("User pressed button to sign in:", result.user);
 		return result.user; // Returns user details
 	} catch (error) {
 		console.error("Google Sign-In Error:", error);
@@ -13,10 +13,10 @@ export const SignInWithGoogle = async () => {
 	}
 };
 
-export const Logout = async () => {
+export const SignOut = async () => {
 	try {
 		await signOut(auth);
-		console.log("User signed out");
+		console.log("User pressed button to sign out");
 	} catch (error) {
 		console.error("Sign-out error:", error);
 	}

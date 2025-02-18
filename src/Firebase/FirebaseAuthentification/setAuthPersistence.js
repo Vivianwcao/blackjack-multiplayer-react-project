@@ -20,7 +20,7 @@ export const SetAuthPersistence = () => {
 	return null; // No UI needed, just setting persistence
 };
 
-// Optional: Function to listen for authentication state changes
+//Function to listen for authentication state changes
 export const OnAuthStateChangedListener = (callback) => {
 	return auth.onAuthStateChanged(callback);
 };

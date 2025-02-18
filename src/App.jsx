@@ -1,45 +1,32 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import {
 	SignInWithGoogle,
-	Logout,
+	SignOut,
 } from "./Firebase/FirebaseAuthentification/Auth";
-import {
-	SetAuthPersistence,
-	OnAuthStateChangedListener,
-} from "./Firebase/FirebaseAuthentification/setAuthPersistence";
+import { SetAuthPersistence } from "./Firebase/FirebaseAuthentification/setAuthPersistence";
+import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
+
 const App = () => {
-	const [user, setUser] = useState(null);
+	let user = useAuth();
+	console.log(user);
 
-	// Handles Google Sign-In
-	const handleSignIn = async () => {
-		const user = await SignInWithGoogle();
-		if (user) setUser(user);
-	};
+	// Handles Google sign-in & sign-out
+	const handleSignIn = async () => await SignInWithGoogle();
 
-	// Handles Logout
-	const handleLogout = async () => {
-		await Logout();
-		setUser(null);
-	};
-
-	// Auth State Listener (Detects login/logout)
-	useEffect(() => {
-		const unsubscribe = OnAuthStateChangedListener(setUser);
-		return unsubscribe; // Cleanup listener on unmount
-	}, []);
+	const handleSignOut = async () => await SignOut();
 
 	return (
 		<BrowserRouter>
 			<SetAuthPersistence />
 			<header>
 				{user ? (
-					<>
+					<div>
 						<p>Welcome, {user.displayName}!</p>
-						<button onClick={handleLogout}>Logout</button>
-					</>
+						<button onClick={handleSignOut}>Sign out</button>
+					</div>
 				) : (
 					<button onClick={handleSignIn}>Sign in</button>
 				)}
