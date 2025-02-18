@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./pages/ProtectedRoute";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import {
@@ -11,7 +12,7 @@ import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
 
 const App = () => {
 	let user = useAuth();
-	console.log(user);
+	console.log("user from authProvider", user);
 
 	// Handles Google sign-in & sign-out
 	const handleSignIn = async () => await SignInWithGoogle();
@@ -32,6 +33,7 @@ const App = () => {
 				)}
 			</header>
 			<Routes>
+				{/* <Route path="/" element={<ProtectedRoute component={Lobby} />} /> */}
 				<Route path="/" element={<Lobby />} />
 				<Route path="/:gameId" element={<Game />} />
 			</Routes>

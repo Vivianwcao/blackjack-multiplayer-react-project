@@ -27,8 +27,10 @@ import {
 	arrayUnion,
 	increment,
 } from "firebase/firestore";
+import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 
 const Lobby = () => {
+	const user = useAuth();
 	const [gamesList, setGamesList] = useState([]);
 	const [joined, setJoined] = useState(false);
 	const gameDocRef = useRef(null);
@@ -56,10 +58,13 @@ const Lobby = () => {
 
 	//Attach onSnapshot listeners to games collection, each game and its players collection
 	useEffect(() => {
+		let unsubscribers = [];
+
 		const unsubscribeGames = onSnapshot(gamesCollectionRef, (gameSnapshot) => {
-			let gamesList = [];
-			const unsubscribeGame = gameSnapshot.docs.forEach((gameDoc) => {
+			// let gamesList = [];
+			unsubscribers = gameSnapshot.docs.map((gameDoc) => {
 				let gameObj = { id: gameDoc.id, ...gameDoc.data() };
+
 				const playersCollectionRef = collection(
 					gamesCollectionRef,
 					gameDoc.id,
@@ -73,20 +78,23 @@ const Lobby = () => {
 							...playerDoc.data(),
 						}));
 						gameObj.players = playersList;
-						gamesList.push(gameObj);
-						//setGamesList((previous) => [...previous, gameObj]);
+						//gamesList.push(gameObj);
+						setGamesList((previous) => {
+							let filteredPrevious = previous.filter(
+								(game) => game.id !== gameObj.id
+							);
+							return [...filteredPrevious, gameObj];
+						});
 					}
 				);
 				return unsubscribePlayers; // Clean up listener on component unmount
 			});
-			setGamesList(gamesList);
-			console.log(gamesList);
-			return () => {
-				unsubscribeGame.forEach((unsubscribe) => unsubscribe());
-			};
 		});
 
-		return () => unsubscribeGames();
+		return () => {
+			unsubscribeGames(); // Unsubscribe from the games collection listener
+			unsubscribers.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+		};
 	}, []);
 
 	return (
