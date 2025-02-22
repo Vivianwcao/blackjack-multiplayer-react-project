@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
-
 import { OnAuthStateChangedListener } from "./setAuthPersistence";
+import { collectionName, createUser } from "../FirestoreDatabase/firebaseUser";
 
 const AuthContext = createContext(null);
+
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
 
@@ -18,14 +19,16 @@ export const AuthProvider = ({ children }) => {
 			if (currentUser) {
 				// User is signed in
 				setUser(currentUser);
+				//create/recreate a user doc in firestore users collection
+				createUser(collectionName, currentUser.uid);
 				console.log("listener user signed in... ");
 			} else {
 				// User is signed out
 				setUser(null);
 				console.log("listener user signed out... ");
 			}
-			return unsubscribe;
 		});
+		return () => unsubscribe();
 	}, []);
 
 	return <AuthContext.Provider value={user}>{children}</AuthContext.Provider>;

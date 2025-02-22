@@ -15,68 +15,92 @@ import {
 	deleteDoc,
 } from "firebase/firestore";
 
-let gamesCollectionRef = collection(db, "games");
-//let gameDocRef = doc(db, "games", "game"); //docId is 'game'
-//let playersCollectionRef = collection(gameDocRef, "players"); //collectionId is 'players'
+export const gameCollectionNameTwoPlayers = "games";
+export const playerCollectionName = "players";
+const getGamesCollectionRef = (gamescollectionName) =>
+	collection(db, gamescollectionName);
 
-const addNewGame = async (
+export const gamesCollectionRef2 = getGamesCollectionRef(
+	gameCollectionNameTwoPlayers
+);
+
+export const getGameDocRef = (gamescollectionName, gameDocName) =>
+	doc(db, gamescollectionName, gameDocName);
+
+export const getPlayersCollectionRef = (
+	gamescollectionName,
+	gameDocName,
+	playerCollectionName
+) =>
+	collection(
+		getGameDocRef(db, gamescollectionName, gameDocName),
+		playerCollectionName
+	);
+
+export const getPlayerDocRef = (
+	gamescollectionName,
+	gameDocName,
+	playerCollectionName,
+	playerDocId
+) =>
+	doc(db, gamescollectionName, gameDocName, playerCollectionName, playerDocId);
+
+export const addNewGame = async (
 	gamesCollectionRef,
 	gameStatus,
-	currentPlayerIndex,
+	currentPlayerUid,
 	deckId
 ) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
 			gameStatus,
-			currentPlayerIndex,
+			currentPlayerUid,
 			deckId,
 		},
 		{ merge: true }
 	);
 	return gameDocRef;
 };
-const updateGame = async (gameDocRef, obj) => {
+
+export const updateGame = async (gameDocRef, obj) => {
 	//gameStatus: "waiting", "dealing", "playerTurn", "dealerTurn", "gameOver"
 	await updateDoc(gameDocRef, obj);
 };
+
 //helper--count the # of players, for index
-const getNumberOfPlayers = async (gameDocRef) => {
+export const getNumberOfPlayers = async (gameDocRef) => {
 	//get players list size, need ref to players collection
-	let playersCollectionRef = collection(gameDocRef, "players");
+	let playersCollectionRef = collection(gameDocRef, playerCollectionName);
 	let playersSnap = await getDocs(playersCollectionRef);
-	let numberOfPlayers = playersSnap.size;
-	console.log("numberOfPlayers: ", numberOfPlayers);
-	return numberOfPlayers;
+	return playersSnap.size;
 };
 
-const createPlayer = async (gameDocRef, name, status) => {
-	let playerIndex = await getNumberOfPlayers(gameDocRef);
-	if (playerIndex > 1) {
+export const createPlayer = async (gameDocRef, status, uid) => {
+	let numOfPlayers = await getNumberOfPlayers(gameDocRef);
+	if (numOfPlayers > 1) {
 		console.log("2 players maximum. The room is full");
 		return;
 	} else {
-		let playerDocRef = doc(gameDocRef, "players", playerIndex.toString());
+		let playerDocRef = doc(gameDocRef, playerCollectionName, uid);
 		await setDoc(
 			playerDocRef,
 			{
 				status,
-				name,
 			},
 			{ merge: true }
 		);
-		console.log(`Player added at index ${playerIndex}`);
 		return playerDocRef;
 	}
 };
 
 //status: "waiting", "playing", "stand", "busted", "won", "lost", "dropped","dealer"
-const updatePlayer = async (playerDocRef, changeObj) => {
+export const updatePlayer = async (playerDocRef, changeObj) => {
 	updateDoc(playerDocRef, changeObj);
 };
 
 //Delete all players
-const deleteAllPlayers = async (playersCollectionRef) => {
+export const deleteAllPlayers = async (playersCollectionRef) => {
 	const playersCollectionSnapshot = await getDocs(playersCollectionRef);
 	const deletePromises = playersCollectionSnapshot.docs.map((playerDoc) =>
 		deleteDoc(playerDoc.ref)
@@ -85,7 +109,7 @@ const deleteAllPlayers = async (playersCollectionRef) => {
 	console.log("All players deleted");
 };
 
-const checkNumberOfHands = async (playerDocRef) => {
+export const checkNumberOfHands = async (playerDocRef) => {
 	let handsCollectionRef = collection(playerDocRef, "hands");
 	let handSnapShot = await getDocs(handsCollectionRef);
 	let numberOfHands = handSnapShot.size;
@@ -93,7 +117,7 @@ const checkNumberOfHands = async (playerDocRef) => {
 	return { handsCollectionRef, numberOfHands };
 };
 
-const createHand = async (playerDocRef, initialBet) => {
+export const createHand = async (playerDocRef, initialBet) => {
 	let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
 		playerDocRef
 	);
@@ -105,19 +129,6 @@ const createHand = async (playerDocRef, initialBet) => {
 	return handDocRef;
 };
 
-const updateHand = async (handDocRef, obj) => {
+export const updateHand = async (handDocRef, obj) => {
 	await updateDoc(handDocRef, obj);
-};
-export {
-	db,
-	gamesCollectionRef,
-	addNewGame,
-	updateGame,
-	getNumberOfPlayers,
-	createPlayer,
-	updatePlayer,
-	checkNumberOfHands,
-	createHand,
-	updateHand,
-	deleteAllPlayers,
 };

@@ -1,8 +1,13 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import { db } from "../Firebase/Config";
 import {
-	db,
-	gamesCollectionRef,
+	gameCollectionNameTwoPlayers,
+	playerCollectionName,
+	gamesCollectionRef2,
+	getGameDocRef,
+	getPlayersCollectionRef,
+	getPlayerDocRef,
 	addNewGame,
 	updateGame,
 	getNumberOfPlayers,
@@ -12,7 +17,11 @@ import {
 	createHand,
 	updateHand,
 	deleteAllPlayers,
-} from "../Firebase/FirestoreDatabase/firebase";
+} from "../Firebase/FirestoreDatabase/firebaseGame";
+import {
+	collectionName,
+	updateUser,
+} from "../Firebase/FirestoreDatabase/firebaseUser";
 import {
 	onSnapshot,
 	query,
@@ -37,59 +46,80 @@ const Lobby = () => {
 	const playerDocRef = useRef(null);
 
 	const handleCreateNewGame = async () => {
-		gamesCollectionRef.current = await addNewGame(
-			gamesCollectionRef,
-			"waiting",
-			0,
-			null
-		);
+		try {
+			gamesCollectionRef2.current = await addNewGame(
+				gamesCollectionRef2,
+				"waiting",
+				0,
+				null
+			);
+		} catch (err) {
+			console.error("Error creating game: ", err);
+		}
 	};
 
 	const handleJoinGame = async (gameId) => {
-		let gameRef = doc(db, "games", gameId);
+		const gameRef = doc(db, gameCollectionNameTwoPlayers, gameId);
 
-		let playerRef = await createPlayer(gameRef, "", "waiting");
-		gameDocRef.current = gameRef;
+		try {
+			const playerRef = await createPlayer(gameRef, "waiting", user.uid);
+			gameDocRef.current = gameRef;
+			playerDocRef.current = playerRef;
+			//update user's gameDocId.
+			await updateUser(collectionName, user.uid, gameId);
+		} catch (err) {
+			console.error("Error joining game: ", err);
+		}
+
 		console.log(gameDocRef.current);
-		playerDocRef.current = playerRef;
 		console.log(playerDocRef.current);
-		setJoined(true);
+
+		//setJoined(true);
 	};
 
 	//Attach onSnapshot listeners to games collection, each game and its players collection
 	useEffect(() => {
+		console.log(user);
 		let unsubscribers = [];
 
-		const unsubscribeGames = onSnapshot(gamesCollectionRef, (gameSnapshot) => {
-			// let gamesList = [];
-			unsubscribers = gameSnapshot.docs.map((gameDoc) => {
-				let gameObj = { id: gameDoc.id, ...gameDoc.data() };
+		const unsubscribeGames = onSnapshot(
+			gamesCollectionRef2,
+			(gamesSnapshot) => {
+				// mapping game collection snapshot to a list of game objects.
+				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
+					let gameObj = { id: gameDoc.id, ...gameDoc.data() };
 
-				const playersCollectionRef = collection(
-					gamesCollectionRef,
-					gameDoc.id,
-					"players"
-				);
-				const unsubscribePlayers = onSnapshot(
-					playersCollectionRef,
-					(playerSnapshot) => {
-						const playersList = playerSnapshot.docs.map((playerDoc) => ({
-							id: playerDoc.id,
-							...playerDoc.data(),
-						}));
-						gameObj.players = playersList;
-						//gamesList.push(gameObj);
-						setGamesList((previous) => {
-							let filteredPrevious = previous.filter(
-								(game) => game.id !== gameObj.id
-							);
-							return [...filteredPrevious, gameObj];
-						});
-					}
-				);
-				return unsubscribePlayers; // Clean up listener on component unmount
-			});
-		});
+					//get each playersCollectionRef.
+					const playersCollectionRef = collection(
+						gamesCollectionRef2,
+						gameDoc.id,
+						playerCollectionName
+					);
+					//create a snapshot of each players collection
+					const unsubscribePlayers = onSnapshot(
+						playersCollectionRef,
+						(playersSnapshot) => {
+							//create a list of players of each game
+							const playersList = playersSnapshot.docs.map((playerDoc) => ({
+								id: playerDoc.id,
+								...playerDoc.data(),
+							}));
+							//add the player list to each game object
+							gameObj.players = playersList;
+
+							setGamesList((previous) => {
+								let filteredPrevious = previous.filter(
+									(game) => game.id !== gameObj.id
+								);
+								return [...filteredPrevious, gameObj];
+							});
+						}
+					);
+					// explicit return each listener's unsubscribe function to [unsubscribers].map().
+					return unsubscribePlayers;
+				});
+			}
+		);
 
 		return () => {
 			unsubscribeGames(); // Unsubscribe from the games collection listener
@@ -99,19 +129,25 @@ const Lobby = () => {
 
 	return (
 		<div className="lobby">
-			{console.log(gamesList)}
-			{gamesList.map((game, i) => (
-				<div key={i}>
-					{/* <Link to={`/${game.id}`}> */}
-					<p>{`Game room ${i + 1}`}</p>
-					<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
-					<button onClick={() => handleJoinGame(game.id)} disabled={joined}>
-						Join game
-					</button>
-					{/* </Link> */}
-				</div>
-			))}
-			<button onClick={handleCreateNewGame} disabled={joined}>
+			{gamesList
+				.sort((a, b) => a.id.localeCompare(b.id))
+				.map((game, i) => (
+					<div key={i}>
+						{/* <Link to={`/${game.id}`}> */}
+						<p>{`Game room ${i + 1}`}</p>
+						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
+						<div></div>
+						<button
+							onClick={() => handleJoinGame(game.id)}
+							disabled={!user || joined}
+						>
+							Join game
+						</button>
+						<button disabled={!user || !joined}>Leave game</button>
+						{/* </Link> */}
+					</div>
+				))}
+			<button onClick={handleCreateNewGame} disabled={!user || joined}>
 				Create new game
 			</button>
 		</div>

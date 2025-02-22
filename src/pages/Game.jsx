@@ -1,8 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./Game.scss";
 import {
-	db,
-	gamesCollectionRef,
 	addNewGame,
 	updateGame,
 	getNumberOfPlayers,
@@ -12,7 +10,7 @@ import {
 	createHand,
 	updateHand,
 	deleteAllPlayers,
-} from "../Firebase/FirestoreDatabase/firebase";
+} from "../Firebase/FirestoreDatabase/firebaseGame";
 import {
 	onSnapshot,
 	query,
