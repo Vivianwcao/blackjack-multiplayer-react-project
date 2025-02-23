@@ -7,7 +7,6 @@ import {
 	SignInWithGoogle,
 	SignOut,
 } from "./Firebase/FirebaseAuthentification/Auth";
-import { SetAuthPersistence } from "./Firebase/FirebaseAuthentification/setAuthPersistence";
 import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
 
 const App = () => {
@@ -21,7 +20,6 @@ const App = () => {
 
 	return (
 		<BrowserRouter>
-			<SetAuthPersistence />
 			<header>
 				{user ? (
 					<div>

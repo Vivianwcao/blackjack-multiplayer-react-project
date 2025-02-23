@@ -21,3 +21,8 @@ export const SignOut = async () => {
 		console.error("Google Sign-out error:", error);
 	}
 };
+
+//Function to listen for authentication state changes
+export const OnAuthStateChangedListener = (callback) => {
+	return auth.onAuthStateChanged(callback);
+};

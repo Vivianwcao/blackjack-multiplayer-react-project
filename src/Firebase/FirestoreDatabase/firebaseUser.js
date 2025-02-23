@@ -1,8 +1,5 @@
 import { db } from "../Config.js";
 import {
-	onSnapshot,
-	query,
-	where,
 	collection,
 	doc,
 	setDoc,
@@ -17,18 +14,19 @@ import {
 
 export const collectionName = "users";
 
-const getUsersCollectionRef = (usersCollectionName) =>
-	collection(db, usersCollectionName);
-
 export const createUser = async (usersCollectionName, userUid) => {
-	let usersCollectionRef = getUsersCollectionRef(usersCollectionName);
-	const userDocRef = doc(usersCollectionRef, userUid);
-	await setDoc((usersCollectionRef, userDocRef), {}, { merge: true });
+	let userDocRef = doc(db, usersCollectionName, userUid);
+	await setDoc(userDocRef, { time: new Date(), gameId: null }, { merge: true });
 };
 
 export const updateUser = async (usersCollectionName, userUid, gameDocId) => {
-	let usersCollectionRef = getUsersCollectionRef(usersCollectionName);
-	const userDocRef = doc(usersCollectionRef, userUid);
+	let userDocRef = doc(db, usersCollectionName, userUid);
 	await updateDoc(userDocRef, { gameId: gameDocId });
 };
-//createNewUser( usersCollectionRef, "Ku0hTKiATpWEcKHRKl3AGTyZeIH3" );
+
+export const getJoinedGame = async (usersCollectionName, userUid) => {
+	let userDocRef = doc(db, usersCollectionName, userUid);
+	const docSnapShot = await getDoc(userDocRef);
+	console.log("docSnapShot.data().gameId: ", docSnapShot.data().gameId);
+	if (docSnapShot.exists()) return docSnapShot.data().gameId;
+};

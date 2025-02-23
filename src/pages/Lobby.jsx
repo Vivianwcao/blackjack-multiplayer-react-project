@@ -21,6 +21,7 @@ import {
 import {
 	collectionName,
 	updateUser,
+	getJoinedGame,
 } from "../Firebase/FirestoreDatabase/firebaseUser";
 import {
 	onSnapshot,
@@ -41,7 +42,7 @@ import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 const Lobby = () => {
 	const user = useAuth();
 	const [gamesList, setGamesList] = useState([]);
-	const [joined, setJoined] = useState(false);
+	const [joinedGame, setJoinedGame] = useState(null);
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
 
@@ -62,24 +63,43 @@ const Lobby = () => {
 		const gameRef = doc(db, gameCollectionNameTwoPlayers, gameId);
 
 		try {
-			const playerRef = await createPlayer(gameRef, "waiting", user.uid);
-			gameDocRef.current = gameRef;
-			playerDocRef.current = playerRef;
-			//update user's gameDocId.
-			await updateUser(collectionName, user.uid, gameId);
+			const joinedGameId = await getJoinedGame(collectionName, user.uid);
+			console.log("console.log(joinedGameId): ", joinedGameId);
+
+			if (joinedGameId) {
+				setJoinedGame(joinedGameId);
+				console.log("You can only join 1 game at a time.");
+				return;
+			} else {
+				const playerRef = await createPlayer(gameRef, "waiting", user.uid);
+				gameDocRef.current = gameRef;
+				playerDocRef.current = playerRef;
+
+				//update user's gameDocId.
+				await updateUser(collectionName, user.uid, gameId);
+			}
 		} catch (err) {
 			console.error("Error joining game: ", err);
 		}
 
 		console.log(gameDocRef.current);
 		console.log(playerDocRef.current);
-
-		//setJoined(true);
 	};
+
+	useEffect(() => {
+		if (!user) return; //stop if user not signed in.
+		const fetchJoinedGameId = async () => {
+			console.log("upon reloading page", user);
+
+			const gameId = await getJoinedGame(collectionName, user.uid);
+			gameId ? setJoinedGame(gameId) : setJoinedGame(null);
+			console.log("joined game id: ", gameId);
+		};
+		fetchJoinedGameId();
+	}, [user]);
 
 	//Attach onSnapshot listeners to games collection, each game and its players collection
 	useEffect(() => {
-		console.log(user);
 		let unsubscribers = [];
 
 		const unsubscribeGames = onSnapshot(
@@ -139,15 +159,15 @@ const Lobby = () => {
 						<div></div>
 						<button
 							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || joined}
+							disabled={!user || joinedGame}
 						>
 							Join game
 						</button>
-						<button disabled={!user || !joined}>Leave game</button>
+						<button disabled={!user || !joinedGame}>Leave game</button>
 						{/* </Link> */}
 					</div>
 				))}
-			<button onClick={handleCreateNewGame} disabled={!user || joined}>
+			<button onClick={handleCreateNewGame} disabled={!user || joinedGame}>
 				Create new game
 			</button>
 		</div>
