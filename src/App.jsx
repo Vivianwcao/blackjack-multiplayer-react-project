@@ -23,7 +23,7 @@ const App = () => {
 			<header>
 				{user ? (
 					<div>
-						<p>Welcome, {user.displayName}!</p>
+						<p>Welcome {user.displayName}!</p>
 						<button onClick={handleSignOut}>Sign out</button>
 					</div>
 				) : (

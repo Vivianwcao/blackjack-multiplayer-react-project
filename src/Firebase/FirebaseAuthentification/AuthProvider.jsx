@@ -19,11 +19,11 @@ export const AuthProvider = ({ children }) => {
 					setUser(currentUser);
 					//create/recreate a user doc in firestore users collection
 					createUser(collectionName, currentUser.uid);
-					console.log("listener user signed in... ");
+					console.log("AuthListener: user signed in... ");
 				} else {
 					// User is signed out
 					setUser(null);
-					console.log("listener user signed out... ");
+					console.log("AuthListener:  user signed out... ");
 				}
 			});
 			//return reference to the unsubscribe function.
@@ -33,12 +33,6 @@ export const AuthProvider = ({ children }) => {
 		}
 	};
 	useEffect(() => {
-		// const setApplyAuthSettings = async () => {
-		// 	//call to run the function and get the unsubscribe function returned.
-		// 	const unsubscribe = await applyAuthSettings();
-		// 	if (unsubscribe) return unsubscribe;
-		// 	//if !unsubscribe, default return undefined
-		// };
 		let unsubscribeAuth;
 		//call the asyc function and assign the unsubscribe function to unsubscribeAuth.
 		applyAuthSettings()
