@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 
 export const gameCollectionNameTwoPlayers = "games";
-export const playerCollectionName = "players";
+export const playersCollectionName = "players";
 const getGamesCollectionRef = (gamescollectionName) =>
 	collection(db, gamescollectionName);
 
@@ -30,32 +30,32 @@ export const getGameDocRef = (gamescollectionName, gameDocName) =>
 export const getPlayersCollectionRef = (
 	gamescollectionName,
 	gameDocName,
-	playerCollectionName
+	playersCollectionName
 ) =>
 	collection(
 		getGameDocRef(db, gamescollectionName, gameDocName),
-		playerCollectionName
+		playersCollectionName
 	);
 
 export const getPlayerDocRef = (
 	gamescollectionName,
 	gameDocName,
-	playerCollectionName,
+	playersCollectionName,
 	playerDocId
 ) =>
-	doc(db, gamescollectionName, gameDocName, playerCollectionName, playerDocId);
+	doc(db, gamescollectionName, gameDocName, playersCollectionName, playerDocId);
 
 export const addNewGame = async (
 	gamesCollectionRef,
 	gameStatus,
-	currentPlayerUid,
+	currentPlayerIndex,
 	deckId
 ) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
 			gameStatus,
-			currentPlayerUid,
+			currentPlayerIndex,
 			deckId,
 		},
 		{ merge: true }
@@ -68,10 +68,10 @@ export const updateGame = async (gameDocRef, obj) => {
 	await updateDoc(gameDocRef, obj);
 };
 
-//helper--count the # of players, for index
+//helper--count the # of players
 export const getNumberOfPlayers = async (gameDocRef) => {
 	//get players list size, need ref to players collection
-	let playersCollectionRef = collection(gameDocRef, playerCollectionName);
+	let playersCollectionRef = collection(gameDocRef, playersCollectionName);
 	let playersSnap = await getDocs(playersCollectionRef);
 	return playersSnap.size;
 };
@@ -82,11 +82,13 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		console.log("2 players maximum. The room is full");
 		return;
 	} else {
-		let playerDocRef = doc(gameDocRef, playerCollectionName, uid);
+		let playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		await setDoc(
 			playerDocRef,
 			{
 				status,
+				timestamp: Date.now(),
+				playerIndex: null,
 			},
 			{ merge: true }
 		);
@@ -97,6 +99,14 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 //status: "waiting", "playing", "stand", "busted", "won", "lost", "dropped","dealer"
 export const updatePlayer = async (playerDocRef, changeObj) => {
 	updateDoc(playerDocRef, changeObj);
+};
+
+export const removePlayerFromGame = async (playerDocRef) => {
+	const playerDocSnapshot = await getDoc(playerDocRef);
+	if (playerDocSnapshot.exists()) {
+		await deleteDoc(playerDocRef);
+		console.log(`Player ${playerDocRef.id} deleted`);
+	}
 };
 
 //Delete all players

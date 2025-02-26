@@ -10,8 +10,8 @@ import {
 import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
 
 const App = () => {
-	let user = useAuth();
-	console.log("user from authProvider", user);
+	const { user } = useAuth();
+	console.log("user from authProvider on <App />", user);
 
 	// Handles Google sign-in & sign-out
 	const handleSignIn = async () => await SignInWithGoogle();
