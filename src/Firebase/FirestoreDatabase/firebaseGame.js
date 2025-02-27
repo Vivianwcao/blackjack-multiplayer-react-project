@@ -13,6 +13,7 @@ import {
 	arrayUnion,
 	increment,
 	deleteDoc,
+	runTransaction,
 } from "firebase/firestore";
 
 export const gameCollectionNameTwoPlayers = "games";
@@ -53,6 +54,7 @@ export const addNewGame = async (
 			gameStatus,
 			currentPlayerIndex,
 			deckId,
+			playersAddedCount: 0,
 		},
 		{ merge: true }
 	);
@@ -73,22 +75,18 @@ export const getNumberOfPlayers = async (gameDocRef) => {
 };
 
 export const createPlayer = async (gameDocRef, status, uid) => {
-	let numOfPlayers = await getNumberOfPlayers(gameDocRef);
+	const numOfPlayers = await getNumberOfPlayers(gameDocRef);
 	if (numOfPlayers > 1) {
 		console.log("2 players maximum. The room is full");
 		return;
 	} else {
-		let playerDocRef = doc(gameDocRef, playersCollectionName, uid);
-		await setDoc(
-			playerDocRef,
-			{
-				status,
-				timestamp: Date.now(),
-				playerIndex: null,
-			},
-			{ merge: true }
-		);
-		return playerDocRef;
+		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
+		const playerData = { status, timestamp: Date.now(), playerIndex: null };
+		await runTransaction(db, async (transaction) => {
+			transaction.set(playerDocRef, playerData);
+			transaction.update(gameDocRef, { playersAddedCount: increment(1) });
+			return playerDocRef;
+		});
 	}
 };
 

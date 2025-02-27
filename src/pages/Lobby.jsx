@@ -96,7 +96,9 @@ const Lobby = () => {
 
 	//helper remove if empty game room
 	const removeEmptyGame = async () => {
-		const emptyGames = gamesList.filter((game) => game.players.length === 0);
+		const emptyGames = gamesList.filter(
+			(game) => game.players.length === 0 && game.playersAddedCount > 0
+		);
 		console.log("Empty games...", emptyGames);
 
 		const promisesList = emptyGames.map((game) =>
