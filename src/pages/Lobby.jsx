@@ -100,11 +100,12 @@ const Lobby = () => {
 			(game) => game.players.length === 0 && game.playersAddedCount > 0
 		);
 		console.log("Empty games...", emptyGames);
-
-		const promisesList = emptyGames.map((game) =>
-			deleteGame(gameCollectionNameTwoPlayers, game.id, playersCollectionName)
-		);
-		await Promise.all(promisesList);
+		if (emptyGames.length > 0) {
+			const promisesList = emptyGames.map((game) =>
+				deleteGame(gameCollectionNameTwoPlayers, game.id, playersCollectionName)
+			);
+			await Promise.all(promisesList);
+		}
 	};
 
 	const handleLeaveGame = async (gameId) => {
@@ -133,9 +134,11 @@ const Lobby = () => {
 		return null;
 	};
 
-	// useEffect(() => {
-	// 	removeEmptyGame();
-	// }, [gamesList]);
+	useEffect(() => {
+		const myTimeOut = setTimeout(removeEmptyGame, 1);
+
+		return () => clearTimeout(myTimeOut);
+	}, [gamesList]);
 
 	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
