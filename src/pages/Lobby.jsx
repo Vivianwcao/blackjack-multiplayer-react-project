@@ -10,6 +10,8 @@ import {
 	getPlayerDocRef,
 	addNewGame,
 	updateGame,
+	deleteSingleGame,
+	deleteGame,
 	getNumberOfPlayers,
 	createPlayer,
 	updatePlayer,
@@ -38,7 +40,6 @@ import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 
 const Lobby = () => {
 	const { user, gamesList } = useAuth();
-	console.log("gamesList from authProvider on <Lobby />", gamesList);
 
 	const [userLobby, setUserLobby] = useState({ uid: null, joinedGameId: null });
 	const gameDocRef = useRef(null);
@@ -46,14 +47,74 @@ const Lobby = () => {
 
 	const handleCreateNewGame = async () => {
 		try {
-			gamesCollectionRef2.current = await addNewGame(
+			//create new game
+			const gameRef = await addNewGame(
 				gamesCollectionRef2,
 				"waiting",
 				null,
 				null
 			);
+			console.log(`Game: ${gameRef.id} created`);
+			//join this game
+			handleJoinGame(gameRef.id);
 		} catch (err) {
 			console.error("Error creating game: ", err);
+		}
+	};
+
+	const handleJoinGame = async (gameId) => {
+		let { uid, joinedGameId } = userLobby;
+		if (!user) {
+			console.log("User not signed in");
+			return;
+		}
+		if (user.uid !== uid) {
+			console.log("Something went wrong here....not the correct user.");
+			return;
+		}
+		if (joinedGameId) {
+			console.log(`User ${user.uid} has already joined game: ${joinedGameId}`);
+		}
+		if (!joinedGameId) {
+			// add player to game.
+			const gameRef = getGameDocRef(gameCollectionNameTwoPlayers, gameId);
+			try {
+				await createPlayer(gameRef, "waiting", user.uid);
+				console.log(`User ${user.uid} is in game: ${gameRef.id}`);
+
+				// setUserLobby((pre) => ({ ...pre, joinedGameId: gameId }));
+			} catch (err) {
+				console.error("Error joining game: ", err);
+			}
+		}
+	};
+
+	// //Test function
+	// const deleteOneGame = async (gameCollectionNameTwoPlayers, gameDocName) => {
+	// 	await deleteSingleGame(gameCollectionNameTwoPlayers, gameDocName);
+	// };
+
+	//helper remove if empty game room
+	const removeEmptyGame = async () => {
+		const emptyGames = gamesList.filter((game) => game.players.length === 0);
+		console.log("Empty games...", emptyGames);
+
+		const promisesList = emptyGames.map((game) =>
+			deleteGame(gameCollectionNameTwoPlayers, game.id, playersCollectionName)
+		);
+		await Promise.all(promisesList);
+	};
+
+	const handleLeaveGame = async (gameId) => {
+		if (gameId !== userLobby?.joinedGameId) {
+			console.log("User not in this game.");
+			return;
+		}
+		try {
+			await removePlayerFromGame(playerDocRef.current);
+			//removeEmptyGame();
+		} catch (err) {
+			console.error(err);
 		}
 	};
 
@@ -70,52 +131,14 @@ const Lobby = () => {
 		return null;
 	};
 
-	const handleJoinGame = async (gameId) => {
-		let { uid, joinedGameId } = userLobby;
-		if (!user) {
-			console.log("User not signed in");
-			return;
-		}
-		if (user.uid !== uid) {
-			console.log("Something went wrong here....not the correct user.");
-			return;
-		}
-		if (joinedGameId) {
-			console.log(`User has already joined game: ${joinedGameId}`);
-		}
-		if (!joinedGameId) {
-			// add player to game.
-			const gameRef = getGameDocRef(gameCollectionNameTwoPlayers, gameId);
-
-			try {
-				const playerRef = await createPlayer(gameRef, "waiting", user.uid);
-				setUserLobby((pre) => ({ ...pre, joinedGameId: gameId }));
-			} catch (err) {
-				console.error("Error joining game: ", err);
-			}
-		}
-	};
-	const handleLeaveGame = async (gameId) => {
-		if (gameId !== userLobby?.joinedGameId) {
-			console.log("User not in this game.");
-			return;
-		}
-		try {
-			await removePlayerFromGame(playerDocRef.current);
-		} catch (err) {
-			console.error(err);
-		}
-	};
+	// useEffect(() => {
+	// 	removeEmptyGame();
+	// }, [gamesList]);
 
 	useEffect(() => {
+		console.log("------UseEffect in Lobby runs...");
 		if (user) {
 			const gameId = userJoinedGame(user.uid);
-			setUserLobby((pre) => ({
-				...pre,
-				uid: user.uid,
-				joinedGameId: gameId,
-			}));
-			console.log("userLobby in useEffect", userLobby);
 			if (gameId) {
 				gameDocRef.current = getGameDocRef(
 					gameCollectionNameTwoPlayers,
@@ -128,15 +151,26 @@ const Lobby = () => {
 					user.uid
 				);
 			}
+			//set userLobby state
+			setUserLobby((pre) => ({
+				...pre,
+				uid: user.uid,
+				joinedGameId: gameId,
+			}));
+			console.log("-------set userLobby state...");
 
-			console.log(gameDocRef.current);
-			console.log(playerDocRef.current);
+			// console.log(gameDocRef.current);
+			// console.log(playerDocRef.current);
 		}
 	}, [user, gamesList]);
 
 	return (
 		<div className="lobby">
-			{console.log("userLobby in jsx", userLobby)}
+			{console.log(
+				"------re-render------userLobby in jsx",
+				userLobby,
+				gamesList
+			)}
 			{gamesList
 				.sort((a, b) => a.id.localeCompare(b.id))
 				.map((game, i) => (
@@ -164,7 +198,7 @@ const Lobby = () => {
 				onClick={handleCreateNewGame}
 				disabled={!user || userLobby.joinedGameId}
 			>
-				Create new game
+				Create and join new game
 			</button>
 		</div>
 	);

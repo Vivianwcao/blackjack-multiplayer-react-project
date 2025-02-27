@@ -31,11 +31,7 @@ export const getPlayersCollectionRef = (
 	gamescollectionName,
 	gameDocName,
 	playersCollectionName
-) =>
-	collection(
-		getGameDocRef(db, gamescollectionName, gameDocName),
-		playersCollectionName
-	);
+) => collection(db, gamescollectionName, gameDocName, playersCollectionName);
 
 export const getPlayerDocRef = (
 	gamescollectionName,
@@ -105,18 +101,45 @@ export const removePlayerFromGame = async (playerDocRef) => {
 	const playerDocSnapshot = await getDoc(playerDocRef);
 	if (playerDocSnapshot.exists()) {
 		await deleteDoc(playerDocRef);
-		console.log(`Player ${playerDocRef.id} deleted`);
+		console.log(`Player ${playerDocRef.id} removed from game`);
 	}
 };
 
-//Delete all players
+export const deleteSingleGame = async (gamescollectionName, gameDocName) => {
+	const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
+	await deleteDoc(gameDocRef);
+};
+
+//Delete all players of a game
 export const deleteAllPlayers = async (playersCollectionRef) => {
 	const playersCollectionSnapshot = await getDocs(playersCollectionRef);
+	if (playersCollectionSnapshot.empty) {
+		console.log(`No players in this game to delete.`);
+		return;
+	}
 	const deletePromises = playersCollectionSnapshot.docs.map((playerDoc) =>
 		deleteDoc(playerDoc.ref)
 	);
 	await Promise.all(deletePromises);
 	console.log("All players deleted");
+};
+
+//delete a game and its players sub-collection.
+export const deleteGame = async (
+	gamescollectionName,
+	gameDocName,
+	playersCollectionName
+) => {
+	const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
+	const playersCollectionRef = collection(gameDocRef, playersCollectionName);
+	//delete its player collection.
+	await deleteAllPlayers(playersCollectionRef);
+	//delete game doc.
+	const gameSnapshot = await getDoc(gameDocRef);
+	if (gameSnapshot.exists()) {
+		await deleteDoc(gameDocRef);
+		console.log(`Game: ${gameDocName} deleted`);
+	}
 };
 
 export const checkNumberOfHands = async (playerDocRef) => {

@@ -43,21 +43,36 @@ export const AuthProvider = ({ children }) => {
 
 	//Firestore listener on game and players
 	const attachOnSnapshotListeners = () => {
+		//List for inner listeners
 		let unsubscribers = [];
+
+		//Outer lister on games
 		const unsubscribeGames = onSnapshot(
 			gamesCollectionRef2,
 			(gamesSnapshot) => {
+				//setGameList upon every outer listener firing.
+				setGamesList(
+					gamesSnapshot.docs.map((gameDoc) => ({
+						id: gameDoc.id,
+						...gameDoc.data(),
+						players: [],
+					}))
+				);
+
+				//cleanup the old inner listeners -> ready for next new firing
+				unsubscribers.forEach((unsc) => unsc());
+				unsubscribers = [];
+
 				// mapping game collection snapshot to a list of game objects.
 				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
-					let gameObj = { id: gameDoc.id, ...gameDoc.data() };
-
 					//get each playersCollectionRef.
 					const playersCollectionRef = collection(
 						gamesCollectionRef2,
 						gameDoc.id,
 						playersCollectionName
 					);
-					//create a snapshot of each players collection
+
+					//inner listener on each game's players collection
 					const unsubscribePlayers = onSnapshot(
 						playersCollectionRef,
 						(playersSnapshot) => {
@@ -66,18 +81,19 @@ export const AuthProvider = ({ children }) => {
 								id: playerDoc.id,
 								...playerDoc.data(),
 							}));
+
 							//add the player list to each game object
+							let gameObj = { id: gameDoc.id, ...gameDoc.data() };
 							gameObj.players = playersList;
 
-							setGamesList((previous) => {
-								let filteredPrevious = previous.filter(
-									(game) => game.id !== gameObj.id
-								);
-								return [...filteredPrevious, gameObj];
+							//setGameList upon every inner listener firing.
+							setGamesList((pre) => {
+								let filteredPre = pre.filter((game) => game.id !== gameObj.id);
+								return [...filteredPre, gameObj];
 							});
 						}
 					);
-					// explicitly return each listener's unsubscribe function to [unsubscribers].map().
+					// explicitly return each listener's unsubscribe function to [unsubscribers].map(...).
 					return unsubscribePlayers;
 				});
 			}
@@ -112,11 +128,12 @@ export const AuthProvider = ({ children }) => {
 				unsubscribeAuth();
 				console.log("~.~onAuthStateChanged listener unmounted~.~");
 			}
-			unsubscribeGamesList(); // Unsubscribe from the games collection listener
+			// Unsubscribe from the games collection listener
 			unsubscribersList.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+			unsubscribeGamesList();
 			console.log("~.~Firestore onSnapshot listeners unmounted/removed~.~");
 		};
-	}, [user]);
+	}, []);
 
 	return (
 		<AuthContext.Provider value={{ user, gamesList }}>
