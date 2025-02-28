@@ -136,8 +136,10 @@ const Lobby = () => {
 	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
 		if (user) {
+			userLobby.current.uid = user.uid;
 			const gameId = userJoinedGame(user.uid);
 			if (gameId) {
+				userLobby.current.joinedGameId = gameId;
 				gameDocRef.current = getGameDocRef(
 					gameCollectionNameTwoPlayers,
 					gameId
@@ -148,8 +150,12 @@ const Lobby = () => {
 					playersCollectionName,
 					user.uid
 				);
+			} else {
+				userLobby.current.joinedGameId = null;
 			}
-			userLobby.current = { uid: user.uid, joinedGameId: gameId };
+		} else {
+			//not signed in
+			userLobby.current.uid = null;
 		}
 	}, [user, gamesList]);
 
@@ -170,13 +176,13 @@ const Lobby = () => {
 						<div></div>
 						<button
 							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || userLobby.current.joinedGameId}
+							disabled={!user || userJoinedGame(user.uid) === game.id}
 						>
 							Join game
 						</button>
 						<button
 							onClick={() => handleLeaveGame(game.id)}
-							disabled={!user || userLobby.current.joinedGameId !== game.id}
+							disabled={!(user && userJoinedGame(user.uid) === game.id)}
 						>
 							Leave game
 						</button>
@@ -185,7 +191,7 @@ const Lobby = () => {
 				))}
 			<button
 				onClick={handleCreateNewGame}
-				disabled={!user || userLobby.current.joinedGameId}
+				disabled={!user || userJoinedGame(user.uid)}
 			>
 				Create and join new game
 			</button>
