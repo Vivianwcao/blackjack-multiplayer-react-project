@@ -41,9 +41,9 @@ import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 const Lobby = () => {
 	const { user, gamesList } = useAuth();
 
-	const [userLobby, setUserLobby] = useState({ uid: null, joinedGameId: null });
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
+	const userLobby = useRef({ uid: null, joinedGameId: null });
 
 	const handleCreateNewGame = async () => {
 		try {
@@ -63,7 +63,7 @@ const Lobby = () => {
 	};
 
 	const handleJoinGame = async (gameId) => {
-		let { uid, joinedGameId } = userLobby;
+		let { uid, joinedGameId } = userLobby.current;
 		if (!user) {
 			console.log("User not signed in");
 			return;
@@ -109,13 +109,12 @@ const Lobby = () => {
 	};
 
 	const handleLeaveGame = async (gameId) => {
-		if (gameId !== userLobby?.joinedGameId) {
+		if (gameId !== userLobby.current.joinedGameId) {
 			console.log("User not in this game.");
 			return;
 		}
 		try {
 			await removePlayerFromGame(playerDocRef.current);
-			//removeEmptyGame();
 		} catch (err) {
 			console.error(err);
 		}
@@ -135,12 +134,6 @@ const Lobby = () => {
 	};
 
 	useEffect(() => {
-		const myTimeOut = setTimeout(removeEmptyGame, 1);
-
-		return () => clearTimeout(myTimeOut);
-	}, [gamesList]);
-
-	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
 		if (user) {
 			const gameId = userJoinedGame(user.uid);
@@ -156,16 +149,7 @@ const Lobby = () => {
 					user.uid
 				);
 			}
-			//set userLobby state
-			setUserLobby((pre) => ({
-				...pre,
-				uid: user.uid,
-				joinedGameId: gameId,
-			}));
-			console.log("-------set userLobby state...");
-
-			// console.log(gameDocRef.current);
-			// console.log(playerDocRef.current);
+			userLobby.current = { uid: user.uid, joinedGameId: gameId };
 		}
 	}, [user, gamesList]);
 
@@ -173,7 +157,7 @@ const Lobby = () => {
 		<div className="lobby">
 			{console.log(
 				"------re-render------userLobby in jsx",
-				userLobby,
+				userLobby.current,
 				gamesList
 			)}
 			{gamesList
@@ -186,13 +170,13 @@ const Lobby = () => {
 						<div></div>
 						<button
 							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || userLobby.joinedGameId}
+							disabled={!user || userLobby.current.joinedGameId}
 						>
 							Join game
 						</button>
 						<button
 							onClick={() => handleLeaveGame(game.id)}
-							disabled={!user || userLobby.joinedGameId !== game.id}
+							disabled={!user || userLobby.current.joinedGameId !== game.id}
 						>
 							Leave game
 						</button>
@@ -201,7 +185,7 @@ const Lobby = () => {
 				))}
 			<button
 				onClick={handleCreateNewGame}
-				disabled={!user || userLobby.joinedGameId}
+				disabled={!user || userLobby.current.joinedGameId}
 			>
 				Create and join new game
 			</button>
