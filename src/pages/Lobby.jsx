@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { db } from "../Firebase/Config";
 import {
@@ -92,7 +92,7 @@ const Lobby = () => {
 		await deleteSingleGame(gamesCollectionNameTwoPlayers, gameDocName);
 	};
 
-	//helper remove if empty game room
+	//remove game remotely if empty game.
 	const removeEmptyGame = async () => {
 		//check firestore database if any empty game
 		const gamesCollectionSnap = await getDocs(gamesCollectionRef2);
@@ -148,6 +148,9 @@ const Lobby = () => {
 		return null;
 	};
 
+	//UI toggle
+	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
+
 	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
 
@@ -193,23 +196,20 @@ const Lobby = () => {
 						<div></div>
 						<button
 							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || userJoinedGame(user.uid) === game.id}
+							disabled={!user || joined === game.id}
 						>
 							Join game
 						</button>
 						<button
 							onClick={() => handleLeaveGame(game.id)}
-							disabled={!(user && userJoinedGame(user.uid) === game.id)}
+							disabled={!(user && joined === game.id)}
 						>
 							Leave game
 						</button>
 						{/* </Link> */}
 					</div>
 				))}
-			<button
-				onClick={handleCreateNewGame}
-				disabled={!user || userJoinedGame(user.uid)}
-			>
+			<button onClick={handleCreateNewGame} disabled={!user || joined}>
 				Create and join new game
 			</button>
 		</div>
