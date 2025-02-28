@@ -1,6 +1,20 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+
+import {
+	collection,
+	doc,
+	setDoc,
+	getDoc,
+	getDocs,
+	addDoc,
+	updateDoc,
+	arrayUnion,
+	increment,
+} from "firebase/firestore";
 import { db } from "../Firebase/Config";
+import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
+import Popup from "../components/Popup/Popup";
 import {
 	gamesCollectionNameTwoPlayers,
 	playersCollectionName,
@@ -22,27 +36,61 @@ import {
 	deleteAllPlayers,
 } from "../Firebase/FirestoreDatabase/firebaseGame";
 
-import {
-	collection,
-	doc,
-	setDoc,
-	getDoc,
-	getDocs,
-	addDoc,
-	updateDoc,
-	arrayUnion,
-	increment,
-} from "firebase/firestore";
-import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
-
 const Lobby = () => {
 	const { user, gamesList } = useAuth();
 
+	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
 	const userLobby = useRef({ uid: null, joinedGameId: null });
 
+	//Helper -- Check if user has already joined a game
+	const userJoinedGame = (uid) => {
+		for (let game of gamesList) {
+			if (game?.players) {
+				const joined = game.players.some((player) => player.id === uid);
+				if (joined) {
+					return game.id;
+				}
+			}
+		}
+		return null;
+	};
+
+	//UI toggle
+	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
+
+	//check if user's joined game has two players including the user.
+	const joinedGameReady = () => {
+		console.log(joined);
+		if (!user) return null;
+		if (joined && gamesList.length) {
+			for (let game of gamesList) {
+				if (game.players.length === 2) {
+					//return game id or undefined if other player pairs
+					const gameId = game.players.some((player) => player.id === user.uid);
+					if (gameId) {
+						setIsPopupOpen(true);
+						return game.id;
+					}
+					setIsPopupOpen(false);
+					return null;
+				}
+			}
+		}
+		setIsPopupOpen(false);
+		return null;
+	};
+
+	//UI toggle
+	const gameReady = useMemo(() => joinedGameReady(), [user, gamesList]);
+	console.log("Is game ready??", gameReady);
+
 	const handleCreateNewGame = async () => {
+		if (!user) {
+			console.log("User not signed in");
+			return;
+		}
 		try {
 			//create new game
 			const gameRef = await addNewGame(
@@ -122,6 +170,11 @@ const Lobby = () => {
 	};
 
 	const handleLeaveGame = async (gameId) => {
+		console.log(user, gameId);
+		if (!user) {
+			console.log("User not signed in");
+			return;
+		}
 		if (gameId !== userLobby.current.joinedGameId) {
 			console.log("User not in this game.");
 			return;
@@ -130,26 +183,11 @@ const Lobby = () => {
 			await removePlayerFromGame(playerDocRef.current);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			removeEmptyGame();
+			setIsPopupOpen(false);
 		} catch (err) {
 			console.error(err);
 		}
 	};
-
-	//Helper -- Check if user has already joined a game
-	const userJoinedGame = (uid) => {
-		for (let game of gamesList) {
-			if (game?.players) {
-				const joined = game.players.some((player) => player.id === uid);
-				if (joined) {
-					return game.id;
-				}
-			}
-		}
-		return null;
-	};
-
-	//UI toggle
-	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
 
 	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
@@ -180,7 +218,6 @@ const Lobby = () => {
 
 	return (
 		<div className="lobby">
-			{/* <button onClick={removeEmptyGame}>remove empty</button> */}
 			{console.log(
 				"------re-render------userLobby in jsx",
 				userLobby.current,
@@ -191,9 +228,16 @@ const Lobby = () => {
 				.map((game, i) => (
 					<div key={i}>
 						{/* <Link to={`/${game.id}`}> */}
-						<p>{`Game room ${i + 1}`}</p>
+						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
-						<div></div>
+						{/*{gameReady === game.id ? <button>Enter game!</button> : <></>}*/}
+						{
+							<Popup
+								isOpen={isPopupOpen}
+								onClose={() => setIsPopupOpen(false)}
+								handleBtnLeft={() => handleLeaveGame(game.id)}
+							/>
+						}
 						<button
 							onClick={() => handleJoinGame(game.id)}
 							disabled={!user || joined === game.id}

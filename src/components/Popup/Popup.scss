@@ -1,0 +1,69 @@
+// Block: popup
+.popup {
+	&__overlay {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.5);
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: white;
+		padding: 1.25rem;
+		border-radius: 0.625rem;
+		box-shadow: 0rem 0.25rem 0.625rem rgba(0, 0, 0, 0.2);
+		width: 18.75rem;
+		//aspect-ratio: 3;
+		text-align: center;
+		position: relative;
+	}
+
+	&__title {
+		margin-bottom: 0.625rem;
+		font-size: 1.25rem;
+	}
+
+	&__text {
+		margin-bottom: 0.9375rem;
+	}
+	&__btn-wrapper {
+		display: flex;
+		flex-direction: row;
+		gap: 1rem;
+	}
+	&__close-btn {
+		background: #ff4d4d;
+		color: white;
+		border: none;
+		padding: 0.5rem 0.75rem;
+		border-radius: 0.3125rem;
+		cursor: pointer;
+		transition: 0.3s;
+
+		&:hover {
+			background: #cc0000;
+		}
+	}
+}
+
+// Block: app
+.app {
+	&__open-btn {
+		background: #4caf50;
+		color: white;
+		border: none;
+		padding: 0.625rem 0.9375rem;
+		border-radius: 0.3125rem;
+		cursor: pointer;
+		transition: 0.3s;
+
+		&:hover {
+			background: #388e3c;
+		}
+	}
+}
