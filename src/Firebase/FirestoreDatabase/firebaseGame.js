@@ -16,13 +16,13 @@ import {
 	runTransaction,
 } from "firebase/firestore";
 
-export const gameCollectionNameTwoPlayers = "games";
+export const gamesCollectionNameTwoPlayers = "games";
 export const playersCollectionName = "players";
 const getGamesCollectionRef = (gamescollectionName) =>
 	collection(db, gamescollectionName);
 
 export const gamesCollectionRef2 = getGamesCollectionRef(
-	gameCollectionNameTwoPlayers
+	gamesCollectionNameTwoPlayers
 );
 
 export const getGameDocRef = (gamescollectionName, gameDocName) =>
@@ -103,6 +103,7 @@ export const removePlayerFromGame = async (playerDocRef) => {
 	}
 };
 
+//Delete a game without sub-collections
 export const deleteSingleGame = async (gamescollectionName, gameDocName) => {
 	const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
 	await deleteDoc(gameDocRef);

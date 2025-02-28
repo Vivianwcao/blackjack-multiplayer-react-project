@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { db } from "../Firebase/Config";
 import {
-	gameCollectionNameTwoPlayers,
+	gamesCollectionNameTwoPlayers,
 	playersCollectionName,
 	gamesCollectionRef2,
 	getGameDocRef,
@@ -23,9 +23,6 @@ import {
 } from "../Firebase/FirestoreDatabase/firebaseGame";
 
 import {
-	onSnapshot,
-	query,
-	where,
 	collection,
 	doc,
 	setDoc,
@@ -77,9 +74,10 @@ const Lobby = () => {
 		}
 		if (!joinedGameId) {
 			// add player to game.
-			const gameRef = getGameDocRef(gameCollectionNameTwoPlayers, gameId);
+			const gameRef = getGameDocRef(gamesCollectionNameTwoPlayers, gameId);
 			try {
 				await createPlayer(gameRef, "waiting", user.uid);
+				userLobby.current.joinedGameId = gameId; //minimizing latency
 				console.log(`User ${user.uid} is in game: ${gameRef.id}`);
 
 				// setUserLobby((pre) => ({ ...pre, joinedGameId: gameId }));
@@ -89,23 +87,38 @@ const Lobby = () => {
 		}
 	};
 
-	// //Test function
-	// const deleteOneGame = async (gameCollectionNameTwoPlayers, gameDocName) => {
-	// 	await deleteSingleGame(gameCollectionNameTwoPlayers, gameDocName);
-	// };
+	//delete game without players sub-collection
+	const deleteOneGame = async (gamesCollectionNameTwoPlayers, gameDocName) => {
+		await deleteSingleGame(gamesCollectionNameTwoPlayers, gameDocName);
+	};
 
 	//helper remove if empty game room
 	const removeEmptyGame = async () => {
-		const emptyGames = gamesList.filter(
-			(game) => game.players.length === 0 && game.playersAddedCount > 0
-		);
-		console.log("Empty games...", emptyGames);
-		if (emptyGames.length > 0) {
-			const promisesList = emptyGames.map((game) =>
-				deleteGame(gameCollectionNameTwoPlayers, game.id, playersCollectionName)
+		//check firestore database if any empty game
+		const gamesCollectionSnap = await getDocs(gamesCollectionRef2);
+
+		//create a list of delete promises
+		const deletePromises = gamesCollectionSnap.docs.map(async (gameDoc) => {
+			const gameDocRef = getGameDocRef(
+				gamesCollectionNameTwoPlayers,
+				gameDoc.id
 			);
-			await Promise.all(promisesList);
-		}
+
+			const playersCollectionRef = collection(
+				gameDocRef,
+				playersCollectionName
+			);
+
+			const collectionSnap = await getDocs(playersCollectionRef);
+			if (collectionSnap.size === 0) {
+				return deleteOneGame(gamesCollectionNameTwoPlayers, gameDoc.id);
+			}
+			//implicitly return undefined if players in the game
+		});
+		//filter out undefined
+		const filteredDeletePromises = deletePromises.filter((promise) => promise);
+		if (filteredDeletePromises.length)
+			await Promise.all(filteredDeletePromises);
 	};
 
 	const handleLeaveGame = async (gameId) => {
@@ -115,6 +128,8 @@ const Lobby = () => {
 		}
 		try {
 			await removePlayerFromGame(playerDocRef.current);
+			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
+			removeEmptyGame();
 		} catch (err) {
 			console.error(err);
 		}
@@ -135,17 +150,18 @@ const Lobby = () => {
 
 	useEffect(() => {
 		console.log("------UseEffect in Lobby runs...");
+
 		if (user) {
 			userLobby.current.uid = user.uid;
 			const gameId = userJoinedGame(user.uid);
 			if (gameId) {
 				userLobby.current.joinedGameId = gameId;
 				gameDocRef.current = getGameDocRef(
-					gameCollectionNameTwoPlayers,
+					gamesCollectionNameTwoPlayers,
 					gameId
 				);
 				playerDocRef.current = getPlayerDocRef(
-					gameCollectionNameTwoPlayers,
+					gamesCollectionNameTwoPlayers,
 					gameId,
 					playersCollectionName,
 					user.uid
@@ -161,6 +177,7 @@ const Lobby = () => {
 
 	return (
 		<div className="lobby">
+			{/* <button onClick={removeEmptyGame}>remove empty</button> */}
 			{console.log(
 				"------re-render------userLobby in jsx",
 				userLobby.current,
