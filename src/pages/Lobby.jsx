@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
 	collection,
@@ -39,10 +39,21 @@ import {
 const Lobby = () => {
 	const { user, gamesList } = useAuth();
 
-	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
 	const userLobby = useRef({ uid: null, joinedGameId: null });
+
+	const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+	//Toggle functions
+	const openPopup = () => setIsPopupOpen(true);
+	const closePopup = () => setIsPopupOpen(false);
+
+	const navigate = useNavigate();
+
+	const handleEnterGame = (gameId) => {
+		navigate(`/${gameId}`);
+	};
 
 	//Helper -- Check if user has already joined a game
 	const userJoinedGame = (uid) => {
@@ -70,15 +81,15 @@ const Lobby = () => {
 					//return game id or undefined if other player pairs
 					const gameId = game.players.some((player) => player.id === user.uid);
 					if (gameId) {
-						setIsPopupOpen(true);
+						openPopup();
 						return game.id;
 					}
-					setIsPopupOpen(false);
+					closePopup();
 					return null;
 				}
 			}
 		}
-		setIsPopupOpen(false);
+		closePopup();
 		return null;
 	};
 
@@ -127,8 +138,6 @@ const Lobby = () => {
 				await createPlayer(gameRef, "waiting", user.uid);
 				userLobby.current.joinedGameId = gameId; //minimizing latency
 				console.log(`User ${user.uid} is in game: ${gameRef.id}`);
-
-				// setUserLobby((pre) => ({ ...pre, joinedGameId: gameId }));
 			} catch (err) {
 				console.error("Error joining game: ", err);
 			}
@@ -183,14 +192,14 @@ const Lobby = () => {
 			await removePlayerFromGame(playerDocRef.current);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			removeEmptyGame();
-			setIsPopupOpen(false);
+			closePopup();
 		} catch (err) {
 			console.error(err);
 		}
 	};
 
 	useEffect(() => {
-		console.log("------UseEffect in Lobby runs...");
+		console.log("~ ~ ~ ~ ~ UseEffect in Lobby runs~ ~ ~ ~ ~ ");
 
 		if (user) {
 			userLobby.current.uid = user.uid;
@@ -219,7 +228,7 @@ const Lobby = () => {
 	return (
 		<div className="lobby">
 			{console.log(
-				"------re-render------userLobby in jsx",
+				"* * * * * re-render * * * * *userLobby in jsx",
 				userLobby.current,
 				gamesList
 			)}
@@ -234,13 +243,14 @@ const Lobby = () => {
 						{
 							<Popup
 								isOpen={isPopupOpen}
-								onClose={() => setIsPopupOpen(false)}
 								handleBtnLeft={() => handleLeaveGame(game.id)}
+								handleBtnRight={() => handleJoinGame(game.id)}
+								gameId={game.id}
 							/>
 						}
 						<button
 							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || joined === game.id}
+							disabled={!user || joined}
 						>
 							Join game
 						</button>

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import "./Popup.scss"; // Import the SCSS file
 
-const Popup = ({ isOpen, onClose, handleBtnLeft }) => {
+const Popup = ({ isOpen, handleBtnLeft, handleBtnLRight, gameId }) => {
+	console.log("inside popup: ", gameId);
 	if (!isOpen) return null;
+
 	return (
 		<div className="popup__overlay">
 			<div className="popup__content">
@@ -14,7 +16,7 @@ const Popup = ({ isOpen, onClose, handleBtnLeft }) => {
 					<button className="popup__close-btn" onClick={handleBtnLeft}>
 						Leave game
 					</button>
-					<button className="popup__close-btn" onClick={onClose}>
+					<button className="popup__close-btn" onClick={handleBtnLRight}>
 						Enter game!
 					</button>
 				</div>
