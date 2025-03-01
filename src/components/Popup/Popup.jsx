@@ -1,8 +1,16 @@
 import { useState } from "react";
+
 import "./Popup.scss"; // Import the SCSS file
 
-const Popup = ({ isOpen, handleBtnLeft, handleBtnLRight, gameId }) => {
-	console.log("inside popup: ", gameId);
+const Popup = ({
+	isOpen,
+	handleBtnLeft,
+	handleBtnRight,
+	btnLeftText,
+	btnRightText,
+}) => {
+	console.log("inside popup: ");
+
 	if (!isOpen) return null;
 
 	return (
@@ -14,10 +22,10 @@ const Popup = ({ isOpen, handleBtnLeft, handleBtnLRight, gameId }) => {
 				</p>
 				<div className="popup__btn-wrapper">
 					<button className="popup__close-btn" onClick={handleBtnLeft}>
-						Leave game
+						{btnLeftText}
 					</button>
-					<button className="popup__close-btn" onClick={handleBtnLRight}>
-						Enter game!
+					<button className="popup__close-btn" onClick={handleBtnRight}>
+						{btnRightText}
 					</button>
 				</div>
 			</div>

@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 import {
 	collection,
 	doc,
@@ -50,9 +49,9 @@ const Lobby = () => {
 	const closePopup = () => setIsPopupOpen(false);
 
 	const navigate = useNavigate();
-
-	const handleEnterGame = (gameId) => {
-		navigate(`/${gameId}`);
+	const handleEnterGame = (navigateTo, gameId) => {
+		console.log("inside handleEnter game: ");
+		navigateTo(`/${gameId}`);
 	};
 
 	//Helper -- Check if user has already joined a game
@@ -239,13 +238,15 @@ const Lobby = () => {
 						{/* <Link to={`/${game.id}`}> */}
 						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
-						{/*{gameReady === game.id ? <button>Enter game!</button> : <></>}*/}
+						{/*{gameReady === game.id ? <button>Enter game!</button> : null}*/}
 						{
 							<Popup
 								isOpen={isPopupOpen}
 								handleBtnLeft={() => handleLeaveGame(game.id)}
-								handleBtnRight={() => handleJoinGame(game.id)}
+								handleBtnRight={() => handleEnterGame(navigate, game.id)}
 								gameId={game.id}
+								btnLeftText="Leave Game"
+								btnRightText="Enter Game !"
 							/>
 						}
 						<button
