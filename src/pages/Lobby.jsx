@@ -1,6 +1,13 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import Popup from "../components/Popup/Popup";
 import {
+	AuthContext,
+	useAuth,
+} from "../Firebase/FirebaseAuthentification/AuthProvider";
+import { db } from "../Firebase/Config";
+import {
+	onSnapshot,
 	collection,
 	doc,
 	setDoc,
@@ -11,9 +18,6 @@ import {
 	arrayUnion,
 	increment,
 } from "firebase/firestore";
-import { db } from "../Firebase/Config";
-import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
-import Popup from "../components/Popup/Popup";
 import {
 	gamesCollectionNameTwoPlayers,
 	playersCollectionName,
@@ -36,7 +40,8 @@ import {
 } from "../Firebase/FirestoreDatabase/firebaseGame";
 
 const Lobby = () => {
-	const { user, gamesList } = useAuth();
+	const { user } = useAuth();
+	const [gamesList, setGamesList] = useState([]);
 
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
@@ -198,6 +203,23 @@ const Lobby = () => {
 	};
 
 	useEffect(() => {
+		let unsubscribeGamesList;
+		let unsubscribersList;
+
+		const { unsubscribeGames, unsubscribers } = attachOnSnapshotListeners();
+		unsubscribeGamesList = unsubscribeGames;
+		unsubscribersList = unsubscribers;
+		console.log("**Firestore onSnapshot listeners mounted/attached.**");
+
+		return () => {
+			// Unsubscribe from the games collection listener
+			unsubscribersList.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+			unsubscribeGamesList();
+			console.log("~.~Firestore onSnapshot listeners unmounted/removed~.~");
+		};
+	}, []);
+
+	useEffect(() => {
 		console.log("~ ~ ~ ~ ~ UseEffect in Lobby runs~ ~ ~ ~ ~ ");
 
 		if (user) {
@@ -223,6 +245,67 @@ const Lobby = () => {
 			userLobby.current.uid = null;
 		}
 	}, [user, gamesList]);
+
+	//Firestore listener on game and players
+	const attachOnSnapshotListeners = () => {
+		//List for inner listeners
+		let unsubscribers = [];
+
+		//Outer lister on games
+		const unsubscribeGames = onSnapshot(
+			gamesCollectionRef2,
+			(gamesSnapshot) => {
+				//setGameList upon every outer listener firing.
+				setGamesList(
+					gamesSnapshot.docs.map((gameDoc) => ({
+						id: gameDoc.id,
+						...gameDoc.data(),
+						players: [],
+					}))
+				);
+
+				//cleanup the old inner listeners -> ready for next new firing
+				unsubscribers.forEach((unsc) => unsc());
+				unsubscribers = [];
+
+				// mapping game collection snapshot to a list of game objects.
+				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
+					//get each playersCollectionRef.
+					const playersCollectionRef = collection(
+						gamesCollectionRef2,
+						gameDoc.id,
+						playersCollectionName
+					);
+
+					//inner listener on each game's players collection
+					const unsubscribePlayers = onSnapshot(
+						playersCollectionRef,
+						(playersSnapshot) => {
+							//create a list of players of each game
+							const playersList = playersSnapshot.docs.map((playerDoc) => ({
+								id: playerDoc.id,
+								...playerDoc.data(),
+							}));
+
+							//add the player list to each game object
+							let gameObj = { id: gameDoc.id, ...gameDoc.data() };
+							gameObj.players = playersList;
+
+							//setGameList upon every inner listener firing.
+							setGamesList((pre) => {
+								let filteredPre = pre.filter((game) => game.id !== gameObj.id);
+								return [...filteredPre, gameObj];
+							});
+						}
+					);
+					// explicitly return each listener's unsubscribe function to [unsubscribers].map(...).
+					return unsubscribePlayers;
+				});
+			}
+		);
+		// return subscribe functions of all listeners.
+		return { unsubscribeGames, unsubscribers };
+	};
 
 	return (
 		<div className="lobby">
