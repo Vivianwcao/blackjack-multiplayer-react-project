@@ -9,8 +9,6 @@ const Popup = ({
 	btnLeftText,
 	btnRightText,
 }) => {
-	console.log("inside popup: ");
-
 	if (!isOpen) return null;
 
 	return (

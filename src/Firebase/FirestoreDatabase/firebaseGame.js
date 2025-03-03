@@ -51,10 +51,11 @@ export const addNewGame = async (
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
+			timestamp: Date.now(),
 			gameStatus,
 			currentPlayerIndex,
 			deckId,
-			playersAddedCount: 0,
+			// playersAddedCount: 0,
 		},
 		{ merge: true }
 	);
@@ -82,11 +83,13 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 	} else {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		const playerData = { status, timestamp: Date.now(), playerIndex: null };
-		await runTransaction(db, async (transaction) => {
-			transaction.set(playerDocRef, playerData);
-			transaction.update(gameDocRef, { playersAddedCount: increment(1) });
-			return playerDocRef;
-		});
+		// await runTransaction(db, async (transaction) => {
+		// 	transaction.set(playerDocRef, playerData);
+		// 	transaction.update(gameDocRef, { playersAddedCount: increment(1) });
+		// 	return playerDocRef;
+		// });
+		await setDoc(playerDocRef, playerData, { merge: true });
+		return playerDocRef;
 	}
 };
 

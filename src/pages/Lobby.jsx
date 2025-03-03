@@ -183,7 +183,7 @@ const Lobby = () => {
 	};
 
 	const handleLeaveGame = async (gameId) => {
-		console.log(user, gameId);
+		console.log(user, userLobby.current.joinedGameId, gameId);
 		if (!user) {
 			console.log("User not signed in");
 			return;
@@ -195,7 +195,7 @@ const Lobby = () => {
 		try {
 			await removePlayerFromGame(playerDocRef.current);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
-			removeEmptyGame();
+			//removeEmptyGame();
 			closePopup();
 		} catch (err) {
 			console.error(err);
@@ -314,24 +314,25 @@ const Lobby = () => {
 				userLobby.current,
 				gamesList
 			)}
+			{
+				<Popup
+					isOpen={isPopupOpen}
+					handleBtnLeft={() => handleLeaveGame(joined)}
+					handleBtnRight={() => handleEnterGame(navigate, joined)}
+					gameId={joined}
+					btnLeftText="Leave Game"
+					btnRightText="Enter Game !"
+				/>
+			}
 			{gamesList
-				.sort((a, b) => a.id.localeCompare(b.id))
-				.map((game, i) => (
-					<div key={i}>
+				.sort((a, b) => a.timestamp - b.timestamp)
+				.map((game) => (
+					<div key={game.id}>
 						{/* <Link to={`/${game.id}`}> */}
 						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
 						{/*{gameReady === game.id ? <button>Enter game!</button> : null}*/}
-						{
-							<Popup
-								isOpen={isPopupOpen}
-								handleBtnLeft={() => handleLeaveGame(game.id)}
-								handleBtnRight={() => handleEnterGame(navigate, game.id)}
-								gameId={game.id}
-								btnLeftText="Leave Game"
-								btnRightText="Enter Game !"
-							/>
-						}
+
 						<button
 							onClick={() => handleJoinGame(game.id)}
 							disabled={!user || joined}
