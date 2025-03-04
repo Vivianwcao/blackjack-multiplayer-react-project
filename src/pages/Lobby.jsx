@@ -1,23 +1,9 @@
 import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Popup from "../components/Popup/Popup";
-import {
-	AuthContext,
-	useAuth,
-} from "../Firebase/FirebaseAuthentification/AuthProvider";
+import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import { db } from "../Firebase/Config";
-import {
-	onSnapshot,
-	collection,
-	doc,
-	setDoc,
-	getDoc,
-	getDocs,
-	addDoc,
-	updateDoc,
-	arrayUnion,
-	increment,
-} from "firebase/firestore";
+import { onSnapshot, collection, doc, getDocs } from "firebase/firestore";
 import {
 	gamesCollectionNameTwoPlayers,
 	playersCollectionName,
@@ -33,10 +19,6 @@ import {
 	createPlayer,
 	updatePlayer,
 	removePlayerFromGame,
-	checkNumberOfHands,
-	createHand,
-	updateHand,
-	deleteAllPlayers,
 } from "../Firebase/FirestoreDatabase/firebaseGame";
 
 const Lobby = () => {

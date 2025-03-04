@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { setPersistence, browserSessionPersistence } from "firebase/auth";
 import { auth } from "../Config";
 
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 	}, []);
 
 	return (
+		//{{user}} because user is an object
 		<AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
 	);
 };

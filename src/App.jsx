@@ -4,18 +4,14 @@ import ProtectedRoute from "./pages/ProtectedRoute";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import {
-	SignInWithGoogle,
-	SignOut,
-} from "./Firebase/FirebaseAuthentification/Auth";
+	handleGoogleSignIn,
+	handleSignOut,
+} from "./Firebase/FirebaseAuthentification/signInPartners/googleSignIn";
+import { handleGithubSignIn } from "./Firebase/FirebaseAuthentification/signInPartners/githubSignIn";
 import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
 
 const App = () => {
 	const { user } = useAuth();
-
-	// Handles Google sign-in & sign-out
-	const handleSignIn = async () => await SignInWithGoogle();
-
-	const handleSignOut = async () => await SignOut();
 
 	return (
 		<BrowserRouter>
@@ -23,10 +19,18 @@ const App = () => {
 				{user ? (
 					<div>
 						<p>Welcome {user.displayName}!</p>
+						<p>
+							Last login at:{" "}
+							{new Date(+user.metadata.lastLoginAt).toLocaleString()}
+						</p>
+
 						<button onClick={handleSignOut}>Sign out</button>
 					</div>
 				) : (
-					<button onClick={handleSignIn}>Sign in</button>
+					<div>
+						<button onClick={handleGoogleSignIn}>Sign in google</button>
+						<button onClick={handleGithubSignIn}>Sign in github</button>
+					</div>
 				)}
 			</header>
 			<Routes>
