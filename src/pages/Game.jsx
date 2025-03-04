@@ -2,22 +2,49 @@ import React, { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
-import { onSnapshot, collection, getDoc } from "firebase/firestore";
+import {
+	onSnapshot,
+	collection,
+	getDoc,
+	getDocs,
+	doc,
+} from "firebase/firestore";
 import { db } from "../Firebase/Config";
 import "./Game.scss";
 
 const Game = () => {
 	const { user } = useAuth();
 	const [game, setGame] = useState(null);
+	const [character, setCharacter] = useState(null);
+	const [opponent, setOpponent] = useState(null);
+	const [characterHandsCollection, setCharacterHandsCollection] =
+		useState(null);
+	const [opponentHandsCollection, setOpponentHandsCollection] = useState(null);
 	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
-	const playerCharaterDocRef = useRef(null);
-	const playerOpponentDocRef = useRef(null);
-	const dealerDocRef = useRef(null);
+	const characterDocRef = useRef(null);
+	const opponentDocRef = useRef(null);
 
 	console.log(gameId);
 
-	//
+	//listener on player
+	const getPlayerRefs = async (gameDocRef, playersCollectionName) => {
+		const playerCollectionRef = collection(gameDocRef, playersCollectionName);
+		const snapshot = await getDocs(playerCollectionRef);
+		if (snapshot.empty) {
+			console.log("No player in this game.");
+			return null;
+		}
+
+		for (let player of snapshot.docs) {
+			if (player.id === user?.uid) {
+				characterDocRef.current = doc(playerCollectionRef, user.uid);
+			}
+			opponentDocRef.current = doc(playerCollectionRef, player.id);
+		}
+		console.log(characterDocRef.current);
+		console.log(opponentDocRef.current);
+	};
 
 	//onSnapshot listener on game
 	const addGameListener = async (gameRef) => {
@@ -49,7 +76,6 @@ const Game = () => {
 		}
 	};
 
-	//listeners on player and hands
 	useEffect(() => {
 		//set refs, could be invalid
 		gameDocRef.current = fbGame.getGameDocRef(
@@ -57,6 +83,7 @@ const Game = () => {
 			gameId
 		);
 		console.log(gameDocRef.current);
+		getPlayerRefs(gameDocRef.current, fbGame.playersCollectionName);
 
 		//call to mount listeners
 		let unsubscribeGame = null;
