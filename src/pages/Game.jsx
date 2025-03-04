@@ -1,30 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./Game.scss";
-import {
-	addNewGame,
-	updateGame,
-	getNumberOfPlayers,
-	createPlayer,
-	updatePlayer,
-	checkNumberOfHands,
-	createHand,
-	updateHand,
-	deleteAllPlayers,
-} from "../Firebase/FirestoreDatabase/firebaseGame";
-import {
-	onSnapshot,
-	query,
-	where,
-	collection,
-	doc,
-	setDoc,
-	getDoc,
-	getDocs,
-	addDoc,
-	updateDoc,
-	arrayUnion,
-	increment,
-} from "firebase/firestore";
+import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
+import * as firestore from "firebase/firestore";
 
 ("use client"); // This is a Client Component
 
@@ -35,7 +12,7 @@ const Game = () => {
 
 	const handleJoin = async () => {
 		console.log(players);
-		let playerRef = await createPlayer({
+		let playerRef = await fbGame.createPlayer({
 			gameDocRef: gameDocRef,
 			name: "Jane",
 			status: "waiting",

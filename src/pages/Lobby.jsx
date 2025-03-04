@@ -4,22 +4,7 @@ import Popup from "../components/Popup/Popup";
 import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import { db } from "../Firebase/Config";
 import { onSnapshot, collection, doc, getDocs } from "firebase/firestore";
-import {
-	gamesCollectionNameTwoPlayers,
-	playersCollectionName,
-	gamesCollectionRef2,
-	getGameDocRef,
-	getPlayersCollectionRef,
-	getPlayerDocRef,
-	addNewGame,
-	updateGame,
-	deleteSingleGame,
-	deleteGame,
-	getNumberOfPlayers,
-	createPlayer,
-	updatePlayer,
-	removePlayerFromGame,
-} from "../Firebase/FirestoreDatabase/firebaseGame";
+import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
 
 const Lobby = () => {
 	const { user } = useAuth();
@@ -90,8 +75,8 @@ const Lobby = () => {
 		}
 		try {
 			//create new game
-			const gameRef = await addNewGame(
-				gamesCollectionRef2,
+			const gameRef = await fbGame.addNewGame(
+				fbGame.fbGame.gamesCollectionRef2,
 				"waiting",
 				null,
 				null
@@ -119,9 +104,12 @@ const Lobby = () => {
 		}
 		if (!joinedGameId) {
 			// add player to game.
-			const gameRef = getGameDocRef(gamesCollectionNameTwoPlayers, gameId);
+			const gameRef = fbGame.getGameDocRef(
+				fbGame.gamesCollectionNameTwoPlayers,
+				gameId
+			);
 			try {
-				await createPlayer(gameRef, "waiting", user.uid);
+				await fbGame.createPlayer(gameRef, "waiting", user.uid);
 				userLobby.current.joinedGameId = gameId; //minimizing latency
 				console.log(`User ${user.uid} is in game: ${gameRef.id}`);
 			} catch (err) {
@@ -132,29 +120,32 @@ const Lobby = () => {
 
 	//delete game without players sub-collection
 	const deleteOneGame = async (gamesCollectionNameTwoPlayers, gameDocName) => {
-		await deleteSingleGame(gamesCollectionNameTwoPlayers, gameDocName);
+		await fbGame.deleteSingleGame(
+			fbGame.gamesCollectionNameTwoPlayers,
+			gameDocName
+		);
 	};
 
 	//remove game remotely if empty game.
 	const removeEmptyGame = async () => {
 		//check firestore database if any empty game
-		const gamesCollectionSnap = await getDocs(gamesCollectionRef2);
+		const gamesCollectionSnap = await getDocs(fbGame.gamesCollectionRef2);
 
 		//create a list of delete promises
 		const deletePromises = gamesCollectionSnap.docs.map(async (gameDoc) => {
-			const gameDocRef = getGameDocRef(
-				gamesCollectionNameTwoPlayers,
+			const gameDocRef = fbGame.getGameDocRef(
+				fbGame.gamesCollectionNameTwoPlayers,
 				gameDoc.id
 			);
 
 			const playersCollectionRef = collection(
 				gameDocRef,
-				playersCollectionName
+				fbGame.playersCollectionName
 			);
 
 			const collectionSnap = await getDocs(playersCollectionRef);
 			if (collectionSnap.size === 0) {
-				return deleteOneGame(gamesCollectionNameTwoPlayers, gameDoc.id);
+				return deleteOneGame(fbGame.gamesCollectionNameTwoPlayers, gameDoc.id);
 			}
 			//implicitly return undefined if players in the game
 		});
@@ -175,7 +166,7 @@ const Lobby = () => {
 			return;
 		}
 		try {
-			await removePlayerFromGame(playerDocRef.current);
+			await fbGame.removePlayerFromGame(playerDocRef.current);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			//removeEmptyGame();
 			closePopup();
@@ -209,14 +200,14 @@ const Lobby = () => {
 			const gameId = userJoinedGame(user.uid);
 			if (gameId) {
 				userLobby.current.joinedGameId = gameId;
-				gameDocRef.current = getGameDocRef(
-					gamesCollectionNameTwoPlayers,
+				gameDocRef.current = fbGame.getGameDocRef(
+					fbGame.gamesCollectionNameTwoPlayers,
 					gameId
 				);
-				playerDocRef.current = getPlayerDocRef(
-					gamesCollectionNameTwoPlayers,
+				playerDocRef.current = fbGame.getPlayerDocRef(
+					fbGame.gamesCollectionNameTwoPlayers,
 					gameId,
-					playersCollectionName,
+					fbGame.playersCollectionName,
 					user.uid
 				);
 			} else {
@@ -235,7 +226,7 @@ const Lobby = () => {
 
 		//Outer lister on games
 		const unsubscribeGames = onSnapshot(
-			gamesCollectionRef2,
+			fbGame.gamesCollectionRef2,
 			(gamesSnapshot) => {
 				//setGameList upon every outer listener firing.
 				setGamesList(
@@ -254,9 +245,9 @@ const Lobby = () => {
 				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
 					//get each playersCollectionRef.
 					const playersCollectionRef = collection(
-						gamesCollectionRef2,
+						fbGame.gamesCollectionRef2,
 						gameDoc.id,
-						playersCollectionName
+						fbGame.playersCollectionName
 					);
 
 					//inner listener on each game's players collection
