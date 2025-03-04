@@ -1,45 +1,83 @@
 import React, { useRef, useState, useEffect } from "react";
-import "./Game.scss";
+import { useParams } from "react-router-dom";
+import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
-import * as firestore from "firebase/firestore";
-
-("use client"); // This is a Client Component
+import { onSnapshot, collection, getDoc } from "firebase/firestore";
+import { db } from "../Firebase/Config";
+import "./Game.scss";
 
 const Game = () => {
-	const [players, setPlayers] = useState([]);
-	const [joined, setJoined] = useState(false);
-	const playerDocRef = useRef(null);
+	const { user } = useAuth();
+	const [game, setGame] = useState(null);
+	const { gameId } = useParams();
+	const gameDocRef = useRef(null);
+	const playerCharaterDocRef = useRef(null);
+	const playerOpponentDocRef = useRef(null);
+	const dealerDocRef = useRef(null);
 
-	const handleJoin = async () => {
-		console.log(players);
-		let playerRef = await fbGame.createPlayer({
-			gameDocRef: gameDocRef,
-			name: "Jane",
-			status: "waiting",
-		});
-		playerDocRef.current = playerRef;
-		setJoined(true);
+	console.log(gameId);
+
+	//
+
+	//onSnapshot listener on game
+	const addGameListener = async (gameRef) => {
+		if (!gameRef) return null; //No listener is attached here yet.
+		try {
+			//check if gameRef is valid.
+			const docSnapshot = await getDoc(gameRef);
+
+			if (!docSnapshot.exists()) {
+				gameDocRef.current = null; //reset gameRef
+				console.log(`Game with id: ${gameRef.id} does not exist`);
+				return null; //return undefined
+			}
+
+			//proceed with valid gameDocRef
+			return onSnapshot(gameRef, (snapshot) => {
+				if (!snapshot.exists()) {
+					gameDocRef.current = null; //reset gameRef
+					console.log(`Game with id: ${gameRef.id} does not exist`);
+					return; // No value needed
+				}
+				setGame(snapshot.data());
+				console.log("**setGame successfully.**");
+			});
+		} catch (error) {
+			console.error("Error checking game document:", error);
+			gameDocRef.current = null;
+			return null;
+		}
 	};
 
-	// useEffect(() => {
-	// 	//Attach onSnapshot listener for real-time updates on "players" collection on Firestore.
-	// 	const unsubscribe = onSnapshot(playersCollectionRef, (snapshot) => {
-	// 		const playersList = snapshot.docs.map((doc) => ({
-	// 			id: doc.id,
-	// 			...doc.data(),
-	// 		}));
-	// 		setPlayers(playersList);
-	// 	});
+	//listeners on player and hands
+	useEffect(() => {
+		//set refs, could be invalid
+		gameDocRef.current = fbGame.getGameDocRef(
+			fbGame.gamesCollectionNameTwoPlayers,
+			gameId
+		);
+		console.log(gameDocRef.current);
 
-	// 	return () => unsubscribe(); // Clean up listener on component unmount
-	// }, []);
+		//call to mount listeners
+		let unsubscribeGame = null;
+		const func = async () => {
+			unsubscribeGame = await addGameListener(gameDocRef.current);
+		};
+		func();
+		if (unsubscribeGame) {
+			console.log("**Firestore listener on game mounted/attached.**");
+		}
+
+		return () => {
+			unsubscribeGame?.(); //call function if not null/undefined
+			console.log("~.~Firestore listener on game UNmounted/removed~.~");
+		};
+	}, []);
 
 	return (
 		<div>
-			<p>{players.length} joined...</p>
-			<button className="game__join" onClick={handleJoin} disabled={joined}>
-				{joined ? "You are in!" : "Join Game"}
-			</button>
+			{console.log("* * * * * re-render * * * * *userLobby in jsx", game)}
+			<p>...</p>
 		</div>
 	);
 };

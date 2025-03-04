@@ -1,9 +1,8 @@
-import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Popup from "../components/Popup/Popup";
 import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
-import { db } from "../Firebase/Config";
-import { onSnapshot, collection, doc, getDocs } from "firebase/firestore";
+import { onSnapshot, collection, getDocs } from "firebase/firestore";
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
 
 const Lobby = () => {
@@ -39,7 +38,7 @@ const Lobby = () => {
 		return null;
 	};
 
-	//UI toggle
+	//UI add/leave/join game buttons toggle
 	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
 
 	//check if user's joined game has two players including the user.
@@ -64,7 +63,7 @@ const Lobby = () => {
 		return null;
 	};
 
-	//UI toggle
+	//UI add/leave/join game buttons toggle
 	const gameReady = useMemo(() => joinedGameReady(), [user, gamesList]);
 	console.log("Is game ready??", gameReady);
 
@@ -76,7 +75,7 @@ const Lobby = () => {
 		try {
 			//create new game
 			const gameRef = await fbGame.addNewGame(
-				fbGame.fbGame.gamesCollectionRef2,
+				fbGame.gamesCollectionRef2,
 				"waiting",
 				null,
 				null
@@ -111,7 +110,6 @@ const Lobby = () => {
 			try {
 				await fbGame.createPlayer(gameRef, "waiting", user.uid);
 				userLobby.current.joinedGameId = gameId; //minimizing latency
-				console.log(`User ${user.uid} is in game: ${gameRef.id}`);
 			} catch (err) {
 				console.error("Error joining game: ", err);
 			}
@@ -166,7 +164,10 @@ const Lobby = () => {
 			return;
 		}
 		try {
-			await fbGame.removePlayerFromGame(playerDocRef.current);
+			await fbGame.removePlayerFromGame(
+				playerDocRef.current,
+				gameDocRef.current
+			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			//removeEmptyGame();
 			closePopup();
@@ -176,19 +177,14 @@ const Lobby = () => {
 	};
 
 	useEffect(() => {
-		let unsubscribeGamesList;
-		let unsubscribersList;
-
 		const { unsubscribeGames, unsubscribers } = attachOnSnapshotListeners();
-		unsubscribeGamesList = unsubscribeGames;
-		unsubscribersList = unsubscribers;
-		console.log("**Firestore onSnapshot listeners mounted/attached.**");
+		console.log("**Firestore nested game listeners mounted/attached.**");
 
 		return () => {
 			// Unsubscribe from the games collection listener
-			unsubscribersList.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
-			unsubscribeGamesList();
-			console.log("~.~Firestore onSnapshot listeners unmounted/removed~.~");
+			unsubscribers.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+			unsubscribeGames();
+			console.log("~.~Firestore nested game listeners UNmounted/removed~.~");
 		};
 	}, []);
 

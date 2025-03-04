@@ -7,7 +7,8 @@ const signInWithGithub = async () => {
 	try {
 		const result = await signInWithPopup(auth, provider);
 		console.log("User pressed button to sign in github:", result.user);
-		await linkProvider("google");
+
+		//await linkProvider( "google" );
 	} catch (error) {
 		console.error("GitHub Sign-In Error:", error);
 	}

@@ -55,7 +55,7 @@ export const addNewGame = async (
 			gameStatus,
 			currentPlayerIndex,
 			deckId,
-			// playersAddedCount: 0,
+			playersCount: 0,
 		},
 		{ merge: true }
 	);
@@ -83,13 +83,14 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 	} else {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		const playerData = { status, timestamp: Date.now(), playerIndex: null };
-		// await runTransaction(db, async (transaction) => {
-		// 	transaction.set(playerDocRef, playerData);
-		// 	transaction.update(gameDocRef, { playersAddedCount: increment(1) });
-		// 	return playerDocRef;
-		// });
-		await setDoc(playerDocRef, playerData, { merge: true });
-		return playerDocRef;
+		await runTransaction(db, async (transaction) => {
+			transaction.set(playerDocRef, playerData);
+			transaction.update(gameDocRef, { playersCount: increment(1) });
+			console.log(`Player ${playerDocRef.id} added to game ${gameDocRef.id}`);
+			return playerDocRef;
+		});
+		//await setDoc(playerDocRef, playerData, { merge: true });
+		//return playerDocRef;
 	}
 };
 
@@ -98,11 +99,17 @@ export const updatePlayer = async (playerDocRef, changeObj) => {
 	updateDoc(playerDocRef, changeObj);
 };
 
-export const removePlayerFromGame = async (playerDocRef) => {
+export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 	const playerDocSnapshot = await getDoc(playerDocRef);
 	if (playerDocSnapshot.exists()) {
-		await deleteDoc(playerDocRef);
-		console.log(`Player ${playerDocRef.id} removed from game`);
+		await runTransaction(db, async (transaction) => {
+			transaction.delete(playerDocRef);
+			transaction.update(gameDocRef, { playersCount: increment(-1) });
+			console.log(
+				`Player ${playerDocRef.id} removed from game ${gameDocRef.id}`
+			);
+			return playerDocRef;
+		});
 	}
 };
 

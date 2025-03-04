@@ -7,7 +7,9 @@ const provider = new GoogleAuthProvider();
 const signInWithGoogle = async () => {
 	try {
 		const result = await signInWithPopup(auth, provider);
-		await linkProvider("github");
+
+		//await linkProvider("github");
+
 		console.log("User pressed button to sign in google:", result.user);
 		//return result.user; // Returns user details
 	} catch (error) {
