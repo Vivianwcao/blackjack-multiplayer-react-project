@@ -1,8 +1,5 @@
 import { db } from "../Config";
 import {
-	onSnapshot,
-	query,
-	where,
 	collection,
 	doc,
 	setDoc,
@@ -82,7 +79,13 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		return;
 	} else {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
-		const playerData = { status, timestamp: Date.now(), playerIndex: null };
+		const playerData = {
+			status,
+			gameId: gameDocRef.id,
+			timestamp: Date.now(),
+			bet: 0,
+			doubleBet: false,
+		};
 		await runTransaction(db, async (transaction) => {
 			transaction.set(playerDocRef, playerData);
 			transaction.update(gameDocRef, { playersCount: increment(1) });
@@ -151,26 +154,30 @@ export const deleteGame = async (
 	}
 };
 
-export const checkNumberOfHands = async (playerDocRef) => {
-	let handsCollectionRef = collection(playerDocRef, "hands");
-	let handSnapShot = await getDocs(handsCollectionRef);
-	let numberOfHands = handSnapShot.size;
-	console.log("numberOfHands:  ", numberOfHands);
-	return { handsCollectionRef, numberOfHands };
-};
+// export const checkNumberOfHands = async (playerDocRef) => {
+// 	let handsCollectionRef = collection(playerDocRef, "hands");
+// 	let handSnapShot = await getDocs(handsCollectionRef);
+// 	let numberOfHands = handSnapShot.size;
+// 	console.log("numberOfHands:  ", numberOfHands);
+// 	return { handsCollectionRef, numberOfHands };
+// };
 
-export const createHand = async (playerDocRef, initialBet) => {
-	let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
-		playerDocRef
-	);
-	let handDocRef = doc(
-		handsCollectionRef,
-		playerDocRef.id.concat(numberOfHands.toString())
-	);
-	await setDoc(handDocRef, { bet: initialBet, payout: 0 }, { merge: true });
-	return handDocRef;
-};
+// export const createHand = async (playerDocRef, initialBet) => {
+// 	let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
+// 		playerDocRef
+// 	);
+// 	let handDocRef = doc(
+// 		handsCollectionRef,
+// 		playerDocRef.id.concat(numberOfHands.toString())
+// 	);
+// 	await setDoc(
+// 		handDocRef,
+// 		{ bet: initialBet, payout: 0, split: false, playerId: playerDocRef.id },
+// 		{ merge: true }
+// 	);
+// 	return handDocRef;
+// };
 
-export const updateHand = async (handDocRef, obj) => {
-	await updateDoc(handDocRef, obj);
-};
+// export const updateHand = async (handDocRef, obj) => {
+// 	await updateDoc(handDocRef, obj);
+// };
