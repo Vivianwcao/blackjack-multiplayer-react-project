@@ -20,8 +20,8 @@ const App = () => {
 					<div>
 						<p>Welcome {user.displayName}!</p>
 						<p>
-							Last login at:{" "}
-							{new Date(+user.metadata.lastLoginAt).toLocaleString()}
+							Last login at:
+							{` ${new Date(+user.metadata.lastLoginAt).toLocaleString()}`}
 						</p>
 
 						<button onClick={handleSignOut}>Sign out</button>
