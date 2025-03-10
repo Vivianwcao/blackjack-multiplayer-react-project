@@ -15,82 +15,45 @@ import "./Game.scss";
 const Game = () => {
 	const { user } = useAuth();
 	const [game, setGame] = useState(null);
-	const [character, setCharacter] = useState(null);
-	const [opponent, setOpponent] = useState(null);
+	const [players, setPlayers] = useState([]);
 	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
-	const characterDocRef = useRef(null);
-	const opponentDocRef = useRef(null);
 
-	//check if valid gameDocRef
-	//Async don't go well inside useEffect()
-	const checkValidGameRef = async (gameRef) => {
-		if (!gameRef) return null; //No listener is attached here yet.
-		try {
-			//check if gameRef is valid.
-			const docSnapshot = await getDoc(gameRef);
+	const checkIfHomePlayer = () => {};
 
-			if (!docSnapshot.exists()) {
-				gameDocRef.current = null; //reset gameRef
-				console.log(`Game with id: ${gameRef.id} does not exist`);
-				return null;
-			}
-			return gameRef;
-		} catch (error) {
-			console.error("Error checking game document:", error);
-			gameDocRef.current = null;
+	//listeners on list of players
+	const addPlayersListeners = async (gameRef) => {
+		//let unsubscribePlayers = [];
+		const playersSnap = await getDocs(
+			collection(gameRef, fbGame.playersCollectionName)
+		);
+		if (playersSnap.size !== fbGame.maxPlayers) {
+			console.log(`Must have ${fbGame.maxPlayers} players to play this game.`);
 			return null;
 		}
-	};
-
-	const setPlayerRefs = async (gameDocRef, playersCollectionName) => {
-		if (!gameDocRef || !user?.uid) {
-			console.log("Invalid gameDocRef or user not loaded");
-			return false;
-		}
-		const playerCollectionRef = collection(gameDocRef, playersCollectionName);
-		const snapshot = await getDocs(playerCollectionRef);
-		if (snapshot.empty) {
-			console.log("No player in this game.");
-			return false;
-		}
-		if (snapshot.size !== 2) {
-			console.log("Only 2 players allowed in this game.");
-			return false;
-		}
-		for (let player of snapshot.docs) {
-			if (player.id === user?.uid) {
-				characterDocRef.current = doc(playerCollectionRef, user.uid);
-			}
-			opponentDocRef.current = doc(playerCollectionRef, player.id);
-		}
-		return true;
-	};
-
-	//listener on player
-	const addPlayerListener = (playerRef, setFunction) => {
-		if (!playerRef) {
-			console.log("Error: Doc ref is null or undefined.");
-			return null;
-		}
-		return onSnapshot(playerRef, (snapshot) => {
-			if (!snapshot.exists()) {
-				console.log(`Player with id: ${playerRef.id} does not exist`);
-				return;
-			}
-			setFunction(snapshot.data());
-			console.log(`Listener attached on player ${playerRef.id}`);
+		return playersSnap.docs.map((playerDoc) => {
+			return onSnapshot(playerDoc.ref, (snapshot) => {
+				if (!snapshot.exists()) {
+					console.log(`Player with id: ${playerDoc.id} does not exist`);
+					return null;
+				}
+				setPlayers((pre) => {
+					let filteredPre = pre?.filter((player) => player.id !== snapshot.id);
+					return [...filteredPre, { id: snapshot.id, ...snapshot.data() }];
+				});
+				console.log(`Listener attached on player ${playerDoc.id}`);
+			});
 		});
 	};
 
 	//onSnapshot listener on game
 	const addGameListener = (gameRef) => {
 		if (!gameRef) return null;
+		//return unsubscribe function
 		return onSnapshot(gameRef, (snapshot) => {
 			if (!snapshot.exists()) {
 				gameDocRef.current = null; //reset gameRef
 				console.log(`Game with id: ${gameRef.id} does not exist`);
-				unsubscribe(); // Unsubscribe immediately
 				return; // No value needed
 			}
 			setGame(snapshot.data());
@@ -105,27 +68,23 @@ const Game = () => {
 			return; // No cleanup needed if user isn’t ready
 		}
 
+		//set ref using game id from params.
 		gameDocRef.current = fbGame.getGameDocRef(
 			fbGame.gamesCollectionNameTwoPlayers,
 			gameId
 		);
-
+		const unsubscribeGame = addGameListener(gameDocRef.current);
+		console.log("**Firestore listener on game mounted/attached.**");
+		if (!unsubscribeGame) {
+			console.log("No game listener attached");
+			return () => {
+				console.log("~.~No game listener to unmount~.~");
+			};
+		}
 		async function setupListeners() {
-			const unsubscribeGame = addGameListener(gameDocRef.current);
-			if (!unsubscribeGame) {
-				console.log("No game listener attached");
-				return () => {
-					console.log("~.~No game listener to unmount~.~");
-				};
-			}
+			const unsubscribePlayers = await addPlayersListeners(gameDocRef.current);
 
-			console.log("**Firestore listener on game mounted/attached.**");
-			const playersSet = await setPlayerRefs(
-				gameDocRef.current,
-				fbGame.playersCollectionName
-			);
-
-			if (!playersSet) {
+			if (!unsubscribePlayers) {
 				return () => {
 					unsubscribeGame?.();
 					console.log(
@@ -134,20 +93,10 @@ const Game = () => {
 				};
 			}
 
-			const unsubscribeCharacter = addPlayerListener(
-				characterDocRef.current,
-				setCharacter
-			);
-			const unsubscribeOpponent = addPlayerListener(
-				opponentDocRef.current,
-				setOpponent
-			);
-
 			return () => {
 				unsubscribeGame?.();
-				unsubscribeCharacter?.();
-				unsubscribeOpponent?.();
-				console.log("~.~Firestore listeners UNmounted/removed~.~");
+				unsubscribePlayers?.forEach((unsub) => unsub());
+				console.log("~.~Firestore players listeners UNmounted/removed~.~");
 			};
 		}
 
@@ -157,7 +106,7 @@ const Game = () => {
 				cleanupFn = cleanup || (() => {}); // Default to empty cleanup if none returned
 			})
 			.catch((error) => {
-				console.error("Error setting up listeners:", error);
+				console.error("Error setting up players listeners:", error);
 				cleanupFn = () => {}; // Ensure cleanup is always defined
 			});
 
@@ -173,10 +122,7 @@ const Game = () => {
 				game
 			)}
 			{console.log(user)}
-			{console.log(character)}
-			{console.log(opponent)}
-			{console.log(characterDocRef.current)}
-			{console.log(opponentDocRef.current)}
+			{console.log(players)}
 			<p>...</p>
 		</div>
 	);

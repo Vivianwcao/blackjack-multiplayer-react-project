@@ -13,6 +13,7 @@ import {
 	runTransaction,
 } from "firebase/firestore";
 
+export const maxPlayers = 2;
 export const gamesCollectionNameTwoPlayers = "games";
 export const playersCollectionName = "players";
 const getGamesCollectionRef = (gamescollectionName) =>
@@ -74,8 +75,8 @@ export const getNumberOfPlayers = async (gameDocRef) => {
 
 export const createPlayer = async (gameDocRef, status, uid) => {
 	const numOfPlayers = await getNumberOfPlayers(gameDocRef);
-	if (numOfPlayers > 1) {
-		console.log("2 players maximum. The room is full");
+	if (numOfPlayers > maxPlayers - 1) {
+		console.log(`${maxPlayers} players maximum. The room is full`);
 		return;
 	} else {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
