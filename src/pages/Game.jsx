@@ -19,30 +19,24 @@ const Game = () => {
 	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
 
-	const checkIfHomePlayer = () => {};
-
 	//listeners on list of players
-	const addPlayersListeners = async (gameRef) => {
-		//let unsubscribePlayers = [];
-		const playersSnap = await getDocs(
-			collection(gameRef, fbGame.playersCollectionName)
+	const addPlayersListeners = (gameRef) => {
+		if (!gameRef) return null;
+		const playersCollectionRef = collection(
+			gameRef,
+			fbGame.playersCollectionName
 		);
-		if (playersSnap.size !== fbGame.maxPlayers) {
-			console.log(`Must have ${fbGame.maxPlayers} players to play this game.`);
-			return null;
-		}
-		return playersSnap.docs.map((playerDoc) => {
-			return onSnapshot(playerDoc.ref, (snapshot) => {
-				if (!snapshot.exists()) {
-					console.log(`Player with id: ${playerDoc.id} does not exist`);
-					return null;
-				}
-				setPlayers((pre) => {
-					let filteredPre = pre?.filter((player) => player.id !== snapshot.id);
-					return [...filteredPre, { id: snapshot.id, ...snapshot.data() }];
-				});
-				console.log(`Listener attached on player ${playerDoc.id}`);
-			});
+		return onSnapshot(playersCollectionRef, (snapshot) => {
+			console.log(snapshot.size);
+			if (snapshot.size !== fbGame.maxPlayers) {
+				return null;
+			}
+			let newList = [];
+			snapshot.docs.map((doc) => newList.push({ id: doc.id, ...doc.data() }));
+			newList.sort((a, b) => a.timestamp - b.timestamp);
+			setPlayers(newList);
+			console.log("**setPlayers successfully.**");
+			console.log("**Firestore listener on players mounted/attached.**");
 		});
 	};
 
@@ -56,8 +50,8 @@ const Game = () => {
 				console.log(`Game with id: ${gameRef.id} does not exist`);
 				return; // No value needed
 			}
+			console.log("**Firestore listener on game mounted/attached.**");
 			setGame(snapshot.data());
-
 			console.log("**setGame successfully.**");
 		});
 	};
@@ -74,44 +68,13 @@ const Game = () => {
 			gameId
 		);
 		const unsubscribeGame = addGameListener(gameDocRef.current);
-		console.log("**Firestore listener on game mounted/attached.**");
-		if (!unsubscribeGame) {
-			console.log("No game listener attached");
-			return () => {
-				console.log("~.~No game listener to unmount~.~");
-			};
-		}
-		async function setupListeners() {
-			const unsubscribePlayers = await addPlayersListeners(gameDocRef.current);
-
-			if (!unsubscribePlayers) {
-				return () => {
-					unsubscribeGame?.();
-					console.log(
-						"~.~Firestore listener on game UNmounted/removed (no players)~.~"
-					);
-				};
-			}
-
-			return () => {
-				unsubscribeGame?.();
-				unsubscribePlayers?.forEach((unsub) => unsub());
-				console.log("~.~Firestore players listeners UNmounted/removed~.~");
-			};
-		}
-
-		let cleanupFn;
-		setupListeners()
-			.then((cleanup) => {
-				cleanupFn = cleanup || (() => {}); // Default to empty cleanup if none returned
-			})
-			.catch((error) => {
-				console.error("Error setting up players listeners:", error);
-				cleanupFn = () => {}; // Ensure cleanup is always defined
-			});
+		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
 
 		return () => {
-			if (cleanupFn) cleanupFn();
+			unsubscribeGame?.();
+			console.log("**Firestore listener on game UNmounted/attached.**");
+			unsubscribePlayers?.();
+			console.log("**Firestore listener on players UNmounted/attached.**");
 		};
 	}, [user?.uid, gameId]);
 
