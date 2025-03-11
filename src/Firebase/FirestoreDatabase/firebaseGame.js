@@ -11,17 +11,16 @@ import {
 	increment,
 	deleteDoc,
 	runTransaction,
+	arrayRemove,
 } from "firebase/firestore";
 
 export const maxPlayers = 2;
-export const gamesCollectionNameTwoPlayers = "games";
+export const gamesCollectionName = "games";
 export const playersCollectionName = "players";
 const getGamesCollectionRef = (gamescollectionName) =>
 	collection(db, gamescollectionName);
 
-export const gamesCollectionRef2 = getGamesCollectionRef(
-	gamesCollectionNameTwoPlayers
-);
+export const gamesCollectionRef = getGamesCollectionRef(gamesCollectionName);
 
 export const getGameDocRef = (gamescollectionName, gameDocName) =>
 	doc(db, gamescollectionName, gameDocName);
@@ -62,7 +61,25 @@ export const addNewGame = async (
 
 export const updateGame = async (gameDocRef, obj) => {
 	//gameStatus: "waiting", "dealing", "playerTurn", "dealerTurn", "gameOver"
-	await updateDoc(gameDocRef, obj);
+	try {
+		await updateDoc(gameDocRef, obj);
+		console.log(`Updated game ${gameDocRef.id} successfully`);
+	} catch (err) {
+		console.log(`Updated game ${gameDocRef.id} failed. Error: ${err.message}`);
+	}
+};
+
+export const updateGameDealer = async (gameDocRef, cardObj) => {
+	try {
+		await updateDoc(gameDocRef, {
+			dealer: arrayUnion(cardObj),
+		});
+		console.log(`Updated dealer from game ${gameDocRef.id} successfully`);
+	} catch (err) {
+		console.log(
+			`Updated dealer from game ${gameDocRef.id} failed. Error: ${err.message}`
+		);
+	}
 };
 
 //helper--count the # of players
@@ -82,6 +99,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		const playerData = {
 			status,
+			gameRef: gameDocRef,
 			gameId: gameDocRef.id,
 			timestamp: Date.now(),
 			bet: 0,
@@ -90,6 +108,8 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		await runTransaction(db, async (transaction) => {
 			transaction.set(playerDocRef, playerData);
 			transaction.update(gameDocRef, { playersCount: increment(1) });
+			transaction.update(gameDocRef, { playerRef: arrayUnion(playerDocRef) });
+			transaction.update(gameDocRef, { playerId: arrayUnion(playerDocRef.id) });
 			console.log(`Player ${playerDocRef.id} added to game ${gameDocRef.id}`);
 			return playerDocRef;
 		});
@@ -100,7 +120,25 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 
 //status: "waiting", "playing", "stand", "busted", "won", "lost", "dropped","dealer"
 export const updatePlayer = async (playerDocRef, changeObj) => {
-	updateDoc(playerDocRef, changeObj);
+	try {
+		await updateDoc(playerDocRef, changeObj);
+		console.log(`Updated player ${playerDocRef.id} successfully`);
+	} catch (err) {
+		console.log(
+			`Updated player ${playerDocRef.id} failed. Error: ${err.message}`
+		);
+	}
+};
+
+export const updatePlayerHand = async (playerDocRef, cardObj) => {
+	try {
+		await updateDoc(playerDocRef, { hand: arrayUnion(cardObj) });
+		console.log(`Updated player ${playerDocRef.id}'s hand successfully`);
+	} catch (err) {
+		console.log(
+			`Updated player ${playerDocRef.id}'s hand failed. Error: ${err.message}`
+		);
+	}
 };
 
 export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
@@ -109,6 +147,10 @@ export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 		await runTransaction(db, async (transaction) => {
 			transaction.delete(playerDocRef);
 			transaction.update(gameDocRef, { playersCount: increment(-1) });
+			transaction.update(gameDocRef, { playerRef: arrayRemove(playerDocRef) });
+			transaction.update(gameDocRef, {
+				playerId: arrayRemove(playerDocRef.id),
+			});
 			console.log(
 				`Player ${playerDocRef.id} removed from game ${gameDocRef.id}`
 			);
@@ -119,8 +161,13 @@ export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 
 //Delete a game without sub-collections
 export const deleteSingleGame = async (gamescollectionName, gameDocName) => {
-	const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
-	await deleteDoc(gameDocRef);
+	try {
+		const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
+		await deleteDoc(gameDocRef);
+		console.log(`Deleted ${gameDocName} successfully`);
+	} catch (err) {
+		console.log(`Deleted ${gameDocName} failed. Error: ${err.message}`);
+	}
 };
 
 //Delete all players of a game
@@ -156,29 +203,29 @@ export const deleteGame = async (
 };
 
 // export const checkNumberOfHands = async (playerDocRef) => {
-// 	let handsCollectionRef = collection(playerDocRef, "hands");
-// 	let handSnapShot = await getDocs(handsCollectionRef);
-// 	let numberOfHands = handSnapShot.size;
-// 	console.log("numberOfHands:  ", numberOfHands);
-// 	return { handsCollectionRef, numberOfHands };
+//  let handsCollectionRef = collection(playerDocRef, "hands");
+//  let handSnapShot = await getDocs(handsCollectionRef);
+//  let numberOfHands = handSnapShot.size;
+//  console.log("numberOfHands:  ", numberOfHands);
+//  return { handsCollectionRef, numberOfHands };
 // };
 
 // export const createHand = async (playerDocRef, initialBet) => {
-// 	let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
-// 		playerDocRef
-// 	);
-// 	let handDocRef = doc(
-// 		handsCollectionRef,
-// 		playerDocRef.id.concat(numberOfHands.toString())
-// 	);
-// 	await setDoc(
-// 		handDocRef,
-// 		{ bet: initialBet, payout: 0, split: false, playerId: playerDocRef.id },
-// 		{ merge: true }
-// 	);
-// 	return handDocRef;
+//  let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
+//    playerDocRef
+//  );
+//  let handDocRef = doc(
+//    handsCollectionRef,
+//    playerDocRef.id.concat(numberOfHands.toString())
+//  );
+//  await setDoc(
+//    handDocRef,
+//    { bet: initialBet, payout: 0, split: false, playerId: playerDocRef.id },
+//    { merge: true }
+//  );
+//  return handDocRef;
 // };
 
 // export const updateHand = async (handDocRef, obj) => {
-// 	await updateDoc(handDocRef, obj);
+//  await updateDoc(handDocRef, obj);
 // };

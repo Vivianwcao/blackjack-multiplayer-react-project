@@ -9,7 +9,7 @@ import {
 	getDocs,
 	doc,
 } from "firebase/firestore";
-import { db } from "../Firebase/Config";
+import Popup from "../components/Popup/Popup";
 import "./Game.scss";
 
 const Game = () => {
@@ -18,6 +18,15 @@ const Game = () => {
 	const [players, setPlayers] = useState([]);
 	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
+	const betRef = useRef(null);
+
+	//Toggle functions
+	const [isPopupOpen, setIsPopupOpen] = useState(false);
+	const openPopup = () => setIsPopupOpen(true);
+	const closePopup = () => setIsPopupOpen(false);
+
+	const findMe = () => players?.find((player) => player.id === user?.uid);
+	const me = findMe();
 
 	//listeners on list of players
 	const addPlayersListeners = (gameRef) => {
@@ -27,8 +36,8 @@ const Game = () => {
 			fbGame.playersCollectionName
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
-			console.log(snapshot.size);
 			if (snapshot.size !== fbGame.maxPlayers) {
+				setPlayers([]);
 				return null;
 			}
 			let newList = [];
@@ -56,6 +65,26 @@ const Game = () => {
 		});
 	};
 
+	const handleAddBet = async () => {
+		const bet = betRef.current.value;
+		console.log(bet);
+		//update player's bet in db
+		await fbGame.updatePlayer();
+	};
+
+	useEffect(() => {
+		//ask to place bet
+
+		console.log(me);
+		if (
+			me?.status === "waiting" &&
+			me?.bet == 0 &&
+			game?.gameStatus === "waiting"
+		) {
+			openPopup();
+		}
+	}, [players, game]);
+
 	useEffect(() => {
 		if (!user?.uid) {
 			console.log("User not loaded yet");
@@ -64,9 +93,10 @@ const Game = () => {
 
 		//set ref using game id from params.
 		gameDocRef.current = fbGame.getGameDocRef(
-			fbGame.gamesCollectionNameTwoPlayers,
+			fbGame.gamesCollectionName,
 			gameId
 		);
+		//attach listeners
 		const unsubscribeGame = addGameListener(gameDocRef.current);
 		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
 
@@ -80,6 +110,20 @@ const Game = () => {
 
 	return (
 		<div>
+			<Popup
+				isOpen={isPopupOpen}
+				handleBtnLeft={handleAddBet}
+				btnLeftText="Confirm"
+			>
+				<h2 className="pop-title">Place a bet</h2>
+				<input
+					className="pop-input"
+					ref={betRef}
+					placeholder="Enter a bet ..."
+					type="number"
+					min="1"
+				/>
+			</Popup>
 			{console.log(
 				"* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ *in game",
 				game

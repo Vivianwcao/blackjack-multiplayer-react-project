@@ -47,7 +47,7 @@ const Lobby = () => {
 		if (!user) return null;
 		if (joined && gamesList.length) {
 			for (let game of gamesList) {
-				if (game.players.length === 2) {
+				if (game.players.length === fbGame.maxPlayers) {
 					//return game id or undefined if other player pairs
 					const gameId = game.players.some((player) => player.id === user.uid);
 					if (gameId) {
@@ -75,7 +75,7 @@ const Lobby = () => {
 		try {
 			//create new game
 			const gameRef = await fbGame.addNewGame(
-				fbGame.gamesCollectionRef2,
+				fbGame.gamesCollectionRef,
 				"waiting",
 				null,
 				null
@@ -103,10 +103,7 @@ const Lobby = () => {
 		}
 		if (!joinedGameId) {
 			// add player to game.
-			const gameRef = fbGame.getGameDocRef(
-				fbGame.gamesCollectionNameTwoPlayers,
-				gameId
-			);
+			const gameRef = fbGame.getGameDocRef(fbGame.gamesCollectionName, gameId);
 			try {
 				await fbGame.createPlayer(gameRef, "waiting", user.uid);
 				userLobby.current.joinedGameId = gameId; //minimizing latency
@@ -117,22 +114,19 @@ const Lobby = () => {
 	};
 
 	//delete game without players sub-collection
-	const deleteOneGame = async (gamesCollectionNameTwoPlayers, gameDocName) => {
-		await fbGame.deleteSingleGame(
-			fbGame.gamesCollectionNameTwoPlayers,
-			gameDocName
-		);
+	const deleteOneGame = async (gameDocName) => {
+		await fbGame.deleteSingleGame(fbGame.gamesCollectionName, gameDocName);
 	};
 
 	//remove game remotely if empty game.
 	const removeEmptyGame = async () => {
 		//check firestore database if any empty game
-		const gamesCollectionSnap = await getDocs(fbGame.gamesCollectionRef2);
+		const gamesCollectionSnap = await getDocs(fbGame.gamesCollectionRef);
 
 		//create a list of delete promises
 		const deletePromises = gamesCollectionSnap.docs.map(async (gameDoc) => {
 			const gameDocRef = fbGame.getGameDocRef(
-				fbGame.gamesCollectionNameTwoPlayers,
+				fbGame.gamesCollectionName,
 				gameDoc.id
 			);
 
@@ -143,7 +137,7 @@ const Lobby = () => {
 
 			const collectionSnap = await getDocs(playersCollectionRef);
 			if (collectionSnap.size === 0) {
-				return deleteOneGame(fbGame.gamesCollectionNameTwoPlayers, gameDoc.id);
+				return deleteOneGame(fbGame.gamesCollectionName, gameDoc.id);
 			}
 			//implicitly return undefined if players in the game
 		});
@@ -197,11 +191,11 @@ const Lobby = () => {
 			if (gameId) {
 				userLobby.current.joinedGameId = gameId;
 				gameDocRef.current = fbGame.getGameDocRef(
-					fbGame.gamesCollectionNameTwoPlayers,
+					fbGame.gamesCollectionName,
 					gameId
 				);
 				playerDocRef.current = fbGame.getPlayerDocRef(
-					fbGame.gamesCollectionNameTwoPlayers,
+					fbGame.gamesCollectionName,
 					gameId,
 					fbGame.playersCollectionName,
 					user.uid
@@ -222,7 +216,7 @@ const Lobby = () => {
 
 		//Outer lister on games
 		const unsubscribeGames = onSnapshot(
-			fbGame.gamesCollectionRef2,
+			fbGame.gamesCollectionRef,
 			(gamesSnapshot) => {
 				//setGameList upon every outer listener firing.
 				setGamesList(
@@ -241,7 +235,7 @@ const Lobby = () => {
 				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
 					//get each playersCollectionRef.
 					const playersCollectionRef = collection(
-						fbGame.gamesCollectionRef2,
+						fbGame.gamesCollectionRef,
 						gameDoc.id,
 						fbGame.playersCollectionName
 					);
@@ -283,16 +277,22 @@ const Lobby = () => {
 				userLobby.current,
 				gamesList
 			)}
-			{
-				<Popup
-					isOpen={isPopupOpen}
-					handleBtnLeft={() => handleLeaveGame(joined)}
-					handleBtnRight={() => handleEnterGame(navigate, joined)}
-					gameId={joined}
-					btnLeftText="Leave Game"
-					btnRightText="Enter Game !"
-				/>
-			}
+
+			<Popup
+				isOpen={isPopupOpen}
+				handleBtnLeft={() => handleLeaveGame(joined)}
+				handleBtnRight={() => handleEnterGame(navigate, joined)}
+				btnLeftText="Leave Game"
+				btnRightText="Enter Game !"
+			>
+				<div>
+					<h2 className="popup__title">Floating Window</h2>
+					<p className="popup__text">
+						This is a pop-up modal in React with SCSS!
+					</p>
+				</div>
+			</Popup>
+
 			{gamesList
 				.sort((a, b) => a.timestamp - b.timestamp)
 				.map((game) => (

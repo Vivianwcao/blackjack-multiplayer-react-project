@@ -4,6 +4,7 @@ import "./Popup.scss"; // Import the SCSS file
 
 const Popup = ({
 	isOpen,
+	children,
 	handleBtnLeft,
 	handleBtnRight,
 	btnLeftText,
@@ -14,17 +15,18 @@ const Popup = ({
 	return (
 		<div className="popup__overlay">
 			<div className="popup__content">
-				<h2 className="popup__title">Floating Window</h2>
-				<p className="popup__text">
-					This is a pop-up modal in React with SCSS!
-				</p>
+				{children}
 				<div className="popup__btn-wrapper">
-					<button className="popup__close-btn" onClick={handleBtnLeft}>
-						{btnLeftText}
-					</button>
-					<button className="popup__close-btn" onClick={handleBtnRight}>
-						{btnRightText}
-					</button>
+					{handleBtnLeft && (
+						<button className="popup__close-btn" onClick={handleBtnLeft}>
+							{btnLeftText}
+						</button>
+					)}
+					{handleBtnRight && (
+						<button className="popup__close-btn" onClick={handleBtnRight}>
+							{btnRightText}
+						</button>
+					)}
 				</div>
 			</div>
 		</div>
