@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
 import {
@@ -16,14 +16,16 @@ import useToggle from "../hooks/useToggle";
 const Game = () => {
 	const { user } = useAuth();
 	const [game, setGame] = useState(null);
-	const [players, setPlayers] = useState([]);
+	const [players, setPlayers] = useState(null);
 	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
 
+	const nav = useNavigate();
+
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-	const [popLeaveGame, toggleTruepopLeaveGame, toggleFalsepopLeaveGame] =
+	const [popLeaveGame, toggleTruePopLeaveGame, toggleFalsePopLeaveGame] =
 		useToggle(false);
 
 	const findMe = () => players?.find((player) => player.id === user?.uid);
@@ -38,7 +40,7 @@ const Game = () => {
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
 			if (snapshot.size !== fbGame.maxPlayers) {
-				setPlayers([]); //if player leaves game, playerList -> empty
+				//setPlayers([]);
 				return null;
 			}
 			let newList = [];
@@ -67,27 +69,54 @@ const Game = () => {
 	};
 
 	const handleAddBet = async () => {
-		const bet = betRef.current.value;
+		const betStr = betRef.current.value;
 		//update player's bet in db
-		await fbGame.updatePlayer(me.playerRef, { bet });
+		await fbGame.updatePlayer(me.playerRef, { bet: +betStr });
 		toggleFalseBet();
 	};
 
-	useEffect(() => {
-		//check if players left, quit game
-		if (game?.playersCount !== fbGame.maxPlayers) {
-			//if game not started yet
-		}
+	useEffect(() => {}, [game]);
 
-		//ask to place a bet
+	useEffect(() => {
+		if (!players || !game) {
+			console.log("Players or game state not loaded.");
+			return;
+		}
 		if (
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
 			game?.gameStatus === "waiting" &&
 			game?.playersCount === fbGame.maxPlayers
 		) {
+			//ask to place a bet
 			toggleTrueBet((pre) => !pre);
 		}
+
+		//check if player leaves, quit game
+		const cancelGame = async () => {
+			if (game.playersCount !== fbGame.maxPlayers) {
+				//if game not started yet
+				console.log(game.gameStatus === "waiting");
+				if (game.gameStatus === "waiting") {
+					const promiseList = players.map((player) =>
+						fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
+					);
+					await Promise.all(promiseList);
+				}
+				if (game.gameStatus !== "waiting") {
+					console.log(gameId);
+					//if game started already
+					await fbGame.deleteGame(
+						fbGame.gamesCollectionName,
+						gameId,
+						fbGame.playersCollectionName
+					);
+				}
+				toggleTruePopLeaveGame();
+				return;
+			}
+		};
+		cancelGame();
 	}, [players, game]);
 
 	useEffect(() => {
@@ -127,17 +156,12 @@ const Game = () => {
 			</Popup>
 			<Popup
 				isOpen={popLeaveGame}
-				handleBtnLeft={handleAddBet}
+				handleBtnLeft={() => nav("/")}
 				btnLeftText="Confirm"
 			>
-				<h2 className="pop-title">Place a bet</h2>
-				<input
-					className="pop-input"
-					ref={betRef}
-					placeholder="Enter a bet ..."
-					type="number"
-					min="1"
-				/>
+				<h2 className="pop-title">
+					Someone has left the game ... going back to lobby
+				</h2>
 			</Popup>
 			{console.log(
 				"* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ *in game",
