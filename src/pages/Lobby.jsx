@@ -161,7 +161,7 @@ const Lobby = () => {
 				gameDocRef.current
 			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
-			removeEmptyGame();
+			await removeEmptyGame();
 			toggleFalseEnterGame();
 		} catch (err) {
 			console.error(err);
