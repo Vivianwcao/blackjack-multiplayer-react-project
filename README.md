@@ -2,52 +2,83 @@
 
 ## Overview
 
-What is your app? Give a brief description in a couple of sentences.
+This is an online multiplayer Blackjack game where players can log in with Google, and either start a new game or join an existing one on the lobby page. Each game includes two players and a dealer (the computer), with the potential to expand to more players in the future. Multiple games can run at the same time in separate rooms, allowing different groups to play without interfering with each other. Firestore database handles real-time updates, making the gameplay smooth and interactive.
 
 ### Problem Space
 
-Why is your app needed? Give any background information around any pain points or other reasons.
+Most online card games run on dedicated servers, which can be slow and hard to maintain. This game uses Firestore’s real-time database instead, making it lightweight, fast, and easy to play with friends—no server setup needed.
+
+I also plan to add features my family and friends love, like double bet, insurance, and split hands, to make it even more fun.
 
 ### User Profile
 
-Who will use your app? How will they use it? Add any special considerations that your app must take into account.
+Casual Blackjack players who want to play online with friends.
+Anyone looking for a quick and simple multiplayer game—no downloads or complicated setups.
+Players who want a clean, easy-to-use interface while still having control over the game, just like in a real casino.
 
 ### Features
 
-List the functionality that your app will include. These can be written as user stories or descriptions with related details. Do not describe _how_ these features are implemented, only _what_ needs to be implemented.
+Core Functionality
+
+- Google Authentication – Players can log in using their Google accounts.
+- Lobby Page – Players can create a new game or join an existing one.
+- Real-Time Gameplay – Player actions (hit, stand, etc.) update instantly for all players.
+- Turn-Based Logic – Players and the dealer (computer) follow standard Blackjack rules.
+- Multiple Game Rooms – Different groups can play at the same time in separate rooms.
+- Authentication Management – Users must log in to join or create games. Only players in a specific game can - view and play it.
+- Game Expansion Potential – Future support for 3+ players per game. Plans to add more third-party login options and practical game features.
 
 ## Implementation
 
 ### Tech Stack
 
-List technologies that will be used in your app, including any libraries to save time or provide more functionality. Be sure to research any potential limitations.
+Frontend: React.js using Vite, axios,
+Database: Firestore real-time database
+Authentication: Firebase Google Auth
+Styling: SCSS/SASS (considering Bootstrap for UI components)
+Hosting: GitHub Pages / Netlify
 
 ### APIs
 
-List any external sources of data that will be used in your app.
+Deck of Cards API – Manages and shuffles cards.
+Firebase Authentication API – Handles Google login.
+Firestore Database – Stores and syncs game data in real time.
 
 ### Sitemap
 
-List the pages of your app with brief descriptions. You can show this visually, or write it out.
+Lobby Page: Players see available games or create a new one.
+Game Room: Displays game state, cards, and player actions.
 
 ### Mockups
 
-Provide visuals of your app's screens. You can use pictures of hand-drawn sketches, or wireframing tools like Figma.
+More is coming ...
 
 ### Data
 
-Describe your data and the relationships between the data points. You can show this visually using diagrams, or write it out. 
+Firestore collections and documents:
+
+Games Collection → Stores game state, players, deck, and turn info.
+Players Subcollection → Tracks player specific data (hand, score, turn).
+Firestore Database Structure
+/games/{gameId} → Stores game metadata (status, players, whose turn it is, etc.).
+/games/{gameId}/players/{playerId} → Stores individual player data (hand, actions, score).
+/games/{gameId}/deck → Stores the current deck state.
 
 ### Endpoints
 
-List endpoints that your server will implement, including HTTP methods, parameters, and example responses.
+- No server will be used for this project.
 
 ## Roadmap
 
-Scope your project as a sprint. Break down the tasks that will need to be completed and map out timeframes for implementation working back from the capstone due date. 
+Setup Project & Firebase 
+Implement Authentication & Lobby System 
+Game Logic & Firestore Real-Time Updates UI Design, Improvements Testing, Bug Fixes 
+Deployment & Final Review 
 
----
 
 ## Future Implementations
-Your project will be marked based on what you committed to in the above document. Here, you can list any additional features you may complete after the MVP of your application is built, or if you have extra time before the Capstone due date.
+Expanding support for more than 2 players per game.
+Implementing betting and chips for a more authentic Blackjack experience.
+Adding more features to the game.
+
 
