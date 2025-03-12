@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./pages/ProtectedRoute";
-import Lobby from "./pages/Lobby";
-import Game from "./pages/Game";
+import Lobby from "./pages/Lobby/Lobby";
+import Game from "./pages/Game/Game";
 import {
 	handleGoogleSignIn,
 	handleSignOut,
