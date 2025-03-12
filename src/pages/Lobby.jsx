@@ -4,6 +4,7 @@ import Popup from "../components/Popup/Popup";
 import { useAuth } from "../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection, getDocs } from "firebase/firestore";
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
+import useToggle from "../hooks/useToggle";
 
 const Lobby = () => {
 	const { user } = useAuth();
@@ -13,11 +14,8 @@ const Lobby = () => {
 	const playerDocRef = useRef(null);
 	const userLobby = useRef({ uid: null, joinedGameId: null });
 
-	const [isPopupOpen, setIsPopupOpen] = useState(false);
-
-	//Toggle functions
-	const openPopup = () => setIsPopupOpen(true);
-	const closePopup = () => setIsPopupOpen(false);
+	const [popEnterGame, toggleTrueEnterGame, toggleFalseEnterGame] =
+		useToggle(false);
 
 	const navigate = useNavigate();
 	const handleEnterGame = (navigateTo, gameId) => {
@@ -51,15 +49,15 @@ const Lobby = () => {
 					//return game id or undefined if other player pairs
 					const gameId = game.players.some((player) => player.id === user.uid);
 					if (gameId) {
-						openPopup();
+						toggleTrueEnterGame();
 						return game.id;
 					}
-					closePopup();
+					toggleFalseEnterGame();
 					return null;
 				}
 			}
 		}
-		closePopup();
+		toggleFalseEnterGame();
 		return null;
 	};
 
@@ -164,7 +162,7 @@ const Lobby = () => {
 			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			//removeEmptyGame();
-			closePopup();
+			toggleFalseEnterGame;
 		} catch (err) {
 			console.error(err);
 		}
@@ -279,7 +277,7 @@ const Lobby = () => {
 			)}
 
 			<Popup
-				isOpen={isPopupOpen}
+				isOpen={popEnterGame}
 				handleBtnLeft={() => handleLeaveGame(joined)}
 				handleBtnRight={() => handleEnterGame(navigate, joined)}
 				btnLeftText="Leave Game"

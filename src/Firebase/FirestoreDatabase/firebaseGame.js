@@ -99,6 +99,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		const playerData = {
 			status,
+			playerRef: playerDocRef,
 			gameRef: gameDocRef,
 			gameId: gameDocRef.id,
 			timestamp: Date.now(),

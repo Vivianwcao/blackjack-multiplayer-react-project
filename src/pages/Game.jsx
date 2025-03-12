@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import Popup from "../components/Popup/Popup";
 import "./Game.scss";
+import useToggle from "../hooks/useToggle";
 
 const Game = () => {
 	const { user } = useAuth();
@@ -21,9 +22,9 @@ const Game = () => {
 	const betRef = useRef(null);
 
 	//Toggle functions
-	const [isPopupOpen, setIsPopupOpen] = useState(false);
-	const openPopup = () => setIsPopupOpen(true);
-	const closePopup = () => setIsPopupOpen(false);
+	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
+	const [popLeaveGame, toggleTruepopLeaveGame, toggleFalsepopLeaveGame] =
+		useToggle(false);
 
 	const findMe = () => players?.find((player) => player.id === user?.uid);
 	const me = findMe();
@@ -37,7 +38,7 @@ const Game = () => {
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
 			if (snapshot.size !== fbGame.maxPlayers) {
-				setPlayers([]);
+				setPlayers([]); //if player leaves game, playerList -> empty
 				return null;
 			}
 			let newList = [];
@@ -67,21 +68,25 @@ const Game = () => {
 
 	const handleAddBet = async () => {
 		const bet = betRef.current.value;
-		console.log(bet);
 		//update player's bet in db
-		await fbGame.updatePlayer();
+		await fbGame.updatePlayer(me.playerRef, { bet });
+		toggleFalseBet();
 	};
 
 	useEffect(() => {
-		//ask to place bet
+		//check if players left, quit game
+		if (game?.playersCount !== fbGame.maxPlayers) {
+			//if game not started yet
+		}
 
-		console.log(me);
+		//ask to place a bet
 		if (
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
-			game?.gameStatus === "waiting"
+			game?.gameStatus === "waiting" &&
+			game?.playersCount === fbGame.maxPlayers
 		) {
-			openPopup();
+			toggleTrueBet((pre) => !pre);
 		}
 	}, [players, game]);
 
@@ -110,8 +115,18 @@ const Game = () => {
 
 	return (
 		<div>
+			<Popup isOpen={popBet} handleBtnLeft={handleAddBet} btnLeftText="Confirm">
+				<h2 className="pop-title">Place a bet</h2>
+				<input
+					className="pop-input"
+					ref={betRef}
+					placeholder="Enter a bet ..."
+					type="number"
+					min="1"
+				/>
+			</Popup>
 			<Popup
-				isOpen={isPopupOpen}
+				isOpen={popLeaveGame}
 				handleBtnLeft={handleAddBet}
 				btnLeftText="Confirm"
 			>
