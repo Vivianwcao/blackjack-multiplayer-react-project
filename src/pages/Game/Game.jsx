@@ -11,7 +11,10 @@ import {
 } from "firebase/firestore";
 import Popup from "../../components/Popup/Popup";
 import "./Game.scss";
-import useToggle from "../../hooks/useToggle";
+import useToggle from "../../utils/hooks/useToggle";
+import * as cardMachine from "../../utils/api-helper/cardMachine";
+
+const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
@@ -68,14 +71,95 @@ const Game = () => {
 		});
 	};
 
+	//pop & ask to place a bet
 	const handleAddBet = async () => {
 		const betStr = betRef.current.value;
 		//update player's bet in db
 		await fbGame.updatePlayer(me.playerRef, {
 			bet: +betStr,
-			status: "playing",
 		}); //get number
 		toggleFalseBet();
+	};
+
+	//quit game
+	const cancelGame = async () => {
+		//if game not started yet -> keep game
+		if (game.gameStatus === "waiting") {
+			const promiseList = players.map((player) =>
+				fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
+			);
+			await Promise.all(promiseList);
+		}
+		if (game.gameStatus !== "waiting") {
+			console.log(gameId);
+			//if game started already -> delete game
+			await fbGame.deleteGame(
+				fbGame.gamesCollectionName,
+				gameId,
+				fbGame.playersCollectionName
+			);
+		}
+		toggleTruePopLeaveGame();
+		return;
+	};
+
+	const drawForAll = async (deckId, num) => {
+		const totalNum = num * (game.playersCount + 1); //dealer
+		try {
+			//draw all cards
+			const { cards } = await cardMachine.drawCards(deckId, totalNum);
+			console.log(cards);
+
+			//populate each player's hand
+			let promiseList = players.map((player) => {
+				let cardsForEach = cards.splice(0, num);
+				console.log(cardsForEach);
+				return fbGame.updatePlayerHand(player.playerRef, ...cardsForEach);
+			});
+			console.log(cards);
+			promiseList.push(fbGame.updateGameDealer(gameDocRef.current, ...cards));
+			const res = await Promise.all(promiseList);
+			res.forEach((msg) => console.log(msg));
+		} catch (err) {
+			console.error(`Drawing cards failed. Error: ${err.message}`);
+		}
+	};
+
+	//gameStatus -> "dealing"
+	//api call -> get deck, first 2 cards
+	//player status -> "playing"
+	const playingInitialDraw = async () => {
+		try {
+			const res1 = await fbGame.updateGame(gameDocRef.current, {
+				gameStatus: "dealing",
+			});
+			console.log(res1);
+
+			//get new deck
+			const { deck_id } = await cardMachine.newDeck();
+
+			//update deckId in db : game && players
+			console.log(gameDocRef.current);
+			let promiseList = [];
+			promiseList.push(
+				fbGame.updateGame(gameDocRef.current, { deckId: deck_id })
+			);
+			players.forEach((player) =>
+				promiseList.push(
+					fbGame.updatePlayer(player.playerRef, {
+						deckId: deck_id,
+						status: "playing",
+					})
+				)
+			);
+			const res = await Promise.all(promiseList);
+			res.forEach((msg) => console.log(msg)); //success message
+
+			//draw two cards each ->setGame, setPlayers
+			await drawForAll(deck_id, 2);
+		} catch (err) {
+			console.error(err.message);
+		}
 	};
 
 	useEffect(() => {
@@ -84,18 +168,7 @@ const Game = () => {
 			return;
 		}
 		if (game.playersCount !== fbGame.maxPlayers) return;
-		console.log("--------------------i am here");
-		console.log(players.every((player) => player.bet > 0));
-		if (
-			players.every((player) => player.bet > 0) &&
-			game.gameStatus === "waiting"
-		) {
-			//game status -> "dealing"
-			fbGame
-				.updateGame(gameDocRef.current, { gameStatus: "dealing" })
-				.then((msg) => console.log(msg))
-				.catch((msg) => console.log(msg));
-		}
+
 		//ask to place a bet
 		if (
 			me.status === "waiting" &&
@@ -105,7 +178,13 @@ const Game = () => {
 			//ask to place a bet
 			toggleTrueBet((pre) => !pre);
 		}
-		//game status -> 'playing' if everyone places bet
+		//set up game intial playingInitialDraw stage
+		if (
+			players.every((player) => player.bet > 0) &&
+			game.gameStatus === "waiting"
+		) {
+			playingInitialDraw();
+		}
 	}, [players, game]);
 
 	useEffect(() => {
@@ -114,29 +193,9 @@ const Game = () => {
 			return;
 		}
 		//quit game if player leaves
-		const cancelGame = async () => {
-			if (game.playersCount !== fbGame.maxPlayers) {
-				//if game not started yet -> keep game
-				if (game.gameStatus === "waiting") {
-					const promiseList = players.map((player) =>
-						fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
-					);
-					await Promise.all(promiseList);
-				}
-				if (game.gameStatus !== "waiting") {
-					console.log(gameId);
-					//if game started already -> delete game
-					await fbGame.deleteGame(
-						fbGame.gamesCollectionName,
-						gameId,
-						fbGame.playersCollectionName
-					);
-				}
-				toggleTruePopLeaveGame();
-				return;
-			}
-		};
-		cancelGame();
+		if (game.playersCount !== fbGame.maxPlayers) {
+			cancelGame();
+		}
 	}, [players, game]);
 
 	useEffect(() => {

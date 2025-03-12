@@ -4,7 +4,7 @@ import Popup from "../../components/Popup/Popup";
 import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection, getDocs } from "firebase/firestore";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
-import useToggle from "../../hooks/useToggle";
+import useToggle from "../../utils/hooks/useToggle";
 import "./Lobby.scss";
 
 const Lobby = () => {
@@ -42,7 +42,7 @@ const Lobby = () => {
 
 	//check if user's joined game has two players including the user.
 	const joinedGameReady = () => {
-		console.log(joined);
+		//console.log(joined);
 		if (!user) return null;
 		if (joined && gamesList.length) {
 			for (let game of gamesList) {
@@ -64,7 +64,7 @@ const Lobby = () => {
 
 	//UI add/leave/join game buttons toggle
 	const gameReady = useMemo(() => joinedGameReady(), [user, gamesList]);
-	console.log("Is game ready??", gameReady);
+	//console.log("Is game ready??", gameReady);
 
 	const handleCreateNewGame = async () => {
 		if (!user) {
@@ -112,11 +112,6 @@ const Lobby = () => {
 		}
 	};
 
-	//delete game without players sub-collection
-	const deleteOneGame = async (gameDocName) => {
-		await fbGame.deleteSingleGame(fbGame.gamesCollectionName, gameDocName);
-	};
-
 	//remove game remotely if empty game.
 	const removeEmptyGame = async () => {
 		//check firestore database if any empty game
@@ -136,7 +131,7 @@ const Lobby = () => {
 
 			const collectionSnap = await getDocs(playersCollectionRef);
 			if (collectionSnap.size === 0) {
-				return deleteOneGame(gameDoc.id);
+				return fbGame.deleteSingleGame(fbGame.gamesCollectionName, gameDoc.id);
 			}
 			return null;
 		});
@@ -146,7 +141,12 @@ const Lobby = () => {
 		);
 
 		if (filteredDeletePromises.length)
-			await Promise.all(filteredDeletePromises);
+			try {
+				const res = await Promise.all(filteredDeletePromises);
+				res.forEach((msg) => console.log(msg));
+			} catch (err) {
+				console.error(err.message);
+			}
 	};
 
 	const handleLeaveGame = async (gameId) => {
@@ -168,7 +168,7 @@ const Lobby = () => {
 			setTimeout(removeEmptyGame, 100); //debounce for latency
 			toggleFalseEnterGame();
 		} catch (err) {
-			console.error(err);
+			console.error(err.message);
 		}
 	};
 	useEffect(() => {
