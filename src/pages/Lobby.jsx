@@ -167,19 +167,6 @@ const Lobby = () => {
 			console.error(err);
 		}
 	};
-
-	useEffect(() => {
-		const { unsubscribeGames, unsubscribers } = attachOnSnapshotListeners();
-		console.log("**Firestore nested game listeners mounted/attached.**");
-
-		return () => {
-			// Unsubscribe from the games collection listener
-			unsubscribers.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
-			unsubscribeGames();
-			console.log("~.~Firestore nested game listeners UNmounted/removed~.~");
-		};
-	}, []);
-
 	useEffect(() => {
 		console.log("~ ~ ~ ~ ~ UseEffect in Lobby runs~ ~ ~ ~ ~ ");
 
@@ -206,6 +193,18 @@ const Lobby = () => {
 			userLobby.current.uid = null;
 		}
 	}, [user, gamesList]);
+
+	useEffect(() => {
+		const { unsubscribeGames, unsubscribers } = attachOnSnapshotListeners();
+		console.log("**Firestore nested game listeners mounted/attached.**");
+
+		return () => {
+			// Unsubscribe from the games collection listener
+			unsubscribers.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+			unsubscribeGames();
+			console.log("~.~Firestore nested game listeners UNmounted/removed~.~");
+		};
+	}, []);
 
 	//Firestore listener on game and players
 	const attachOnSnapshotListeners = () => {
