@@ -135,7 +135,7 @@ const Lobby = () => {
 
 			const collectionSnap = await getDocs(playersCollectionRef);
 			if (collectionSnap.size === 0) {
-				return deleteOneGame(fbGame.gamesCollectionName, gameDoc.id);
+				return deleteOneGame(gameDoc.id);
 			}
 			//implicitly return undefined if players in the game
 		});
