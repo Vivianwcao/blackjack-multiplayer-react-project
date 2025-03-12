@@ -190,7 +190,7 @@ const Lobby = () => {
 		try {
 			await removePlayerFromGame(playerDocRef.current);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
-			removeEmptyGame();
+			await removeEmptyGame();
 			closePopup();
 		} catch (err) {
 			console.error(err);
