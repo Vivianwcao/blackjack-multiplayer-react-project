@@ -137,10 +137,13 @@ const Lobby = () => {
 			if (collectionSnap.size === 0) {
 				return deleteOneGame(gameDoc.id);
 			}
-			//implicitly return undefined if players in the game
+			return null;
 		});
 		//filter out undefined
-		const filteredDeletePromises = deletePromises.filter((promise) => promise);
+		const filteredDeletePromises = deletePromises.filter(
+			(promise) => promise !== null
+		);
+
 		if (filteredDeletePromises.length)
 			await Promise.all(filteredDeletePromises);
 	};
@@ -161,7 +164,7 @@ const Lobby = () => {
 				gameDocRef.current
 			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
-			await removeEmptyGame();
+			setTimeout(removeEmptyGame, 100);
 			toggleFalseEnterGame();
 		} catch (err) {
 			console.error(err);
