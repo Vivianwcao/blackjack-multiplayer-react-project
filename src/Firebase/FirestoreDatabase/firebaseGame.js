@@ -39,20 +39,15 @@ export const getPlayerDocRef = (
 ) =>
 	doc(db, gamescollectionName, gameDocName, playersCollectionName, playerDocId);
 
-export const addNewGame = async (
-	gamesCollectionRef,
-	gameStatus,
-	currentPlayerIndex,
-	deckId
-) => {
+export const addNewGame = async (gamesCollectionRef) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
 			timestamp: Date.now(),
-			gameStatus,
-			currentPlayerIndex,
-			deckId,
+			gameStatus: "waiting",
+			deckId: null,
 			playersCount: 0,
+			currentPlayerIndex: 0,
 		},
 		{ merge: true }
 	);
@@ -101,6 +96,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
 		const playerData = {
 			status,
+			id: uid,
 			playerRef: playerDocRef,
 			gameRef: gameDocRef,
 			gameId: gameDocRef.id,
@@ -170,7 +166,7 @@ export const deleteSingleGame = async (gamescollectionName, gameDocName) => {
 		await deleteDoc(gameDocRef);
 		return `Deleted ${gameDocName} successfully`;
 	} catch (err) {
-		throw new Error(`Deleted ${gameDocName} failed. Error: ${err.message}`);
+		throw new Error(`Delete ${gameDocName} failed. Error: ${err.message}`);
 	}
 };
 

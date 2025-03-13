@@ -81,30 +81,43 @@ const Game = () => {
 		toggleFalseBet();
 	};
 
+	const handleQuitGame = async () => {
+		try {
+			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
+		} catch (err) {
+			console.log(err.message);
+		}
+	};
+
 	//quit game
 	const cancelGame = async () => {
-		//if game not started yet -> keep game
-		if (game.gameStatus === "waiting") {
-			const promiseList = players.map((player) =>
-				fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
-			);
-			await Promise.all(promiseList);
+		try {
+			if (game.gameStatus === "waiting") {
+				//if game not started yet -> keep game
+				const promiseList = players.map((player) =>
+					fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
+				);
+				await Promise.all(promiseList);
+			}
+			if (game.gameStatus !== "waiting") {
+				//if game started already -> delete game
+				await fbGame.deleteGame(
+					fbGame.gamesCollectionName,
+					gameId,
+					fbGame.playersCollectionName
+				);
+			}
+		} catch (err) {
+			console.log(err.message);
 		}
-		if (game.gameStatus !== "waiting") {
-			console.log(gameId);
-			//if game started already -> delete game
-			await fbGame.deleteGame(
-				fbGame.gamesCollectionName,
-				gameId,
-				fbGame.playersCollectionName
-			);
-		}
+
 		toggleTruePopLeaveGame();
 		return;
 	};
 
 	const drawForAll = async (deckId, num) => {
 		const totalNum = num * (game.playersCount + 1); //dealer
+		console.log(totalNum);
 		try {
 			//draw all cards
 			const { cards } = await cardMachine.drawCards(deckId, totalNum);
@@ -113,10 +126,8 @@ const Game = () => {
 			//populate each player's hand
 			let promiseList = players.map((player) => {
 				let cardsForEach = cards.splice(0, num);
-				console.log(cardsForEach);
 				return fbGame.updatePlayerHand(player.playerRef, ...cardsForEach);
 			});
-			console.log(cards);
 			promiseList.push(fbGame.updateGameDealer(gameDocRef.current, ...cards));
 			const res = await Promise.all(promiseList);
 			res.forEach((msg) => console.log(msg));
@@ -156,7 +167,8 @@ const Game = () => {
 			res.forEach((msg) => console.log(msg)); //success message
 
 			//draw two cards each ->setGame, setPlayers
-			await drawForAll(deck_id, 2);
+
+			if (!game.dealer) await drawForAll(deck_id, 2);
 		} catch (err) {
 			console.error(err.message);
 		}
@@ -248,6 +260,7 @@ const Game = () => {
 			)}
 			{console.log(user)}
 			{console.log(players)}
+			<button onClick={handleQuitGame}>Quit game</button>
 			<div className="game__opponents-container"></div>
 			<div className="game__dealer-container"></div>
 			<div className="game__me-container"></div>

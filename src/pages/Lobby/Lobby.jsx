@@ -73,13 +73,8 @@ const Lobby = () => {
 		}
 		try {
 			//create new game
-			const gameRef = await fbGame.addNewGame(
-				fbGame.gamesCollectionRef,
-				"waiting",
-				null,
-				null
-			);
-			console.log(`Game: ${gameRef.id} created`);
+			const gameRef = await fbGame.addNewGame(fbGame.gamesCollectionRef);
+			await fbGame.updateGame(gameRef, { gameRef, gameId: gameRef.id });
 			//join this game
 			handleJoinGame(gameRef.id);
 		} catch (err) {
