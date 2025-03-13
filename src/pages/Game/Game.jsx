@@ -81,32 +81,9 @@ const Game = () => {
 		toggleFalseBet();
 
 		// set up game intial draw stage
-		console.log("******************************", players);
-
 		try {
-			const res1 = await fbGame.updateGame(game.gameRef, {
-				gameStatus: "dealing",
-			});
-			console.log(res1);
-
 			//get new deck
 			const { deck_id } = await cardMachine.newDeck();
-
-			//update deckId in db : game && player-me
-			let promiseList = [];
-			if (!game.deckId) {
-				promiseList.push(fbGame.updateGame(game.gameRef, { deckId: deck_id }));
-			}
-			if (!me.deckId) {
-				promiseList.push(
-					fbGame.updatePlayer(me.playerRef, {
-						deckId: deck_id,
-						status: "playing",
-					})
-				);
-			}
-			const res = await Promise.all(promiseList);
-			res.forEach((msg) => console.log(msg)); //success message
 
 			if (
 				//meaning "me" is the last to place bet
@@ -114,8 +91,53 @@ const Game = () => {
 					.filter((player) => player.id !== user.uid)
 					.every((player) => player.bet > 0)
 			) {
+				//update deckId in db : game && all players
+				let promiseList = [];
+				promiseList.push(
+					fbGame.updateGame(gameDocRef.current, { deckId: deck_id })
+				);
+				players.forEach((player) =>
+					promiseList.push(
+						fbGame.updatePlayer(player.playerRef, {
+							deckId: deck_id,
+							status: "playing",
+						})
+					)
+				);
+				const res = await Promise.all(promiseList);
+				res.forEach((msg) => console.log(msg)); //success message
+
 				await playingInitialDraw(deck_id);
+				//update gameStatus -> dealing
+				const res1 = await fbGame.updateGame(game.gameRef, {
+					gameStatus: "dealing",
+				});
+				console.log(res1);
 			}
+		} catch (err) {
+			console.error(err.message);
+		}
+	};
+
+	//gameStatus -> "dealing"
+	//api call -> get deck, first 2 cards
+	//player status -> "playing"
+	const playingInitialDraw = async (deck_id) => {
+		try {
+			//draw two cards each ->setGame, setPlayers
+			const totalNum = 2 * (game.playersCount + 1);
+			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
+			console.log("****************************", cards);
+
+			//populate each player's hand
+			let promises = players.map((player) => {
+				let cardsForEach = cards.splice(0, 2);
+				console.log("****************************", cardsForEach);
+				return fbGame.updatePlayerHand(player.playerRef, cardsForEach);
+			});
+			promises.push(fbGame.updateGameDealer(gameDocRef.current, cards));
+			const resp = await Promise.all(promises);
+			resp.forEach((msg) => console.log(msg));
 		} catch (err) {
 			console.error(err.message);
 		}
@@ -153,29 +175,6 @@ const Game = () => {
 
 		toggleTruePopLeaveGame();
 		return;
-	};
-
-	//gameStatus -> "dealing"
-	//api call -> get deck, first 2 cards
-	//player status -> "playing"
-	const playingInitialDraw = async (deck_id) => {
-		try {
-			//draw two cards each ->setGame, setPlayers
-			const totalNum = 2 * (game.playersCount + 1);
-			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
-			console.log(cards);
-
-			//populate each player's hand
-			let promises = players.map((player) => {
-				let cardsForEach = cards.splice(0, fbGame.maxPlayers);
-				return fbGame.updatePlayerHand(player.playerRef, ...cardsForEach);
-			});
-			promises.push(fbGame.updateGameDealer(gameDocRef.current, ...cards));
-			const resp = await Promise.all(promises);
-			resp.forEach((msg) => console.log(msg));
-		} catch (err) {
-			console.error(err.message);
-		}
 	};
 
 	useEffect(() => {

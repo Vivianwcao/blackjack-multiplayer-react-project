@@ -66,10 +66,10 @@ export const updateGame = async (gameDocRef, obj) => {
 	}
 };
 
-export const updateGameDealer = async (gameDocRef, cardObjs) => {
+export const updateGameDealer = async (gameDocRef, cardList) => {
 	try {
 		await updateDoc(gameDocRef, {
-			dealer: arrayUnion(cardObjs),
+			dealer: arrayUnion(...cardList),
 		});
 		return `Updated dealer from game ${gameDocRef.id} successfully`;
 	} catch (err) {
@@ -130,9 +130,9 @@ export const updatePlayer = async (playerDocRef, changeObj) => {
 	}
 };
 
-export const updatePlayerHand = async (playerDocRef, cardObjs) => {
+export const updatePlayerHand = async (playerDocRef, cardList) => {
 	try {
-		await updateDoc(playerDocRef, { hand: arrayUnion(cardObjs) });
+		await updateDoc(playerDocRef, { hand: arrayUnion(...cardList) });
 		return `Updated player ${playerDocRef.id}'s hand successfully`;
 	} catch (err) {
 		throw new Error(
