@@ -95,10 +95,15 @@ const Game = () => {
 					.filter((player) => player.id !== user.uid)
 					.every((player) => player.bet > 0)
 			) {
+				//Everyone has placed their bet
+				//update gameStatus -> dealing
 				//update deckId in db : game && all players
 				let promiseList = [];
 				promiseList.push(
-					fbGame.updateGame(gameDocRef.current, { deckId: deck_id })
+					fbGame.updateGame(gameDocRef.current, {
+						deckId: deck_id,
+						gameStatus: "dealing",
+					})
 				);
 				players.forEach((player) =>
 					promiseList.push(
@@ -112,9 +117,9 @@ const Game = () => {
 				res.forEach((msg) => console.log(msg)); //success message
 
 				await playingInitialDraw(deck_id);
-				//update gameStatus -> dealing
+				//update gameStatus -> playerTurn
 				const res1 = await fbGame.updateGame(game.gameRef, {
-					gameStatus: "dealing",
+					gameStatus: "playerTurn",
 				});
 				console.log(res1);
 			}
@@ -309,11 +314,13 @@ const Game = () => {
 					</div>
 				))}
 			</div>
-			<div className="game__control-board">
-				<button>Hit!</button>
-				<button>Stand</button>
-				<button>Double bet</button>
-			</div>
+			{game?.gameStatus === "playerTurn" && currentPlayer?.id === user?.uid ? (
+				<div className="game__control-board">
+					<button>Hit!</button>
+					<button>Stand</button>
+					<button>Double bet</button>
+				</div>
+			) : null}
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 			</div>
