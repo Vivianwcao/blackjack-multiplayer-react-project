@@ -33,6 +33,8 @@ const Game = () => {
 
 	const findMe = () => players?.find((player) => player.id === user?.uid);
 	const me = findMe();
+	const currentPlayer = players?.at(players?.currentPlayerIndex);
+	const opponents = players?.filter((player) => player.id !== user?.uid);
 
 	//listeners on list of players
 	const addPlayersListeners = (gameRef) => {
@@ -127,12 +129,10 @@ const Game = () => {
 			//draw two cards each ->setGame, setPlayers
 			const totalNum = 2 * (game.playersCount + 1);
 			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
-			console.log("****************************", cards);
 
 			//populate each player's hand
 			let promises = players.map((player) => {
 				let cardsForEach = cards.splice(0, 2);
-				console.log("****************************", cardsForEach);
 				return fbGame.updatePlayerHand(player.playerRef, cardsForEach);
 			});
 			promises.push(fbGame.updateGameDealer(gameDocRef.current, cards));
@@ -182,7 +182,17 @@ const Game = () => {
 			console.log("Players or game state not loaded.");
 			return;
 		}
-		if (game.playersCount !== fbGame.maxPlayers) return;
+		//quit game if player leaves
+		if (game.playersCount !== fbGame.maxPlayers) {
+			cancelGame();
+		}
+	}, [players, game]);
+
+	useEffect(() => {
+		if (!players || !game) {
+			console.log("Players or game state not loaded.");
+			return;
+		}
 
 		//ask to place a bet
 		if (
@@ -192,24 +202,6 @@ const Game = () => {
 		) {
 			//ask to place a bet
 			toggleTrueBet((pre) => !pre);
-		}
-		//set up game intial draw stage
-		// if (
-		// 	players.every((player) => player.bet > 0) &&
-		// 	game.gameStatus === "waiting"
-		// ) {
-		// 	playingInitialDraw();
-		// }
-	}, [players, game]);
-
-	useEffect(() => {
-		if (!players || !game) {
-			console.log("Players or game state not loaded.");
-			return;
-		}
-		//quit game if player leaves
-		if (game.playersCount !== fbGame.maxPlayers) {
-			cancelGame();
 		}
 	}, [players, game]);
 
@@ -264,10 +256,45 @@ const Game = () => {
 			{console.log(user)}
 			{console.log(players)}
 			<button onClick={handleQuitGame}>Quit game</button>
-			<div className="game__opponents-container"></div>
-			<div className="game__dealer-container"></div>
-			<div className="game__me-container"></div>
-			<div className="game__control-board"></div>
+			<div className="game__opponents-container">
+				{opponents?.map((player) =>
+					player.hand.map(({ image, code }, i) => (
+						<div key={i}>
+							<img
+								className="game__card game__card--opponent"
+								src={image}
+								alt={code}
+							/>
+						</div>
+					))
+				)}
+			</div>
+			<div className="game__dealer-container">
+				{game?.dealer.map(({ image, code }, i) => (
+					<div key={i}>
+						<img
+							className="game__card game__card--dealer"
+							src={i === 1 ? backOfCardImg : image}
+							alt={code}
+						/>
+					</div>
+				))}
+			</div>
+			<div className="game__me-container">
+				{me?.hand?.map(({ image, code }, i) => (
+					<div key={i}>
+						<img className="game__card game__card--me" src={image} alt={code} />
+					</div>
+				))}
+			</div>
+			<div className="game__control-board">
+				<button>Hit!</button>
+				<button>Stand</button>
+				<button>Double bet</button>
+			</div>
+			<div className="game__info">
+				<p>My bet: ${me.bet}</p>
+			</div>
 		</div>
 	);
 };
