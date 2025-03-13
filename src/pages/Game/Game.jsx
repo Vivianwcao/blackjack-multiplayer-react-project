@@ -81,10 +81,43 @@ const Game = () => {
 		toggleFalseBet();
 
 		// set up game intial draw stage
-		if (
-			players.every((player) => player.bet > 0) //meaning me is the last
-		) {
-			playingInitialDraw();
+		console.log("******************************", players);
+
+		try {
+			const res1 = await fbGame.updateGame(game.gameRef, {
+				gameStatus: "dealing",
+			});
+			console.log(res1);
+
+			//get new deck
+			const { deck_id } = await cardMachine.newDeck();
+
+			//update deckId in db : game && player-me
+			let promiseList = [];
+			if (!game.deckId) {
+				promiseList.push(fbGame.updateGame(game.gameRef, { deckId: deck_id }));
+			}
+			if (!me.deckId) {
+				promiseList.push(
+					fbGame.updatePlayer(me.playerRef, {
+						deckId: deck_id,
+						status: "playing",
+					})
+				);
+			}
+			const res = await Promise.all(promiseList);
+			res.forEach((msg) => console.log(msg)); //success message
+
+			if (
+				//meaning "me" is the last to place bet
+				players
+					.filter((player) => player.id !== user.uid)
+					.every((player) => player.bet > 0)
+			) {
+				await playingInitialDraw(deck_id);
+			}
+		} catch (err) {
+			console.error(err.message);
 		}
 	};
 
@@ -125,41 +158,21 @@ const Game = () => {
 	//gameStatus -> "dealing"
 	//api call -> get deck, first 2 cards
 	//player status -> "playing"
-	const playingInitialDraw = async () => {
+	const playingInitialDraw = async (deck_id) => {
 		try {
-			const res1 = await fbGame.updateGame(game.gameRef, {
-				gameStatus: "dealing",
-			});
-			console.log(res1);
-
-			//get new deck
-			const { deck_id } = await cardMachine.newDeck();
-
-			//update deckId in db : game && player-me
-			let promiseList = [];
-			if (!game.deckId) {
-				promiseList.push(fbGame.updateGame(game.gameRef, { deckId: deck_id }));
-			}
-			if (!me.deckId) {
-				promiseList.push(
-					fbGame.updatePlayer(me.playerRef, {
-						deckId: deck_id,
-						status: "playing",
-					})
-				);
-			}
-			const res = await Promise.all(promiseList);
-			res.forEach((msg) => console.log(msg)); //success message
-
 			//draw two cards each ->setGame, setPlayers
-			if (!game.dealer) {
-				const { cards } = await cardMachine.drawTwoCards(deck_id);
-				await fbGame.updateGameDealer(game.gameRef, ...cards);
-			}
-			if (!me.hand) {
-				const { cards } = await cardMachine.drawTwoCards(deck_id);
-				await fbGame.updatePlayerHand(me.playerRef, ...cards);
-			}
+			const totalNum = 2 * (game.playersCount + 1);
+			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
+			console.log(cards);
+
+			//populate each player's hand
+			let promises = players.map((player) => {
+				let cardsForEach = cards.splice(0, fbGame.maxPlayers);
+				return fbGame.updatePlayerHand(player.playerRef, ...cardsForEach);
+			});
+			promises.push(fbGame.updateGameDealer(gameDocRef.current, ...cards));
+			const resp = await Promise.all(promises);
+			resp.forEach((msg) => console.log(msg));
 		} catch (err) {
 			console.error(err.message);
 		}
