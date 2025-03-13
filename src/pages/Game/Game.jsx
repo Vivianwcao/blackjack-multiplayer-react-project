@@ -28,7 +28,9 @@ const Game = () => {
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-	const [popLeaveGame, toggleTruePopLeaveGame, toggleFalsePopLeaveGame] =
+	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
+		useToggle(false);
+	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
 
 	const findMe = () => players?.find((player) => player.id === user?.uid);
@@ -146,6 +148,7 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
+			nav("/");
 		} catch (err) {
 			console.log(err.message);
 		}
@@ -173,7 +176,7 @@ const Game = () => {
 			console.log(err.message);
 		}
 
-		toggleTruePopLeaveGame();
+		toggleTrueGameCloses();
 		return;
 	};
 
@@ -228,7 +231,11 @@ const Game = () => {
 		};
 	}, [user?.uid, gameId]);
 
-	return (
+	return !user?.uid ? (
+		<div>Please log in first</div>
+	) : !game?.playerId.includes(user.uid) ? (
+		<div>You are not in this game</div>
+	) : (
 		<div className="game">
 			<Popup isOpen={popBet} handleBtnLeft={handleAddBet} btnLeftText="Confirm">
 				<h2 className="pop-title">Place a bet</h2>
@@ -241,9 +248,20 @@ const Game = () => {
 				/>
 			</Popup>
 			<Popup
-				isOpen={popLeaveGame}
+				isOpen={popGameCloses}
 				handleBtnLeft={() => nav("/")}
 				btnLeftText="Confirm"
+			>
+				<h2 className="pop-title">
+					Someone has left the game ... going back to lobby
+				</h2>
+			</Popup>
+			<Popup
+				isOpen={popQuitGame}
+				handleBtnLeft={toggleFalseQuitGame}
+				handleBtnRight={handleQuitGame}
+				btnLeftText="Cancel"
+				btnRightText="Quit Game"
 			>
 				<h2 className="pop-title">
 					Someone has left the game ... going back to lobby
@@ -255,10 +273,10 @@ const Game = () => {
 			)}
 			{console.log(user)}
 			{console.log(players)}
-			<button onClick={handleQuitGame}>Quit game</button>
+			<button onClick={toggleTrueQuitGame}>Quit game</button>
 			<div className="game__opponents-container">
 				{opponents?.map((player) =>
-					player.hand.map(({ image, code }, i) => (
+					player?.hand?.map(({ image, code }, i) => (
 						<div key={i}>
 							<img
 								className="game__card game__card--opponent"
@@ -270,11 +288,15 @@ const Game = () => {
 				)}
 			</div>
 			<div className="game__dealer-container">
-				{game?.dealer.map(({ image, code }, i) => (
+				{game?.dealer?.map(({ image, code }, i) => (
 					<div key={i}>
 						<img
 							className="game__card game__card--dealer"
-							src={i === 1 ? backOfCardImg : image}
+							src={
+								i === 1 && game?.gameStatus !== "dealerTurn"
+									? backOfCardImg
+									: image
+							}
 							alt={code}
 						/>
 					</div>
@@ -293,7 +315,7 @@ const Game = () => {
 				<button>Double bet</button>
 			</div>
 			<div className="game__info">
-				<p>My bet: ${me.bet}</p>
+				<p>My bet: ${me?.bet}</p>
 			</div>
 		</div>
 	);
