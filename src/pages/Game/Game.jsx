@@ -115,33 +115,12 @@ const Game = () => {
 		return;
 	};
 
-	const drawForAll = async (deckId, num) => {
-		const totalNum = num * (game.playersCount + 1); //dealer
-		console.log(totalNum);
-		try {
-			//draw all cards
-			const { cards } = await cardMachine.drawCards(deckId, totalNum);
-			console.log(cards);
-
-			//populate each player's hand
-			let promiseList = players.map((player) => {
-				let cardsForEach = cards.splice(0, num);
-				return fbGame.updatePlayerHand(player.playerRef, ...cardsForEach);
-			});
-			promiseList.push(fbGame.updateGameDealer(gameDocRef.current, ...cards));
-			const res = await Promise.all(promiseList);
-			res.forEach((msg) => console.log(msg));
-		} catch (err) {
-			console.error(`Drawing cards failed. Error: ${err.message}`);
-		}
-	};
-
 	//gameStatus -> "dealing"
 	//api call -> get deck, first 2 cards
 	//player status -> "playing"
 	const playingInitialDraw = async () => {
 		try {
-			const res1 = await fbGame.updateGame(gameDocRef.current, {
+			const res1 = await fbGame.updateGame(game.gameRef, {
 				gameStatus: "dealing",
 			});
 			console.log(res1);
@@ -149,26 +128,31 @@ const Game = () => {
 			//get new deck
 			const { deck_id } = await cardMachine.newDeck();
 
-			//update deckId in db : game && players
-			console.log(gameDocRef.current);
+			//update deckId in db : game && player-me
 			let promiseList = [];
-			promiseList.push(
-				fbGame.updateGame(gameDocRef.current, { deckId: deck_id })
-			);
-			players.forEach((player) =>
+			if (!game.deckId) {
+				promiseList.push(fbGame.updateGame(game.gameRef, { deckId: deck_id }));
+			}
+			if (!me.deckId) {
 				promiseList.push(
-					fbGame.updatePlayer(player.playerRef, {
+					fbGame.updatePlayer(me.playerRef, {
 						deckId: deck_id,
 						status: "playing",
 					})
-				)
-			);
+				);
+			}
 			const res = await Promise.all(promiseList);
 			res.forEach((msg) => console.log(msg)); //success message
 
 			//draw two cards each ->setGame, setPlayers
-
-			if (!game.dealer) await drawForAll(deck_id, 2);
+			if (!game.dealer) {
+				const { cards } = await cardMachine.drawTwoCards(deck_id);
+				await fbGame.updateGameDealer(game.gameRef, ...cards);
+			}
+			if (!me.hand) {
+				const { cards } = await cardMachine.drawTwoCards(deck_id);
+				await fbGame.updatePlayerHand(me.playerRef, ...cards);
+			}
 		} catch (err) {
 			console.error(err.message);
 		}
@@ -190,7 +174,7 @@ const Game = () => {
 			//ask to place a bet
 			toggleTrueBet((pre) => !pre);
 		}
-		//set up game intial playingInitialDraw stage
+		//set up game intial draw stage
 		if (
 			players.every((player) => player.bet > 0) &&
 			game.gameStatus === "waiting"

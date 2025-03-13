@@ -35,6 +35,9 @@ export const drawCards = async (deckId, num) => {
 //draw a single card
 export const drawSingleCard = async (deckId) => await drawCards(deckId, 1);
 
+//draw a two cards
+export const drawTwoCards = async (deckId) => await drawCards(deckId, 2);
+
 //shuffle the deck
 export const shuffleDeck = async (deckId) => {
 	try {
