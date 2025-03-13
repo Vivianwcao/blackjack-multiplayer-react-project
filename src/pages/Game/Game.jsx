@@ -79,6 +79,13 @@ const Game = () => {
 			bet: +betStr,
 		}); //get number
 		toggleFalseBet();
+
+		// set up game intial draw stage
+		if (
+			players.every((player) => player.bet > 0) //meaning me is the last
+		) {
+			playingInitialDraw();
+		}
 	};
 
 	const handleQuitGame = async () => {
@@ -175,12 +182,12 @@ const Game = () => {
 			toggleTrueBet((pre) => !pre);
 		}
 		//set up game intial draw stage
-		if (
-			players.every((player) => player.bet > 0) &&
-			game.gameStatus === "waiting"
-		) {
-			playingInitialDraw();
-		}
+		// if (
+		// 	players.every((player) => player.bet > 0) &&
+		// 	game.gameStatus === "waiting"
+		// ) {
+		// 	playingInitialDraw();
+		// }
 	}, [players, game]);
 
 	useEffect(() => {
