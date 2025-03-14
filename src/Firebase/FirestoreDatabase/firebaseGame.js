@@ -103,13 +103,16 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 			timestamp: Date.now(),
 			bet: 0,
 			doubleBet: false,
+			canHit: true,
 			deckId: null,
 		};
 		await runTransaction(db, async (transaction) => {
 			transaction.set(playerDocRef, playerData);
-			transaction.update(gameDocRef, { playersCount: increment(1) });
-			transaction.update(gameDocRef, { playerRef: arrayUnion(playerDocRef) });
-			transaction.update(gameDocRef, { playerId: arrayUnion(playerDocRef.id) });
+			transaction.update(gameDocRef, {
+				playersCount: increment(1),
+				playerRef: arrayUnion(playerDocRef),
+				playerId: arrayUnion(playerDocRef.id),
+			});
 			console.log(`Player ${playerDocRef.id} added to game ${gameDocRef.id}`);
 			return playerDocRef;
 		});
@@ -146,9 +149,9 @@ export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 	if (playerDocSnapshot.exists()) {
 		await runTransaction(db, async (transaction) => {
 			transaction.delete(playerDocRef);
-			transaction.update(gameDocRef, { playersCount: increment(-1) });
-			transaction.update(gameDocRef, { playerRef: arrayRemove(playerDocRef) });
 			transaction.update(gameDocRef, {
+				playersCount: increment(-1),
+				playerRef: arrayRemove(playerDocRef),
 				playerId: arrayRemove(playerDocRef.id),
 			});
 			console.log(

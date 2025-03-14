@@ -292,30 +292,25 @@ const Lobby = () => {
 			{gamesList
 				.sort((a, b) => a.timestamp - b.timestamp)
 				.map((game) => (
-					<div key={game.id}>
+					<div className="game-room" key={game.id}>
 						{/* <Link to={`/${game.id}`}> */}
 						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
-						{/*{gameReady === game.id ? <button>Enter game!</button> : null}*/}
 
-						<button
-							onClick={() => handleJoinGame(game.id)}
-							disabled={!user || joined}
-						>
-							Join game
-						</button>
-						<button
-							onClick={() => handleLeaveGame(game.id)}
-							disabled={!(user && joined === game.id)}
-						>
-							Leave game
-						</button>
+						{user && !joined && (
+							<button onClick={() => handleJoinGame(game.id)}>Join game</button>
+						)}
+						{user && joined === game.id && (
+							<button onClick={() => handleLeaveGame(game.id)}>
+								Leave game
+							</button>
+						)}
 						{/* </Link> */}
 					</div>
 				))}
-			<button onClick={handleCreateNewGame} disabled={!user || joined}>
-				Create and join new game
-			</button>
+			{user && !joined && (
+				<button onClick={handleCreateNewGame}>Create and join new game</button>
+			)}
 		</div>
 	);
 };

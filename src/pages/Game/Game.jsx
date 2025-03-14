@@ -8,6 +8,7 @@ import {
 	getDoc,
 	getDocs,
 	doc,
+	increment,
 } from "firebase/firestore";
 import Popup from "../../components/Popup/Popup";
 import "./Game.scss";
@@ -35,7 +36,7 @@ const Game = () => {
 
 	const findMe = () => players?.find((player) => player.id === user?.uid);
 	const me = findMe();
-	const currentPlayer = players?.at(players?.currentPlayerIndex);
+	const currentPlayer = players?.at(game?.currentPlayerIndex);
 	const opponents = players?.filter((player) => player.id !== user?.uid);
 
 	//listeners on list of players
@@ -159,7 +160,7 @@ const Game = () => {
 		}
 	};
 
-	//quit game
+	//end game if someone leaves
 	const cancelGame = async () => {
 		try {
 			if (game.gameStatus === "waiting") {
@@ -183,6 +184,66 @@ const Game = () => {
 
 		toggleTrueGameCloses();
 		return;
+	};
+
+	const checkForNextPlayer = async () => {
+		try {
+			//check if last player yes -> dealer turn
+			const currentPlayerI = game.currentPlayerIndex;
+			if (currentPlayerI === game.playersCount - 1) {
+				//yes -> dealer turn
+				const res = await fbGame.updateGame(game.gameRef, {
+					gameStatus: "dealerTurn",
+				});
+				console.log(res);
+				return;
+			}
+			if (currentPlayerI < game.playersCount - 1) {
+				//yes -> change gameStatus currentPlayerIndex +1
+				const res = await fbGame.updateGame(game.gameRef, {
+					currentPlayerIndex: increment(1),
+				});
+
+				console.log(res);
+				return;
+			}
+		} catch (err) {
+			throw new Error(err.message);
+		}
+	};
+
+	const handleHit = async () => {
+		try {
+			//draw one card
+			const { cards } = await cardMachine.drawSingleCard(currentPlayer.deckId);
+			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);
+
+			//check if doubleBet === true -> no more hit
+			if (currentPlayer.doubleBet === true) {
+				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+					canHit: false,
+				});
+				console.log(res);
+			}
+			//check if busted
+		} catch (err) {
+			console.log(err.message);
+		}
+	};
+	const handleStand = async () => {
+		//check if last player is a player or dealer
+		await checkForNextPlayer();
+	};
+	const handleDBet = async () => {
+		try {
+			const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+				bet: 2 * currentPlayer.bet,
+				doubleBet: true,
+			});
+			console.log(res);
+		} catch (err) {
+			console.log(err.message);
+		}
 	};
 
 	useEffect(() => {
@@ -314,13 +375,23 @@ const Game = () => {
 					</div>
 				))}
 			</div>
-			{game?.gameStatus === "playerTurn" && currentPlayer?.id === user?.uid ? (
-				<div className="game__control-board">
-					<button>Hit!</button>
-					<button>Stand</button>
-					<button>Double bet</button>
-				</div>
-			) : null}
+			{console.log("+++++++++", game?.currentPlayerIndex)}
+			{console.log("+++++++++", currentPlayer?.id)}
+			{console.log("+++++++++", user?.uid)}
+			{game?.gameStatus === "playerTurn" &&
+				currentPlayer?.id === user?.uid &&
+				currentPlayer?.status !== "busted" && (
+					<div className="game__control-board">
+						{currentPlayer.canHit === true && (
+							<button onClick={handleHit}>Hit!</button>
+						)}
+						<button onClick={handleStand}>Stand</button>
+						{currentPlayer?.hand.length === 2 &&
+							currentPlayer?.doubleBet === false && (
+								<button onClick={handleDBet}>Double bet</button>
+							)}
+					</div>
+				)}
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 			</div>
