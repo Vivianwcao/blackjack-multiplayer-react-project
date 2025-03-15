@@ -15,10 +15,12 @@ import "./Game.scss";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
+import { useGameContext } from "../../components/gameProvider";
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
+	const { resetPlayerData, removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
@@ -154,37 +156,40 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
+			await resetPlayerData(game, players, gameId);
+			await removeEmptyGame();
+
 			nav("/");
 		} catch (err) {
 			console.log(err.message);
 		}
 	};
 
-	//end game if someone leaves
-	const cancelGame = async () => {
-		try {
-			if (game.gameStatus === "waiting") {
-				//if game not started yet -> keep game
-				const promiseList = players.map((player) =>
-					fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
-				);
-				await Promise.all(promiseList);
-			}
-			if (game.gameStatus !== "waiting") {
-				//if game started already -> delete game
-				await fbGame.deleteGame(
-					fbGame.gamesCollectionName,
-					gameId,
-					fbGame.playersCollectionName
-				);
-			}
-		} catch (err) {
-			console.log(err.message);
-		}
+	// //end game if someone leaves
+	// const cancelGame = async () => {
+	// 	try {
+	// 		if (game.gameStatus === "waiting") {
+	// 			//if game not started yet -> keep game
+	// 			const promiseList = players.map((player) =>
+	// 				fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
+	// 			);
+	// 			await Promise.all(promiseList);
+	// 		}
+	// 		if (game.gameStatus !== "waiting") {
+	// 			//if game started already -> delete game
+	// 			await fbGame.deleteGame(
+	// 				fbGame.gamesCollectionName,
+	// 				gameId,
+	// 				fbGame.playersCollectionName
+	// 			);
+	// 		}
+	// 	} catch (err) {
+	// 		console.log(err.message);
+	// 	}
 
-		toggleTrueGameCloses();
-		return;
-	};
+	// 	toggleTrueGameCloses();
+	// 	return;
+	// };
 
 	const checkForNextPlayer = async () => {
 		try {
@@ -253,7 +258,8 @@ const Game = () => {
 		}
 		//quit game if player leaves
 		if (game.playersCount < fbGame.maxPlayers) {
-			cancelGame();
+			// cancelGame();
+			toggleTrueGameCloses();
 		}
 	}, [players, game]);
 
@@ -296,6 +302,14 @@ const Game = () => {
 			console.log("**Firestore listener on players UNmounted/attached.**");
 		};
 	}, [user?.uid, gameId]);
+
+	const controlBoardCondition = () =>
+		game?.gameStatus === "playerTurn" &&
+		currentPlayer?.id === user?.uid &&
+		currentPlayer?.busted === false;
+
+	const handleDBetCondition = () =>
+		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
 
 	return !user?.uid ? (
 		<div>Please log in first</div>
@@ -378,20 +392,17 @@ const Game = () => {
 			{console.log("+++++++++", game?.currentPlayerIndex)}
 			{console.log("+++++++++", currentPlayer?.id)}
 			{console.log("+++++++++", user?.uid)}
-			{game?.gameStatus === "playerTurn" &&
-				currentPlayer?.id === user?.uid &&
-				currentPlayer?.status !== "busted" && (
-					<div className="game__control-board">
-						{currentPlayer.canHit === true && (
-							<button onClick={handleHit}>Hit!</button>
-						)}
-						<button onClick={handleStand}>Stand</button>
-						{currentPlayer?.hand.length === 2 &&
-							currentPlayer?.doubleBet === false && (
-								<button onClick={handleDBet}>Double bet</button>
-							)}
-					</div>
-				)}
+			{controlBoardCondition() && (
+				<div className="game__control-board">
+					{currentPlayer.canHit === true && (
+						<button onClick={handleHit}>Hit!</button>
+					)}
+					<button onClick={handleStand}>Stand</button>
+					{handleDBetCondition() && (
+						<button onClick={handleDBet}>Double bet</button>
+					)}
+				</div>
+			)}
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 			</div>

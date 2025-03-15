@@ -2,13 +2,15 @@ import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Popup from "../../components/Popup/Popup";
 import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
-import { onSnapshot, collection, getDocs } from "firebase/firestore";
+import { onSnapshot, collection } from "firebase/firestore";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
 import useToggle from "../../utils/hooks/useToggle";
+import { useGameContext } from "../../components/gameProvider";
 import "./Lobby.scss";
 
 const Lobby = () => {
 	const { user } = useAuth();
+	const { resetPlayerData, removeEmptyGame } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 
 	const gameDocRef = useRef(null);
@@ -76,7 +78,7 @@ const Lobby = () => {
 			const gameRef = await fbGame.addNewGame(fbGame.gamesCollectionRef);
 			await fbGame.updateGame(gameRef, { gameRef, gameId: gameRef.id });
 			//join this game
-			handleJoinGame(gameRef.id);
+			await handleJoinGame(gameRef.id);
 		} catch (err) {
 			console.error("Error creating game: ", err);
 		}
@@ -107,45 +109,7 @@ const Lobby = () => {
 		}
 	};
 
-	//remove game remotely if empty game.
-	const removeEmptyGame = async () => {
-		//check firestore database if any empty game
-		const gamesCollectionSnap = await getDocs(fbGame.gamesCollectionRef);
-
-		//create a list of delete promises
-		const deletePromises = gamesCollectionSnap.docs.map(async (gameDoc) => {
-			const gameDocRef = fbGame.getGameDocRef(
-				fbGame.gamesCollectionName,
-				gameDoc.id
-			);
-
-			const playersCollectionRef = collection(
-				gameDocRef,
-				fbGame.playersCollectionName
-			);
-
-			const collectionSnap = await getDocs(playersCollectionRef);
-			if (collectionSnap.size === 0) {
-				return fbGame.deleteSingleGame(fbGame.gamesCollectionName, gameDoc.id);
-			}
-			return null;
-		});
-		//filter out undefined
-		const filteredDeletePromises = deletePromises.filter(
-			(promise) => promise !== null
-		);
-
-		if (filteredDeletePromises.length)
-			try {
-				const res = await Promise.all(filteredDeletePromises);
-				res.forEach((msg) => console.log(msg));
-			} catch (err) {
-				console.error(err.message);
-			}
-	};
-
 	const handleLeaveGame = async (gameId) => {
-		console.log(user, userLobby.current.joinedGameId, gameId);
 		if (!user) {
 			console.log("User not signed in");
 			return;
@@ -161,6 +125,13 @@ const Lobby = () => {
 			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
 			setTimeout(removeEmptyGame, 100); //debounce for latency
+
+			const game = gamesList.find((game) => game.gameId === gameId);
+			const players = game.players;
+			await resetPlayerData(game, players, gameId);
+
+			await removeEmptyGame();
+
 			toggleFalseEnterGame();
 		} catch (err) {
 			console.error(err.message);
