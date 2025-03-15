@@ -14,14 +14,14 @@ import Popup from "../../components/Popup/Popup";
 import "./Game.scss";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
-
+import * as cardsCalculator from "../../utils/cardsCalculators";
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
+	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
-	const { gameId } = useParams();
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
 
@@ -252,7 +252,7 @@ const Game = () => {
 			return;
 		}
 		//quit game if player leaves
-		if (game.playersCount !== fbGame.maxPlayers) {
+		if (game.playersCount < fbGame.maxPlayers) {
 			cancelGame();
 		}
 	}, [players, game]);
