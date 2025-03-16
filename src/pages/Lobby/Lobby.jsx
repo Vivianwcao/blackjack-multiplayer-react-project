@@ -130,6 +130,7 @@ const Lobby = () => {
 			await removeEmptyGame(gameRef);
 
 			toggleFalseEnterGame();
+			toggleTrueGameCloses();
 		} catch (err) {
 			console.error(err.message);
 		}

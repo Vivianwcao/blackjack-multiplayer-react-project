@@ -20,7 +20,12 @@ const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
-	const { removeEmptyGame } = useGameContext();
+	const {
+		removeEmptyGame,
+		popGameCloses,
+		toggleTrueGameCloses,
+		toggleFalseGameCloses,
+	} = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
@@ -31,8 +36,7 @@ const Game = () => {
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
-		useToggle(false);
+
 	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
 
@@ -156,9 +160,12 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
+			setTimeout(removeEmptyGame, 100); //debounce for latency
+
 			await removeEmptyGame(game.gameRef);
 
 			nav("/");
+			toggleTrueGameCloses();
 		} catch (err) {
 			console.log(err.message);
 		}
@@ -240,27 +247,15 @@ const Game = () => {
 			console.log("Players or game state not loaded.");
 			return;
 		}
-		//quit game if player leaves
-		if (game.playersCount < fbGame.maxPlayers) {
-			// cancelGame();
-			toggleTrueGameCloses();
-		}
-	}, [players, game]);
-
-	useEffect(() => {
-		if (!players || !game) {
-			console.log("Players or game state not loaded.");
-			return;
-		}
 
 		//ask to place a bet
 		if (
-			me.status === "waiting" &&
-			me.bet == 0 &&
-			game.gameStatus === "waiting"
+			me?.status === "waiting" &&
+			me?.bet == 0 &&
+			game?.gameStatus === "waiting"
 		) {
 			//ask to place a bet
-			toggleTrueBet((pre) => !pre);
+			toggleTrueBet();
 		}
 	}, [players, game]);
 
