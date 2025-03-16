@@ -165,13 +165,12 @@ export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 };
 
 //Delete a game without sub-collections
-export const deleteSingleGame = async (gamescollectionName, gameDocName) => {
+export const deleteSingleGame = async (gameDocRef) => {
 	try {
-		const gameDocRef = getGameDocRef(gamescollectionName, gameDocName);
 		await deleteDoc(gameDocRef);
-		return `Deleted ${gameDocName} successfully`;
+		return `Deleted ${gameDocRef.id} successfully`;
 	} catch (err) {
-		throw new Error(`Delete ${gameDocName} failed. Error: ${err.message}`);
+		throw new Error(`Delete ${gameDocRef.id} failed. Error: ${err.message}`);
 	}
 };
 

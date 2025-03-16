@@ -20,7 +20,7 @@ const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
-	const { resetPlayerData, removeEmptyGame } = useGameContext();
+	const { removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
@@ -49,10 +49,10 @@ const Game = () => {
 			fbGame.playersCollectionName
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
-			if (snapshot.size !== fbGame.maxPlayers) {
-				//setPlayers([]);
-				return null;
-			}
+			// if (snapshot.size !== fbGame.maxPlayers) {
+			// 	//setPlayers([]);
+			// 	return null;
+			// }
 			let newList = [];
 			snapshot.docs.map((doc) => newList.push({ id: doc.id, ...doc.data() }));
 			newList.sort((a, b) => a.timestamp - b.timestamp);
@@ -156,40 +156,13 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-			await resetPlayerData(game, players, gameId);
-			await removeEmptyGame();
+			await removeEmptyGame(game.gameRef);
 
 			nav("/");
 		} catch (err) {
 			console.log(err.message);
 		}
 	};
-
-	// //end game if someone leaves
-	// const cancelGame = async () => {
-	// 	try {
-	// 		if (game.gameStatus === "waiting") {
-	// 			//if game not started yet -> keep game
-	// 			const promiseList = players.map((player) =>
-	// 				fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
-	// 			);
-	// 			await Promise.all(promiseList);
-	// 		}
-	// 		if (game.gameStatus !== "waiting") {
-	// 			//if game started already -> delete game
-	// 			await fbGame.deleteGame(
-	// 				fbGame.gamesCollectionName,
-	// 				gameId,
-	// 				fbGame.playersCollectionName
-	// 			);
-	// 		}
-	// 	} catch (err) {
-	// 		console.log(err.message);
-	// 	}
-
-	// 	toggleTrueGameCloses();
-	// 	return;
-	// };
 
 	const checkForNextPlayer = async () => {
 		try {
@@ -219,6 +192,8 @@ const Game = () => {
 
 	const handleHit = async () => {
 		try {
+			//Re-shuffle deck
+			await cardMachine.shuffleDeck(currentPlayer.deckId);
 			//draw one card
 			const { cards } = await cardMachine.drawSingleCard(currentPlayer.deckId);
 			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);
@@ -230,7 +205,16 @@ const Game = () => {
 				});
 				console.log(res);
 			}
-			//check if busted
+			//check if busted latency error!
+			if (cardsCalculator.isBusted(currentPlayer.hand)) {
+				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+					busted: true,
+					status: "lost",
+				});
+				console.log(res);
+				await checkForNextPlayer();
+				return;
+			}
 		} catch (err) {
 			console.log(err.message);
 		}
@@ -329,11 +313,11 @@ const Game = () => {
 			</Popup>
 			<Popup
 				isOpen={popGameCloses}
-				handleBtnLeft={() => nav("/")}
+				handleBtnLeft={toggleFalseGameCloses}
 				btnLeftText="Confirm"
 			>
 				<h2 className="pop-title">
-					Someone has left the game ... going back to lobby
+					Someone has left the game ... game continues ...
 				</h2>
 			</Popup>
 			<Popup

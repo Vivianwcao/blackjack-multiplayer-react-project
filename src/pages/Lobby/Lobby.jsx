@@ -10,7 +10,7 @@ import "./Lobby.scss";
 
 const Lobby = () => {
 	const { user } = useAuth();
-	const { resetPlayerData, removeEmptyGame } = useGameContext();
+	const { removeEmptyGame } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 
 	const gameDocRef = useRef(null);
@@ -124,13 +124,10 @@ const Lobby = () => {
 				gameDocRef.current
 			);
 			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
-			setTimeout(removeEmptyGame, 100); //debounce for latency
+			//setTimeout(removeEmptyGame, 100); //debounce for latency
 
-			const game = gamesList.find((game) => game.gameId === gameId);
-			const players = game.players;
-			await resetPlayerData(game, players, gameId);
-
-			await removeEmptyGame();
+			const gameRef = fbGame.getGameDocRef(fbGame.gamesCollectionName, gameId);
+			await removeEmptyGame(gameRef);
 
 			toggleFalseEnterGame();
 		} catch (err) {
@@ -264,11 +261,10 @@ const Lobby = () => {
 				.sort((a, b) => a.timestamp - b.timestamp)
 				.map((game) => (
 					<div className="game-room" key={game.id}>
-						{/* <Link to={`/${game.id}`}> */}
 						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
 
-						{user && !joined && (
+						{user && !joined && game.gameStatus === "waiting" && (
 							<button onClick={() => handleJoinGame(game.id)}>Join game</button>
 						)}
 						{user && joined === game.id && (
@@ -276,7 +272,6 @@ const Lobby = () => {
 								Leave game
 							</button>
 						)}
-						{/* </Link> */}
 					</div>
 				))}
 			{user && !joined && (

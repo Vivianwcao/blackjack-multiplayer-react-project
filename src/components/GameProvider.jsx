@@ -1,71 +1,31 @@
 import React, { useContext, createContext } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, getDoc } from "firebase/firestore";
 const GameContext = createContext(null);
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
 
 export const GameProvider = ({ children }) => {
 	//remove game remotely if empty game.
-	const removeEmptyGame = async () => {
-		//check firestore database if any empty game
-		const gamesCollectionSnap = await getDocs(fbGame.gamesCollectionRef);
-
-		//create a list of delete promises
-		const deletePromises = gamesCollectionSnap.docs.map(async (gameDoc) => {
-			const gameDocRef = fbGame.getGameDocRef(
-				fbGame.gamesCollectionName,
-				gameDoc.id
-			);
-
-			const playersCollectionRef = collection(
-				gameDocRef,
-				fbGame.playersCollectionName
-			);
-
-			const collectionSnap = await getDocs(playersCollectionRef);
-			if (collectionSnap.size === 0) {
-				return fbGame.deleteSingleGame(fbGame.gamesCollectionName, gameDoc.id);
-			}
-			return null;
-		});
-		//filter out undefined
-		const filteredDeletePromises = deletePromises.filter(
-			(promise) => promise !== null
-		);
-
-		if (filteredDeletePromises.length)
-			try {
-				const res = await Promise.all(filteredDeletePromises);
-				res.forEach((msg) => console.log(msg));
-			} catch (err) {
-				console.error(err.message);
-			}
-	};
-
-	//end game if someone leaves
-	const resetPlayerData = async (game, players, gameId) => {
+	const removeEmptyGame = async (gameDocRef) => {
 		try {
-			if (game.gameStatus === "waiting") {
-				//if game not started yet -> keep game
-				const promiseList = players.map((player) =>
-					fbGame.updatePlayer(player.playerRef, { bet: 0, status: "waiting" })
-				);
-				await Promise.all(promiseList);
-			}
-			if (game.gameStatus !== "waiting") {
-				//if game started already -> delete game
-				await fbGame.deleteGame(
-					fbGame.gamesCollectionName,
-					gameId,
-					fbGame.playersCollectionName
-				);
+			const gameDocSnap = await getDoc(gameDocRef);
+			if (gameDocSnap.exists()) {
+				const gameData = gameDocSnap.data();
+				console.log("Document data:", gameData);
+				if (gameData.playersCount === 0) {
+					const res = await fbGame.deleteSingleGame(gameDocRef);
+					console.log(res);
+				}
+			} else {
+				console.log(`game ${gameDocRef.id} does not exist`);
+				return;
 			}
 		} catch (err) {
-			console.log(err.message);
+			throw new Error(err.message);
 		}
 	};
 
 	return (
-		<GameContext.Provider value={{ resetPlayerData, removeEmptyGame }}>
+		<GameContext.Provider value={{ removeEmptyGame }}>
 			{children}
 		</GameContext.Provider>
 	);
