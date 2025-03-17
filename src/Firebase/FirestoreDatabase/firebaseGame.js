@@ -12,9 +12,9 @@ import {
 	deleteDoc,
 	runTransaction,
 	arrayRemove,
+	serverTimestamp,
 } from "firebase/firestore";
 
-export const maxPlayers = 2;
 export const gamesCollectionName = "games";
 export const playersCollectionName = "players";
 const getGamesCollectionRef = (gamescollectionName) =>
@@ -39,15 +39,16 @@ export const getPlayerDocRef = (
 ) =>
 	doc(db, gamescollectionName, gameDocName, playersCollectionName, playerDocId);
 
-export const addNewGame = async (gamesCollectionRef) => {
+export const addNewGame = async (gamesCollectionRef, maxPlayers) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
-			timestamp: Date.now(),
+			timestamp: serverTimestamp(),
 			gameStatus: "waiting",
 			deckId: null,
 			playersCount: 0,
 			currentPlayerIndex: 0,
+			maxPlayers,
 		},
 		{ merge: true }
 	);
@@ -79,47 +80,50 @@ export const updateGameDealer = async (gameDocRef, cardList) => {
 	}
 };
 
-//helper--count the # of players
-export const getNumberOfPlayers = async (gameDocRef) => {
-	//get players list size, need ref to players collection
-	let playersCollectionRef = collection(gameDocRef, playersCollectionName);
-	let playersSnap = await getDocs(playersCollectionRef);
-	return playersSnap.size;
-};
-
 export const createPlayer = async (gameDocRef, status, uid) => {
-	const numOfPlayers = await getNumberOfPlayers(gameDocRef);
-	if (numOfPlayers > maxPlayers - 1) {
-		console.log(`${maxPlayers} players maximum. The room is full`);
-		return;
-	} else {
-		const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
-		const playerData = {
-			status,
-			id: uid,
-			playerRef: playerDocRef,
-			gameRef: gameDocRef,
-			gameId: gameDocRef.id,
-			timestamp: Date.now(),
-			bet: 0,
-			doubleBet: false,
-			backJack: false,
-			busted: false,
-			canHit: true,
-			deckId: null,
-		};
-		await runTransaction(db, async (transaction) => {
-			transaction.set(playerDocRef, playerData);
-			transaction.update(gameDocRef, {
-				playersCount: increment(1),
-				playerRef: arrayUnion(playerDocRef),
-				playerId: arrayUnion(playerDocRef.id),
-			});
-			console.log(`Player ${playerDocRef.id} added to game ${gameDocRef.id}`);
-			return playerDocRef;
-		});
-		//await setDoc(playerDocRef, playerData, { merge: true });
-		//return playerDocRef;
+	const gameSnap = await getDoc(gameDocRef);
+	if (gameSnap.exists()) {
+		try {
+			const gameData = gameSnap.data();
+			const numOfPlayers = gameData.playersCount;
+			const maxPlayers = gameData.maxPlayers;
+			if (numOfPlayers === maxPlayers) {
+				console.log(`${maxPlayers} players maximum. The room is full`);
+				return;
+			} else {
+				const playerDocRef = doc(gameDocRef, playersCollectionName, uid);
+				const playerData = {
+					status,
+					id: uid,
+					playerRef: playerDocRef,
+					gameRef: gameDocRef,
+					gameId: gameDocRef.id,
+					timestamp: serverTimestamp(),
+					bet: 0,
+					doubleBet: false,
+					backJack: false,
+					busted: false,
+					canHit: true,
+					deckId: null,
+				};
+				await runTransaction(db, async (transaction) => {
+					transaction.set(playerDocRef, playerData);
+					transaction.update(gameDocRef, {
+						playersCount: increment(1),
+						playerRef: arrayUnion(playerDocRef),
+						playerId: arrayUnion(playerDocRef.id),
+					});
+					console.log(
+						`Player ${playerDocRef.id} added to game ${gameDocRef.id}`
+					);
+					return playerDocRef;
+				});
+				//await setDoc(playerDocRef, playerData, { merge: true });
+				//return playerDocRef;
+			}
+		} catch (err) {
+			throw new Error(err.message);
+		}
 	}
 };
 

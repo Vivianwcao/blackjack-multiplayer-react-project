@@ -53,10 +53,6 @@ const Game = () => {
 			fbGame.playersCollectionName
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
-			// if (snapshot.size !== fbGame.maxPlayers) {
-			// 	//setPlayers([]);
-			// 	return null;
-			// }
 			let newList = [];
 			snapshot.docs.map((doc) => newList.push({ id: doc.id, ...doc.data() }));
 			newList.sort((a, b) => a.timestamp - b.timestamp);
@@ -99,7 +95,7 @@ const Game = () => {
 		// set up game intial draw stage
 		try {
 			//get new deck
-			const { deck_id } = await cardMachine.newDeck();
+			const { deck_id } = await cardMachine.newDeck(game.maxPlayers);
 
 			if (
 				//meaning "me" is the last to place bet
@@ -259,18 +255,25 @@ const Game = () => {
 		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
 		// console.log("######## pre playersId", prePlayerIdRef.current);
 		// console.log("######## current playersId", game.playerId);
-		if (game.playersCount > prePlayerIdRef.current.length) {
-			let pId = game.playerId[game.playersCount - 1];
-			pId !== user.uid && showToast(`${pId} enters ...`);
-		}
-		if (game.playersCount < prePlayerIdRef.current.length) {
-			let pId;
-			for (let player of prePlayerIdRef.current) {
-				if (!game.playerId.includes(player)) {
-					pId = player;
-				}
+
+		//upon refreshing page will not display toast based on initial rendering prePlayerIdRef.current= []
+		if (prePlayerIdRef.current.length) {
+			if (game.playersCount > prePlayerIdRef.current.length) {
+				let pId = game.playerId[game.playersCount - 1];
+				pId !== user.uid && showToast(`${pId} enters ...`);
 			}
-			pId !== user.uid && showToast(`${pId} left ...`);
+			if (game.playersCount < prePlayerIdRef.current.length) {
+				let pId;
+				for (let prePlayerId of prePlayerIdRef.current) {
+					if (!game.playerId.includes(prePlayerId)) {
+						pId = prePlayerId; //find the player who left
+					}
+				}
+				//show toast on other users' page
+				pId !== user.uid && showToast(`${pId} left ...`);
+				//if initial draw not performed -> go back to lobby page.
+				game.gameStatus === "waiting" && nav("/");
+			}
 		}
 
 		prePlayerIdRef.current = game.playerId;
@@ -287,7 +290,7 @@ const Game = () => {
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
 			game?.gameStatus === "waiting" &&
-			game?.playersCount === fbGame.maxPlayers
+			game?.playersCount === game?.maxPlayers
 		)
 			//ask to place a bet
 			toggleTrueBet();

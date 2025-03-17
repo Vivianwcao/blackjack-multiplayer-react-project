@@ -5,4 +5,7 @@
 .game-room {
 	border: 0.1rem solid black;
 	height: 8rem;
+	&__create-game-wrapper {
+		display: flex;
+	}
 }

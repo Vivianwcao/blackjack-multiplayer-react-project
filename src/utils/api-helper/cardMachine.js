@@ -3,10 +3,11 @@ import axios from "axios";
 const mockDeck = "b7u5yr1uqy1z";
 
 //get a deck
-export const newDeck = async () => {
+export const newDeck = async (numOfDecks) => {
 	try {
+		console.log(numOfDecks);
 		// const deck = await axios.get(
-		// 	"https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1"
+		// 	`https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=${numOfDecks}`
 		// );
 		// return deck.data;
 

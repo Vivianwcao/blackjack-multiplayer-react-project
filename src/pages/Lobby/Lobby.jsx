@@ -30,10 +30,10 @@ const Lobby = () => {
 	const userJoinedGame = (uid) => {
 		for (let game of gamesList) {
 			//find the game where the user is in
-			if (game?.playerId?.length > 0 && game.playerId.includes(uid)) {
+			if (game?.playersCount > 0 && game.playerId.includes(uid)) {
 				//side effects here
 				if (
-					game.players.length === fbGame.maxPlayers ||
+					game.playersCount === game.maxPlayers ||
 					game.gameStatus !== "waiting"
 				)
 					toggleTrueEnterGame();
@@ -49,15 +49,21 @@ const Lobby = () => {
 	//UI add/leave/join game buttons toggle
 	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
 
-	const handleCreateNewGame = async () => {
+	const handleCreateNewGame = async (maxPlayers) => {
 		if (!user) {
 			console.log("User not signed in");
 			return;
 		}
 		try {
 			//create new game
-			const gameRef = await fbGame.addNewGame(fbGame.gamesCollectionRef);
-			await fbGame.updateGame(gameRef, { gameRef, gameId: gameRef.id });
+			const gameRef = await fbGame.addNewGame(
+				fbGame.gamesCollectionRef,
+				maxPlayers
+			);
+			await fbGame.updateGame(gameRef, {
+				gameRef,
+				gameId: gameRef.id,
+			});
 			//join this game
 			await handleJoinGame(gameRef.id);
 		} catch (err) {
@@ -248,9 +254,14 @@ const Lobby = () => {
 						<p>{`Game room ${game.id}`}</p>
 						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
 
-						{user && !joined && game.gameStatus === "waiting" && (
-							<button onClick={() => handleJoinGame(game.id)}>Join game</button>
-						)}
+						{user &&
+							!joined &&
+							game.playersCount < game.maxPlayers &&
+							game.gameStatus === "waiting" && (
+								<button onClick={() => handleJoinGame(game.id)}>
+									Join game
+								</button>
+							)}
 						{user && joined === game.id && (
 							<button onClick={() => handleLeaveGame(game.id)}>
 								Leave game
@@ -259,7 +270,17 @@ const Lobby = () => {
 					</div>
 				))}
 			{user && !joined && (
-				<button onClick={handleCreateNewGame}>Create and join new game</button>
+				<div className="game-room__create-game-wrapper">
+					<button onClick={() => handleCreateNewGame(1)}>
+						Create and join new single player game
+					</button>
+					<button onClick={() => handleCreateNewGame(2)}>
+						Create and join a new two-player game
+					</button>
+					<button onClick={() => handleCreateNewGame(3)}>
+						Create and join a new three-player game
+					</button>
+				</div>
 			)}
 		</div>
 	);
