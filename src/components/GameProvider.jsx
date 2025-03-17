@@ -2,12 +2,8 @@ import React, { useContext, createContext } from "react";
 import { collection, getDocs, getDoc } from "firebase/firestore";
 const GameContext = createContext(null);
 import * as fbGame from "../Firebase/FirestoreDatabase/firebaseGame";
-import useToggle from "../utils/hooks/useToggle";
 
 export const GameProvider = ({ children }) => {
-	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
-		useToggle(false);
-
 	//remove game remotely if empty game.
 	const removeEmptyGame = async (gameDocRef) => {
 		try {
@@ -29,14 +25,7 @@ export const GameProvider = ({ children }) => {
 	};
 
 	return (
-		<GameContext.Provider
-			value={{
-				removeEmptyGame,
-				popGameCloses,
-				toggleTrueGameCloses,
-				toggleFalseGameCloses,
-			}}
-		>
+		<GameContext.Provider value={{ removeEmptyGame }}>
 			{children}
 		</GameContext.Provider>
 	);

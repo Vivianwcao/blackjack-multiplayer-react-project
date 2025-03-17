@@ -15,17 +15,12 @@ import "./Game.scss";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
-import { useGameContext } from "../../components/gameProvider";
+import { useGameContext } from "../../components/GameProvider";
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user } = useAuth();
-	const {
-		removeEmptyGame,
-		popGameCloses,
-		toggleTrueGameCloses,
-		toggleFalseGameCloses,
-	} = useGameContext();
+	const { removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
@@ -36,7 +31,8 @@ const Game = () => {
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-
+	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
+		useToggle(false);
 	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
 
@@ -160,12 +156,11 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-			setTimeout(removeEmptyGame, 100); //debounce for latency
+			//setTimeout(removeEmptyGame, 100); //debounce for latency
 
 			await removeEmptyGame(game.gameRef);
 
 			nav("/");
-			toggleTrueGameCloses();
 		} catch (err) {
 			console.log(err.message);
 		}
@@ -241,6 +236,17 @@ const Game = () => {
 			console.log(err.message);
 		}
 	};
+
+	useEffect(() => {
+		if (!players || !game) {
+			console.log("Players or game state not loaded.");
+			return;
+		}
+		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
+		if (game.playersCount < fbGame.maxPlayers) {
+			toggleTrueGameCloses();
+		}
+	}, [game?.playersCount]);
 
 	useEffect(() => {
 		if (!players || !game) {

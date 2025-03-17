@@ -5,7 +5,7 @@ import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection } from "firebase/firestore";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
 import useToggle from "../../utils/hooks/useToggle";
-import { useGameContext } from "../../components/gameProvider";
+import { useGameContext } from "../../components/GameProvider";
 import "./Lobby.scss";
 
 const Lobby = () => {
@@ -29,35 +29,16 @@ const Lobby = () => {
 	//Helper -- Check if user has already joined a game
 	const userJoinedGame = (uid) => {
 		for (let game of gamesList) {
-			if (game?.players) {
-				const joined = game.players.some((player) => player.id === uid);
-				if (joined) {
-					return game.id;
-				}
-			}
-		}
-		return null;
-	};
+			//find the game where the user is in
+			if (game?.playerId?.length > 0 && game.playerId.includes(uid)) {
+				//side effects here
+				if (
+					game.players.length === fbGame.maxPlayers ||
+					game.gameStatus !== "waiting"
+				)
+					toggleTrueEnterGame();
 
-	//UI add/leave/join game buttons toggle
-	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
-
-	//check if user's joined game has two players including the user.
-	const joinedGameReady = () => {
-		//console.log(joined);
-		if (!user) return null;
-		if (joined && gamesList.length) {
-			for (let game of gamesList) {
-				if (game.players.length === fbGame.maxPlayers) {
-					//return game id or undefined if other player pairs
-					const gameId = game.players.some((player) => player.id === user.uid);
-					if (gameId) {
-						toggleTrueEnterGame();
-						return game.id;
-					}
-					toggleFalseEnterGame();
-					return null;
-				}
+				return game.id; //return game.id of the user
 			}
 		}
 		toggleFalseEnterGame();
@@ -65,8 +46,7 @@ const Lobby = () => {
 	};
 
 	//UI add/leave/join game buttons toggle
-	const gameReady = useMemo(() => joinedGameReady(), [user, gamesList]);
-	//console.log("Is game ready??", gameReady);
+	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
 
 	const handleCreateNewGame = async () => {
 		if (!user) {
@@ -130,36 +110,39 @@ const Lobby = () => {
 			await removeEmptyGame(gameRef);
 
 			toggleFalseEnterGame();
-			toggleTrueGameCloses();
 		} catch (err) {
 			console.error(err.message);
 		}
 	};
 	useEffect(() => {
 		console.log("~ ~ ~ ~ ~ UseEffect in Lobby runs~ ~ ~ ~ ~ ");
-
-		if (user) {
-			userLobby.current.uid = user.uid;
-			const gameId = userJoinedGame(user.uid);
-			if (gameId) {
-				userLobby.current.joinedGameId = gameId;
-				gameDocRef.current = fbGame.getGameDocRef(
-					fbGame.gamesCollectionName,
-					gameId
-				);
-				playerDocRef.current = fbGame.getPlayerDocRef(
-					fbGame.gamesCollectionName,
-					gameId,
-					fbGame.playersCollectionName,
-					user.uid
-				);
-			} else {
-				userLobby.current.joinedGameId = null;
-			}
-		} else {
-			//not signed in
+		if (!user) {
+			//not signed in/not loaded
 			userLobby.current.uid = null;
+			return;
 		}
+		if (!gamesList) {
+			return;
+		}
+		userLobby.current.uid = user.uid;
+		const gameId = userJoinedGame(user.uid);
+
+		if (!gameId) {
+			userLobby.current.joinedGameId = null;
+			return;
+		}
+
+		userLobby.current.joinedGameId = gameId;
+		gameDocRef.current = fbGame.getGameDocRef(
+			fbGame.gamesCollectionName,
+			gameId
+		);
+		playerDocRef.current = fbGame.getPlayerDocRef(
+			fbGame.gamesCollectionName,
+			gameId,
+			fbGame.playersCollectionName,
+			user.uid
+		);
 	}, [user, gamesList]);
 
 	useEffect(() => {

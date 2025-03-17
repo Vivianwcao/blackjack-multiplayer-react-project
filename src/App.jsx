@@ -9,7 +9,7 @@ import {
 } from "./Firebase/FirebaseAuthentification/signInPartners/googleSignIn";
 import { handleGithubSignIn } from "./Firebase/FirebaseAuthentification/signInPartners/githubSignIn";
 import { useAuth } from "./Firebase/FirebaseAuthentification/AuthProvider";
-import { GameProvider } from "./components/gameProvider";
+import { GameProvider } from "./components/GameProvider";
 
 const App = () => {
 	const { user } = useAuth();
