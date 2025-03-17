@@ -10,12 +10,15 @@ import {
 	doc,
 	increment,
 } from "firebase/firestore";
+import { toast, Slide } from "react-toastify";
 import Popup from "../../components/Popup/Popup";
 import "./Game.scss";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
 import { useGameContext } from "../../components/GameProvider";
+import { showToast } from "../../components/Toasts/Toast";
+
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
@@ -26,6 +29,7 @@ const Game = () => {
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
+	const prePlayerIdRef = useRef([]);
 
 	const nav = useNavigate();
 
@@ -238,14 +242,33 @@ const Game = () => {
 	};
 
 	useEffect(() => {
+		if (!user?.uid) {
+			console.log("User not loaded yet");
+			return; // No cleanup needed if user isn’t ready
+		}
+
 		if (!players || !game) {
 			console.log("Players or game state not loaded.");
 			return;
 		}
 		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
-		if (game.playersCount < fbGame.maxPlayers) {
-			toggleTrueGameCloses();
+		// console.log("######## pre playersId", prePlayerIdRef.current);
+		// console.log("######## current playersId", game.playerId);
+		if (game.playersCount > prePlayerIdRef.current.length) {
+			let pId = game.playerId[game.playersCount - 1];
+			pId !== user.uid && showToast(`${pId} enters ...`);
 		}
+		if (game.playersCount < prePlayerIdRef.current.length) {
+			let pId;
+			for (let player of prePlayerIdRef.current) {
+				if (!game.playerId.includes(player)) {
+					pId = player;
+				}
+			}
+			pId !== user.uid && showToast(`${pId} left ...`);
+		}
+
+		prePlayerIdRef.current = game.playerId;
 	}, [game?.playersCount]);
 
 	useEffect(() => {
@@ -258,11 +281,12 @@ const Game = () => {
 		if (
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
-			game?.gameStatus === "waiting"
-		) {
+			game?.gameStatus === "waiting" &&
+			game?.playersCount === fbGame.maxPlayers
+		)
 			//ask to place a bet
 			toggleTrueBet();
-		}
+		else toggleFalseBet();
 	}, [players, game]);
 
 	useEffect(() => {

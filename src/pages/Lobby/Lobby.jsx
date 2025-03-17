@@ -37,6 +37,7 @@ const Lobby = () => {
 					game.gameStatus !== "waiting"
 				)
 					toggleTrueEnterGame();
+				else toggleFalseEnterGame();
 
 				return game.id; //return game.id of the user
 			}
@@ -125,21 +126,20 @@ const Lobby = () => {
 			return;
 		}
 		userLobby.current.uid = user.uid;
-		const gameId = userJoinedGame(user.uid);
 
-		if (!gameId) {
+		if (!joined) {
 			userLobby.current.joinedGameId = null;
 			return;
 		}
 
-		userLobby.current.joinedGameId = gameId;
+		userLobby.current.joinedGameId = joined;
 		gameDocRef.current = fbGame.getGameDocRef(
 			fbGame.gamesCollectionName,
-			gameId
+			joined
 		);
 		playerDocRef.current = fbGame.getPlayerDocRef(
 			fbGame.gamesCollectionName,
-			gameId,
+			joined,
 			fbGame.playersCollectionName,
 			user.uid
 		);
