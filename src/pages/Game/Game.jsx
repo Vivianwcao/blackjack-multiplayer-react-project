@@ -82,6 +82,11 @@ const Game = () => {
 		});
 	};
 
+	const handleGameCloses = () => {
+		if (game.gameStatus === "waiting") nav("/");
+		toggleFalseGameCloses();
+	};
+
 	//pop & ask to place a bet
 	const handleAddBet = async () => {
 		const betStr = betRef.current.value;
@@ -338,7 +343,7 @@ const Game = () => {
 			</Popup>
 			<Popup
 				isOpen={popGameCloses}
-				handleBtnLeft={toggleFalseGameCloses}
+				handleBtnLeft={handleGameCloses}
 				btnLeftText="Confirm"
 			>
 				<h2 className="pop-title">
