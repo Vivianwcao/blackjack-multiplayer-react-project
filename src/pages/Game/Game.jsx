@@ -22,7 +22,7 @@ import { showToast } from "../../components/Toasts/Toast";
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
-	const { user, userRef } = useAuth();
+	const { user, users } = useAuth();
 	const { removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
@@ -247,24 +247,29 @@ const Game = () => {
 			console.log("User not loaded yet");
 			return; // No cleanup needed if user isn’t ready
 		}
-
 		if (!players || !game) {
 			console.log("Players or game state not loaded.");
 			return;
 		}
+		if (!users) {
+			console.log("Users not loaded yet");
+			return; // No cleanup needed if user isn’t ready
+		}
 		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
-		// console.log("######## pre playersId", prePlayerIdListRef.current);
-		// console.log("######## current playersId", game.playerId);
-
 		//upon refreshing page will not display toast based on initial rendering prePlayerIdListRef.current= []
 		if (prePlayerIdListRef.current.length) {
-			console.log(userRef.current);
 			if (game.playersCount > prePlayerIdListRef.current.length) {
-				let pId = game.playerId[game.playersCount - 1];
+				// let pId = game.playerId[game.playersCount - 1];
+				let pId;
+				for (let playerId of game.playerId) {
+					if (!prePlayerIdListRef.current.includes(playerId)) {
+						pId = playerId; //find the new player who enters
+					}
+				}
 				pId !== user.uid &&
 					showToast(
 						`${
-							userRef?.current.find((user) => user.id === pId).name
+							users?.find((user) => user.id === pId).name || "Someone "
 						} enters ...`
 					);
 			}
@@ -278,7 +283,9 @@ const Game = () => {
 				//show toast on other users' page
 				pId !== user.uid &&
 					showToast(
-						`${userRef?.current.find((user) => user.id === pId).name} left ...`
+						`${
+							users?.find((user) => user.id === pId).name || "Someone "
+						} left ...`
 					);
 				//if initial draw not performed -> go back to lobby page.
 				game.gameStatus === "waiting" && nav("/");

@@ -9,7 +9,7 @@ import { useGameContext } from "../../components/GameProvider";
 import "./Lobby.scss";
 
 const Lobby = () => {
-	const { user, userRef } = useAuth();
+	const { user, users } = useAuth();
 	const { removeEmptyGame } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 

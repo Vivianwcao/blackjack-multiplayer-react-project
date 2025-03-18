@@ -4,12 +4,11 @@ import { setPersistence, browserSessionPersistence } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "../Config";
 import { collectionName, createUser } from "../FirestoreDatabase/firebaseUser";
-import { useRef } from "react";
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
-	const usersRef = useRef(null);
+	const [users, setUsers] = useState(null);
 
 	// Auth persistence
 	const applyAuthSettings = async () => {
@@ -60,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 				return getDocs(collection(db, collectionName));
 			})
 			.then((snapshot) => {
-				usersRef.current = snapshot.docs.map((doc) => doc.data());
-				console.log("------------users in DB: ", usersRef.current);
+				setUsers(snapshot.docs.map((doc) => doc.data()));
+				console.log("------------get users from DB: ", users);
 			})
 			.catch((err) =>
 				console.log(
@@ -94,7 +93,7 @@ export const AuthProvider = ({ children }) => {
 
 	return (
 		//{{user}} because user is an object
-		<AuthContext.Provider value={{ user, usersRef }}>
+		<AuthContext.Provider value={{ user, users }}>
 			{children}
 		</AuthContext.Provider>
 	);
