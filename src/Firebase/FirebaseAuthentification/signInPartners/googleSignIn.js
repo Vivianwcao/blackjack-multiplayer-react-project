@@ -11,10 +11,9 @@ const signInWithGoogle = async () => {
 		//await linkProvider("github");
 
 		console.log("User pressed button to sign in google:", result.user);
-		//return result.user; // Returns user details
+		return result.user; // Returns user details
 	} catch (error) {
-		console.error("Google Sign-In Error:", error);
-		//return null;
+		console.error("Error during sign-in with Google account:", error);
 	}
 };
 
@@ -23,7 +22,7 @@ const signOutAll = async () => {
 		await signOut(auth);
 		console.log("User pressed button to sign out");
 	} catch (error) {
-		console.error("Sign-out error:", error);
+		console.error("Error signing out:", error);
 	}
 };
 

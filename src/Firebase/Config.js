@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, OAuthProvider } from "firebase/auth";
 const firestoreData = import.meta.env;
 
 const firebaseConfig = {
@@ -17,3 +17,4 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const microsoftProvider = new OAuthProvider("microsoft.com");

@@ -23,13 +23,14 @@ const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user, users } = useAuth();
-	const { removeEmptyGame } = useGameContext();
+	// const { removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
-	const prePlayerIdListRef = useRef([]);
+	const prePlayerIdListRef = useRef({ prePlayerIdList: [], counter: 0 }); //list
+	const [render, setRender] = useState(0); //force re-redner
 
 	const nav = useNavigate();
 
@@ -79,7 +80,7 @@ const Game = () => {
 	};
 
 	const handleGameCloses = () => {
-		if (game.gameStatus === "waiting") nav("/");
+		if (game?.gameStatus === "waiting") nav("/");
 		toggleFalseGameCloses();
 	};
 
@@ -161,9 +162,9 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-			//setTimeout(removeEmptyGame, 100); //debounce for latency
-
-			await removeEmptyGame(game.gameRef);
+			setRender((pre) => pre + 1);
+			console.log(game);
+			await fbGame.removeEmptyGame(game.gameRef);
 
 			nav("/");
 		} catch (err) {
@@ -243,7 +244,7 @@ const Game = () => {
 	};
 
 	useEffect(() => {
-		if (!user?.uid) {
+		if (!user) {
 			console.log("User not loaded yet");
 			return; // No cleanup needed if user isn’t ready
 		}
@@ -255,44 +256,50 @@ const Game = () => {
 			console.log("Users not loaded yet");
 			return; // No cleanup needed if user isn’t ready
 		}
-		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
-		//upon refreshing page will not display toast based on initial rendering prePlayerIdListRef.current= []
-		if (prePlayerIdListRef.current.length) {
-			if (game.playersCount > prePlayerIdListRef.current.length) {
-				// let pId = game.playerId[game.playersCount - 1];
-				let pId;
-				for (let playerId of game.playerId) {
-					if (!prePlayerIdListRef.current.includes(playerId)) {
-						pId = playerId; //find the new player who enters
-					}
+		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
+		console.log(
+			"!!!!!!!!!",
+			prePlayerIdListRef.current.prePlayerIdList,
+			prePlayerIdListRef.current.counter,
+			game.playersCount
+		);
+
+		if (game.playersCount > prePlayerIdListRef.current.prePlayerIdList.length) {
+			// let pId = game.playerId[game.playersCount - 1];
+			let pId;
+			for (let playerId of game.playerId) {
+				if (!prePlayerIdListRef.current.prePlayerIdList.includes(playerId)) {
+					pId = playerId; //find the new player who enters
 				}
-				pId !== user.uid &&
-					showToast(
-						`${
-							users?.find((user) => user.id === pId).name || "Someone "
-						} enters ...`
-					);
 			}
-			if (game.playersCount < prePlayerIdListRef.current.length) {
-				let pId;
-				for (let prePlayerId of prePlayerIdListRef.current) {
-					if (!game.playerId.includes(prePlayerId)) {
-						pId = prePlayerId; //find the player who left
-					}
+			pId !== user.uid &&
+				showToast(
+					`${
+						users?.find((user) => user.id === pId)?.name || "Someone "
+					} enters ...`
+				);
+		}
+		//edge case for leaving the game. Otherwise since initial preList is [], first person leaving will not trigger the < comparison
+		if (game.playersCount < prePlayerIdListRef.current.prePlayerIdList.length) {
+			let pId;
+			for (let prePlayerId of prePlayerIdListRef.current.prePlayerIdList) {
+				if (!game.playerId.includes(prePlayerId)) {
+					pId = prePlayerId; //find the player who left
 				}
-				//show toast on other users' page
-				pId !== user.uid &&
-					showToast(
-						`${
-							users?.find((user) => user.id === pId).name || "Someone "
-						} left ...`
-					);
-				//if initial draw not performed -> go back to lobby page.
-				game.gameStatus === "waiting" && nav("/");
 			}
+			//show toast on other users' page
+			pId !== user.uid &&
+				showToast(
+					`${
+						users?.find((user) => user.id === pId)?.name || "Someone "
+					} left ...`
+				);
+			//if initial draw not performed -> go back to lobby page.
+			//game?.gameStatus === "waiting" && nav("/");
 		}
 
-		prePlayerIdListRef.current = game.playerId;
+		prePlayerIdListRef.current.prePlayerIdList = game.playerId;
+		prePlayerIdListRef.current.counter += 1;
 	}, [game?.playersCount]);
 
 	useEffect(() => {
@@ -438,6 +445,11 @@ const Game = () => {
 			)}
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
+				<p>
+					My total hand: Low:
+					{me?.hand && cardsCalculator.calculateHand(me.hand).min} High:
+					{me?.hand && cardsCalculator.calculateHand(me.hand).max}
+				</p>
 			</div>
 		</div>
 	);

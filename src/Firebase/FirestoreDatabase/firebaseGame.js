@@ -1,3 +1,4 @@
+import React from "react";
 import { db } from "../Config";
 import {
 	collection,
@@ -156,6 +157,26 @@ export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 			);
 			return playerDocRef;
 		});
+	}
+};
+
+//remove game remotely if empty game.
+export const removeEmptyGame = async (gameDocRef) => {
+	try {
+		const gameDocSnap = await getDoc(gameDocRef);
+		if (gameDocSnap.exists()) {
+			const gameData = gameDocSnap.data();
+			console.log("Document data:", gameData);
+			if (gameData.playersCount === 0) {
+				const res = await deleteSingleGame(gameDocRef);
+				console.log(res);
+			}
+		} else {
+			console.log(`game ${gameDocRef.id} does not exist`);
+			return;
+		}
+	} catch (err) {
+		throw err;
 	}
 };
 

@@ -10,7 +10,7 @@ import "./Lobby.scss";
 
 const Lobby = () => {
 	const { user, users } = useAuth();
-	const { removeEmptyGame } = useGameContext();
+	// const { removeEmptyGame } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 
 	const gameDocRef = useRef(null);
@@ -114,7 +114,7 @@ const Lobby = () => {
 			//setTimeout(removeEmptyGame, 100); //debounce for latency
 
 			const gameRef = fbGame.getGameDocRef(fbGame.gamesCollectionName, gameId);
-			await removeEmptyGame(gameRef);
+			await fbGame.removeEmptyGame(gameRef);
 
 			toggleFalseEnterGame();
 		} catch (err) {
