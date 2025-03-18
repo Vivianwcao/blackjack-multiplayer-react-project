@@ -152,76 +152,26 @@ const Lobby = () => {
 	}, [user, gamesList]);
 
 	useEffect(() => {
-		const { unsubscribeGames, unsubscribers } = attachOnSnapshotListeners();
-		console.log("**Firestore nested game listeners mounted/attached.**");
+		const unsubscribeGames = attachGamesListener();
+		console.log("**Firestore game listener mounted/attached.**");
 
 		return () => {
-			// Unsubscribe from the games collection listener
-			unsubscribers.forEach((unsubscribe) => unsubscribe()); // Unsubscribe from players listeners
+			// Unsubscribe game listener.
 			unsubscribeGames();
-			console.log("~.~Firestore nested game listeners UNmounted/removed~.~");
+			console.log("~.~Firestore game listener UNMOUNTED/removed~.~");
 		};
 	}, []);
 
 	//Firestore listener on game and players
-	const attachOnSnapshotListeners = () => {
-		//List for inner listeners
-		let unsubscribers = [];
-
-		//Outer lister on games
-		const unsubscribeGames = onSnapshot(
-			fbGame.gamesCollectionRef,
-			(gamesSnapshot) => {
-				//setGameList upon every outer listener firing.
-				setGamesList(
-					gamesSnapshot.docs.map((gameDoc) => ({
-						id: gameDoc.id,
-						...gameDoc.data(),
-						players: [],
-					}))
-				);
-
-				//cleanup the old inner listeners -> ready for next new firing
-				unsubscribers.forEach((unsc) => unsc());
-				unsubscribers = [];
-
-				// mapping game collection snapshot to a list of game objects.
-				unsubscribers = gamesSnapshot.docs.map((gameDoc) => {
-					//get each playersCollectionRef.
-					const playersCollectionRef = collection(
-						fbGame.gamesCollectionRef,
-						gameDoc.id,
-						fbGame.playersCollectionName
-					);
-
-					//inner listener on each game's players collection
-					const unsubscribePlayers = onSnapshot(
-						playersCollectionRef,
-						(playersSnapshot) => {
-							//create a list of players of each game
-							const playersList = playersSnapshot.docs.map((playerDoc) => ({
-								id: playerDoc.id,
-								...playerDoc.data(),
-							}));
-
-							//add the player list to each game object
-							let gameObj = { id: gameDoc.id, ...gameDoc.data() };
-							gameObj.players = playersList;
-
-							//setGameList upon every inner listener firing.
-							setGamesList((pre) => {
-								let filteredPre = pre.filter((game) => game.id !== gameObj.id);
-								return [...filteredPre, gameObj];
-							});
-						}
-					);
-					// explicitly return each listener's unsubscribe function to [unsubscribers].map(...).
-					return unsubscribePlayers;
-				});
-			}
-		);
-		// return subscribe functions of all listeners.
-		return { unsubscribeGames, unsubscribers };
+	const attachGamesListener = () => {
+		return onSnapshot(fbGame.gamesCollectionRef, (gamesSnapshot) => {
+			setGamesList(
+				gamesSnapshot.docs.map((gameDoc) => ({
+					id: gameDoc.id,
+					...gameDoc.data(),
+				}))
+			);
+		});
 	};
 
 	return (
@@ -252,7 +202,7 @@ const Lobby = () => {
 				.map((game) => (
 					<div className="game-room" key={game.id}>
 						<p>{`Game room ${game.id}`}</p>
-						<p>{`Players in: ${game.players ? game.players.length : "0"}`}</p>
+						<p>{`Players in: ${game.playersCount}`}</p>
 
 						{user &&
 							!joined &&

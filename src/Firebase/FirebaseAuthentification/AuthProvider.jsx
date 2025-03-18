@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (!user) return;
+
 		//Create new user -> firestore db Users collection
 		const userData = {
 			id: user.uid,
