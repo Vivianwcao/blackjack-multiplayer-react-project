@@ -14,19 +14,17 @@ import {
 
 export const collectionName = "users";
 
-export const createUser = async (usersCollectionName, userUid) => {
+export const createUser = async (usersCollectionName, userUid, object) => {
 	let userDocRef = doc(db, usersCollectionName, userUid);
-	await setDoc(userDocRef, { time: new Date(), gameId: null }, { merge: true });
+	try {
+		await setDoc(userDocRef, object, { merge: true });
+		return `User ${userUid}'s account recorded in firstore DB.`;
+	} catch (err) {
+		throw err;
+	}
 };
 
-export const updateUser = async (usersCollectionName, userUid, gameDocId) => {
+export const updateUser = async (usersCollectionName, userUid, obj) => {
 	let userDocRef = doc(db, usersCollectionName, userUid);
-	await updateDoc(userDocRef, { gameId: gameDocId });
-};
-
-export const getJoinedGame = async (usersCollectionName, userUid) => {
-	let userDocRef = doc(db, usersCollectionName, userUid);
-	const docSnapShot = await getDoc(userDocRef);
-	console.log("docSnapShot.data().gameId: ", docSnapShot.data().gameId);
-	if (docSnapShot.exists()) return docSnapShot.data().gameId;
+	await updateDoc(userDocRef, obj);
 };

@@ -12,7 +12,6 @@ import {
 	deleteDoc,
 	runTransaction,
 	arrayRemove,
-	serverTimestamp,
 } from "firebase/firestore";
 
 export const gamesCollectionName = "games";
@@ -43,7 +42,7 @@ export const addNewGame = async (gamesCollectionRef, maxPlayers) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
-			timestamp: serverTimestamp(),
+			timestamp: Date.now(),
 			gameStatus: "waiting",
 			deckId: null,
 			playersCount: 0,
@@ -61,9 +60,7 @@ export const updateGame = async (gameDocRef, obj) => {
 		await updateDoc(gameDocRef, obj);
 		return `Updated game ${gameDocRef.id} successfully`;
 	} catch (err) {
-		throw new Error(
-			`Updated game ${gameDocRef.id} failed. Error: ${err.message}`
-		);
+		throw err;
 	}
 };
 
@@ -74,9 +71,7 @@ export const updateGameDealer = async (gameDocRef, cardList) => {
 		});
 		return `Updated dealer from game ${gameDocRef.id} successfully`;
 	} catch (err) {
-		throw new Error(
-			`Updated dealer from game ${gameDocRef.id} failed. Error: ${err.message}`
-		);
+		throw err;
 	}
 };
 
@@ -98,7 +93,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 					playerRef: playerDocRef,
 					gameRef: gameDocRef,
 					gameId: gameDocRef.id,
-					timestamp: serverTimestamp(),
+					timestamp: Date.now(),
 					bet: 0,
 					doubleBet: false,
 					backJack: false,
@@ -122,7 +117,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 				//return playerDocRef;
 			}
 		} catch (err) {
-			throw new Error(err.message);
+			throw err;
 		}
 	}
 };
@@ -133,9 +128,7 @@ export const updatePlayer = async (playerDocRef, changeObj) => {
 		await updateDoc(playerDocRef, changeObj);
 		return `Updated player ${playerDocRef.id} successfully`;
 	} catch (err) {
-		throw new Error(
-			`Updated player ${playerDocRef.id} failed. Error: ${err.message}`
-		);
+		throw err;
 	}
 };
 
@@ -144,9 +137,7 @@ export const updatePlayerHand = async (playerDocRef, cardList) => {
 		await updateDoc(playerDocRef, { hand: arrayUnion(...cardList) });
 		return `Updated player ${playerDocRef.id}'s hand successfully`;
 	} catch (err) {
-		throw new Error(
-			`Updated player ${playerDocRef.id}'s hand failed. Error: ${err.message}`
-		);
+		throw err;
 	}
 };
 
@@ -174,7 +165,7 @@ export const deleteSingleGame = async (gameDocRef) => {
 		await deleteDoc(gameDocRef);
 		return `Deleted ${gameDocRef.id} successfully`;
 	} catch (err) {
-		throw new Error(`Delete ${gameDocRef.id} failed. Error: ${err.message}`);
+		throw err;
 	}
 };
 

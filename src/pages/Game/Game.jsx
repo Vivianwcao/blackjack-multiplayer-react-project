@@ -22,14 +22,14 @@ import { showToast } from "../../components/Toasts/Toast";
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
-	const { user } = useAuth();
+	const { user, userRef } = useAuth();
 	const { removeEmptyGame } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
-	const prePlayerIdRef = useRef([]);
+	const prePlayerIdListRef = useRef([]);
 
 	const nav = useNavigate();
 
@@ -53,12 +53,12 @@ const Game = () => {
 			fbGame.playersCollectionName
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
+			console.log("**Firestore listener on players mounted/attached.**");
 			let newList = [];
 			snapshot.docs.map((doc) => newList.push({ id: doc.id, ...doc.data() }));
 			newList.sort((a, b) => a.timestamp - b.timestamp);
 			setPlayers(newList);
 			console.log("**setPlayers successfully.**");
-			console.log("**Firestore listener on players mounted/attached.**");
 		});
 	};
 
@@ -132,7 +132,7 @@ const Game = () => {
 				console.log(res1);
 			}
 		} catch (err) {
-			console.error(err.message);
+			console.error(err);
 		}
 	};
 
@@ -154,7 +154,7 @@ const Game = () => {
 			const resp = await Promise.all(promises);
 			resp.forEach((msg) => console.log(msg));
 		} catch (err) {
-			console.error(err.message);
+			console.error(err);
 		}
 	};
 
@@ -167,7 +167,7 @@ const Game = () => {
 
 			nav("/");
 		} catch (err) {
-			console.log(err.message);
+			console.log(err);
 		}
 	};
 
@@ -193,7 +193,7 @@ const Game = () => {
 				return;
 			}
 		} catch (err) {
-			throw new Error(err.message);
+			throw new Error(err);
 		}
 	};
 
@@ -223,7 +223,7 @@ const Game = () => {
 				return;
 			}
 		} catch (err) {
-			console.log(err.message);
+			console.log(err);
 		}
 	};
 	const handleStand = async () => {
@@ -238,7 +238,7 @@ const Game = () => {
 			});
 			console.log(res);
 		} catch (err) {
-			console.log(err.message);
+			console.log(err);
 		}
 	};
 
@@ -253,30 +253,39 @@ const Game = () => {
 			return;
 		}
 		//notify user of player quits (anytime))/joins(while gameStatus -> waiting)
-		// console.log("######## pre playersId", prePlayerIdRef.current);
+		// console.log("######## pre playersId", prePlayerIdListRef.current);
 		// console.log("######## current playersId", game.playerId);
 
-		//upon refreshing page will not display toast based on initial rendering prePlayerIdRef.current= []
-		if (prePlayerIdRef.current.length) {
-			if (game.playersCount > prePlayerIdRef.current.length) {
+		//upon refreshing page will not display toast based on initial rendering prePlayerIdListRef.current= []
+		if (prePlayerIdListRef.current.length) {
+			console.log(userRef.current);
+			if (game.playersCount > prePlayerIdListRef.current.length) {
 				let pId = game.playerId[game.playersCount - 1];
-				pId !== user.uid && showToast(`${pId} enters ...`);
+				pId !== user.uid &&
+					showToast(
+						`${
+							userRef?.current.find((user) => user.id === pId).name
+						} enters ...`
+					);
 			}
-			if (game.playersCount < prePlayerIdRef.current.length) {
+			if (game.playersCount < prePlayerIdListRef.current.length) {
 				let pId;
-				for (let prePlayerId of prePlayerIdRef.current) {
+				for (let prePlayerId of prePlayerIdListRef.current) {
 					if (!game.playerId.includes(prePlayerId)) {
 						pId = prePlayerId; //find the player who left
 					}
 				}
 				//show toast on other users' page
-				pId !== user.uid && showToast(`${pId} left ...`);
+				pId !== user.uid &&
+					showToast(
+						`${userRef?.current.find((user) => user.id === pId).name} left ...`
+					);
 				//if initial draw not performed -> go back to lobby page.
 				game.gameStatus === "waiting" && nav("/");
 			}
 		}
 
-		prePlayerIdRef.current = game.playerId;
+		prePlayerIdListRef.current = game.playerId;
 	}, [game?.playersCount]);
 
 	useEffect(() => {

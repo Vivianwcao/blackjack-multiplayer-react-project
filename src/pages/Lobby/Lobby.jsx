@@ -9,7 +9,7 @@ import { useGameContext } from "../../components/GameProvider";
 import "./Lobby.scss";
 
 const Lobby = () => {
-	const { user } = useAuth();
+	const { user, userRef } = useAuth();
 	const { removeEmptyGame } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 
@@ -118,7 +118,7 @@ const Lobby = () => {
 
 			toggleFalseEnterGame();
 		} catch (err) {
-			console.error(err.message);
+			console.error(err);
 		}
 	};
 	useEffect(() => {
