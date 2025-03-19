@@ -8,7 +8,6 @@ export const calculateHand = (handList) => {
 		else if (card.value === "ACE") (total.min += 1), (total.max += 11);
 		else (total.min += 10), (total.max += 10);
 	}
-	console.log(total);
 	return total;
 };
 
@@ -16,4 +15,5 @@ export const isBlackJack = (handList) => calculateHand(handList).max === 21;
 
 export const isBusted = (handList) => calculateHand(handList).min > 21;
 
+export const isBlackjack = (handList) => calculateHand(handList).max === 21;
 //calculate scores

@@ -97,7 +97,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 					timestamp: Date.now(),
 					bet: 0,
 					doubleBet: false,
-					backJack: false,
+					hasBlackJack: false,
 					busted: false,
 					canHit: true,
 					deckId: null,

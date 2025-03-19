@@ -10,7 +10,6 @@ import "./Lobby.scss";
 
 const Lobby = () => {
 	const { user, users } = useAuth();
-	const { gamesListRef } = useGameContext();
 	const [gamesList, setGamesList] = useState([]);
 
 	const gameDocRef = useRef(null);
@@ -165,13 +164,12 @@ const Lobby = () => {
 	//Firestore listener on game and players
 	const attachGamesListener = () => {
 		return onSnapshot(fbGame.gamesCollectionRef, (gamesSnapshot) => {
-			const newList = gamesSnapshot.docs.map((gameDoc) => ({
-				id: gameDoc.id,
-				...gameDoc.data(),
-			}));
-			//set ref in context
-			gamesListRef.current = newList;
-			setGamesList(newList);
+			setGamesList(
+				gamesSnapshot.docs.map((gameDoc) => ({
+					id: gameDoc.id,
+					...gameDoc.data(),
+				}))
+			);
 		});
 	};
 

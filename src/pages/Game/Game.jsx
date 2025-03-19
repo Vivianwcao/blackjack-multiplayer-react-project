@@ -12,31 +12,44 @@ import {
 } from "firebase/firestore";
 import { toast, Slide } from "react-toastify";
 import Popup from "../../components/Popup/Popup";
-import "./Game.scss";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
 import { useGameContext } from "../../components/GameProvider";
 import { showToast } from "../../components/Toasts/Toast";
+import "./Game.scss";
 
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user, users } = useAuth();
-	const { gamesListRef } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
 
-	const prePlayerIdListRef = useRef({
-		prePlayerIdList:
-			gamesListRef.current.find((game) => game.id === gameId)?.playerId || [],
-		counter: 0,
+	const playersRef = useRef(players);
+
+	//get the latest players list before next batch re-render
+	useEffect(() => {
+		playersRef.current = players;
+	}, [players]);
+
+	const prePlayerIdRef = useRef({
+		prePlayerId: [],
+		initialRender: true,
 	});
-	console.log("XXXXXXXXXXXXXX", prePlayerIdListRef.current);
-	//const [render, setRender] = useState(0); //force re-redner
+
+	//get the very initial playerId list once game state loads.
+	useEffect(() => {
+		if (!game?.playerId?.length) return; //if game not loaded/no players in yet
+		if (prePlayerIdRef.current.initialRender === true) {
+			prePlayerIdRef.current.prePlayerId = game.playerId; //only run once
+			prePlayerIdRef.current.initialRender = false;
+			return;
+		}
+	}, [game?.playerId]);
 
 	const nav = useNavigate();
 
@@ -60,10 +73,10 @@ const Game = () => {
 			fbGame.playersCollectionName
 		);
 		return onSnapshot(playersCollectionRef, (snapshot) => {
-			console.log("**Firestore listener on players mounted/attached.**");
 			let newList = [];
 			snapshot.docs.map((doc) => newList.push({ id: doc.id, ...doc.data() }));
 			newList.sort((a, b) => a.timestamp - b.timestamp);
+			//playersRef.current = newList; //get the latest players list before setPlayers
 			setPlayers(newList);
 			console.log("**setPlayers successfully.**");
 		});
@@ -79,7 +92,7 @@ const Game = () => {
 				console.log(`Game with id: ${gameRef.id} does not exist`);
 				return; // No value needed
 			}
-			console.log("**Firestore listener on game mounted/attached.**");
+
 			setGame(snapshot.data());
 			console.log("**setGame successfully.**");
 		});
@@ -212,17 +225,23 @@ const Game = () => {
 			const { cards } = await cardMachine.drawSingleCard(currentPlayer.deckId);
 			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);
 
-			//check if doubleBet === true -> no more hit
+			//check if doubleBet === true -> canHit -> false
 			if (currentPlayer.doubleBet === true) {
 				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
 					canHit: false,
 				});
 				console.log(res);
 			}
-			//check if busted latency error!
-			if (cardsCalculator.isBusted(currentPlayer.hand)) {
-				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+
+			//create a local currentPlayer with the latest players list from ref.
+			const updatedCurrentPlayer = playersRef.current.at(
+				game?.currentPlayerIndex
+			);
+			//check if busted  === true -> canHit -> false
+			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
+				const res = await fbGame.updatePlayer(updatedCurrentPlayer.playerRef, {
 					busted: true,
+					canHit: false,
 					status: "lost",
 				});
 				console.log(res);
@@ -262,20 +281,16 @@ const Game = () => {
 			console.log("Users not loaded yet");
 			return; // No cleanup needed if user isn’t ready
 		}
-		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
-		console.log(
-			"!!!!!!!!!",
-			prePlayerIdListRef.current.prePlayerIdList,
-			prePlayerIdListRef.current.counter,
-			game.playersCount
-		);
+		console.log("!!!!!!!!!", game.playerId, prePlayerIdRef.current.prePlayerId);
+		const prePIds = prePlayerIdRef.current.prePlayerId;
 
-		if (game.playersCount > prePlayerIdListRef.current.prePlayerIdList.length) {
+		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
+		if (game.playersCount > prePIds.length) {
 			// let pId = game.playerId[game.playersCount - 1];
 			let pId;
-			for (let playerId of game.playerId) {
-				if (!prePlayerIdListRef.current.prePlayerIdList.includes(playerId)) {
-					pId = playerId; //find the new player who enters
+			for (let id of game.playerId) {
+				if (!prePIds?.includes(id)) {
+					pId = id; //find the new player who enters
 				}
 			}
 			pId !== user.uid &&
@@ -285,12 +300,12 @@ const Game = () => {
 					} enters ...`
 				);
 		}
-		//edge case for leaving the game. Otherwise since initial preList is [], first person leaving will not trigger the < comparison
-		if (game.playersCount < prePlayerIdListRef.current.prePlayerIdList.length) {
+
+		if (game.playersCount < prePIds.length) {
 			let pId;
-			for (let prePlayerId of prePlayerIdListRef.current.prePlayerIdList) {
-				if (!game.playerId.includes(prePlayerId)) {
-					pId = prePlayerId; //find the player who left
+			for (let id of prePIds) {
+				if (!game.playerId.includes(id)) {
+					pId = id; //find the player who left
 				}
 			}
 			//show toast on other users' page
@@ -300,12 +315,11 @@ const Game = () => {
 						users?.find((user) => user.id === pId)?.name || "Someone "
 					} left ...`
 				);
-			//if initial draw not performed -> go back to lobby page.
-			game?.gameStatus === "waiting" && nav("/");
+			//if !initial draw -> go back to lobby page.
+			//game?.gameStatus === "waiting" && nav("/");
 		}
-
-		prePlayerIdListRef.current.prePlayerIdList = game.playerId;
-		prePlayerIdListRef.current.counter += 1;
+		//updates prePlayerId ref
+		prePlayerIdRef.current.prePlayerId = game.playerId;
 	}, [game?.playersCount]);
 
 	useEffect(() => {
@@ -339,7 +353,9 @@ const Game = () => {
 		);
 		//attach listeners
 		const unsubscribeGame = addGameListener(gameDocRef.current);
+		console.log("**Firestore listener on game mounted/attached.**");
 		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
+		console.log("**Firestore listener on players mounted/attached.**");
 
 		return () => {
 			unsubscribeGame?.();
@@ -352,7 +368,8 @@ const Game = () => {
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
-		currentPlayer?.busted === false;
+		currentPlayer?.busted === false &&
+		currentPlayer?.hasBlackJack === false;
 
 	const handleDBetCondition = () =>
 		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
@@ -393,12 +410,11 @@ const Game = () => {
 					Someone has left the game ... going back to lobby
 				</h2>
 			</Popup>
-			{console.log(
-				"* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ *in game",
-				game
-			)}
-			{console.log(user)}
+
+			{console.log("* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ * in game")}
 			{console.log(players)}
+			{/* { console.log( user ) } */}
+
 			<button onClick={toggleTrueQuitGame}>Quit game</button>
 			<div className="game__opponents-container">
 				{opponents?.map((player) =>
@@ -435,9 +451,9 @@ const Game = () => {
 					</div>
 				))}
 			</div>
-			{console.log("+++++++++", game?.currentPlayerIndex)}
+			{/* {console.log("+++++++++", game?.currentPlayerIndex)}
 			{console.log("+++++++++", currentPlayer?.id)}
-			{console.log("+++++++++", user?.uid)}
+			{console.log("+++++++++", user?.uid)} */}
 			{controlBoardCondition() && (
 				<div className="game__control-board">
 					{currentPlayer.canHit === true && (

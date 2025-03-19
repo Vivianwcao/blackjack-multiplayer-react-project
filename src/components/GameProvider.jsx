@@ -1,15 +1,8 @@
-import React, { useRef, useContext, createContext } from "react";
-import { collection, getDocs, getDoc } from "firebase/firestore";
+import React, { useContext, createContext } from "react";
 
 const GameContext = createContext(null);
 
 export const GameProvider = ({ children }) => {
-	const gamesListRef = useRef([]);
-
-	return (
-		<GameContext.Provider value={{ gamesListRef }}>
-			{children}
-		</GameContext.Provider>
-	);
+	return <GameContext.Provider value={{}}>{children}</GameContext.Provider>;
 };
 export const useGameContext = () => useContext(GameContext);
