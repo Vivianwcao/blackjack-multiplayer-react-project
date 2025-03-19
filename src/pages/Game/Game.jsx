@@ -36,7 +36,7 @@ const Game = () => {
 		counter: 0,
 	});
 	console.log("XXXXXXXXXXXXXX", prePlayerIdListRef.current);
-	const [render, setRender] = useState(0); //force re-redner
+	//const [render, setRender] = useState(0); //force re-redner
 
 	const nav = useNavigate();
 
@@ -168,11 +168,11 @@ const Game = () => {
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-			setRender((pre) => pre + 1);
-			console.log(game);
-			await fbGame.removeEmptyGame(game.gameRef);
+
+			console.log("$$$$$$$$$$$$$", game);
 
 			nav("/");
+			await fbGame.removeEmptyGame(game.gameRef);
 		} catch (err) {
 			console.log(err);
 		}

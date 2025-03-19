@@ -144,19 +144,23 @@ export const updatePlayerHand = async (playerDocRef, cardList) => {
 
 export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
 	const playerDocSnapshot = await getDoc(playerDocRef);
-	if (playerDocSnapshot.exists()) {
-		await runTransaction(db, async (transaction) => {
-			transaction.delete(playerDocRef);
-			transaction.update(gameDocRef, {
-				playersCount: increment(-1),
-				playerRef: arrayRemove(playerDocRef),
-				playerId: arrayRemove(playerDocRef.id),
+	try {
+		if (playerDocSnapshot.exists()) {
+			await runTransaction(db, async (transaction) => {
+				transaction.delete(playerDocRef);
+				transaction.update(gameDocRef, {
+					playersCount: increment(-1),
+					playerRef: arrayRemove(playerDocRef),
+					playerId: arrayRemove(playerDocRef.id),
+				});
+				console.log(
+					`Player ${playerDocRef.id} removed from game ${gameDocRef.id}`
+				);
+				return playerDocRef;
 			});
-			console.log(
-				`Player ${playerDocRef.id} removed from game ${gameDocRef.id}`
-			);
-			return playerDocRef;
-		});
+		}
+	} catch (err) {
+		throw err;
 	}
 };
 
@@ -165,15 +169,15 @@ export const removeEmptyGame = async (gameDocRef) => {
 	try {
 		const gameDocSnap = await getDoc(gameDocRef);
 		if (gameDocSnap.exists()) {
-			const gameData = gameDocSnap.data();
-			console.log("Document data:", gameData);
-			if (gameData.playersCount === 0) {
+			const playersCollectionRef = collection(
+				gameDocRef,
+				playersCollectionName
+			);
+			const playersCollectionSnapshot = await getDocs(playersCollectionRef);
+			if (playersCollectionSnapshot.empty) {
 				const res = await deleteSingleGame(gameDocRef);
 				console.log(res);
 			}
-		} else {
-			console.log(`game ${gameDocRef.id} does not exist`);
-			return;
 		}
 	} catch (err) {
 		throw err;
@@ -184,7 +188,7 @@ export const removeEmptyGame = async (gameDocRef) => {
 export const deleteSingleGame = async (gameDocRef) => {
 	try {
 		await deleteDoc(gameDocRef);
-		return `Deleted ${gameDocRef.id} successfully`;
+		return `Deleted game ${gameDocRef.id} successfully`;
 	} catch (err) {
 		throw err;
 	}
