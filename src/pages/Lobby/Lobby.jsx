@@ -21,7 +21,6 @@ const Lobby = () => {
 
 	const navigate = useNavigate();
 	const handleEnterGame = (navigateTo, gameId) => {
-		console.log("inside handleEnter game: ");
 		navigateTo(`/${gameId}`);
 	};
 
@@ -121,7 +120,6 @@ const Lobby = () => {
 		}
 	};
 	useEffect(() => {
-		console.log("~ ~ ~ ~ ~ UseEffect in Lobby runs~ ~ ~ ~ ~ ");
 		if (!user) {
 			//not signed in/not loaded
 			userLobby.current.uid = null;
@@ -175,11 +173,7 @@ const Lobby = () => {
 
 	return (
 		<div className="lobby">
-			{console.log(
-				"* * * * * re-render * * * * *userLobby in jsx",
-				userLobby.current,
-				gamesList
-			)}
+			{console.log("* * * * * re-render * * * * *userLobby in jsx")}
 
 			<Popup
 				isOpen={popEnterGame}

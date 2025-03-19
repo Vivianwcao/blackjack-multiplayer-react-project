@@ -182,8 +182,6 @@ const Game = () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
 
-			console.log("$$$$$$$$$$$$$", game);
-
 			nav("/");
 			await fbGame.removeEmptyGame(game.gameRef);
 		} catch (err) {
@@ -281,7 +279,7 @@ const Game = () => {
 			console.log("Users not loaded yet");
 			return; // No cleanup needed if user isn’t ready
 		}
-		console.log("!!!!!!!!!", game.playerId, prePlayerIdRef.current.prePlayerId);
+		//console.log("!!!!!!!!!", game.playerId, prePlayerIdRef.current.prePlayerId);
 		const prePIds = prePlayerIdRef.current.prePlayerId;
 
 		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
@@ -316,7 +314,7 @@ const Game = () => {
 					} left ...`
 				);
 			//if !initial draw -> go back to lobby page.
-			//game?.gameStatus === "waiting" && nav("/");
+			game?.gameStatus === "waiting" && nav("/");
 		}
 		//updates prePlayerId ref
 		prePlayerIdRef.current.prePlayerId = game.playerId;
@@ -451,9 +449,6 @@ const Game = () => {
 					</div>
 				))}
 			</div>
-			{/* {console.log("+++++++++", game?.currentPlayerIndex)}
-			{console.log("+++++++++", currentPlayer?.id)}
-			{console.log("+++++++++", user?.uid)} */}
 			{controlBoardCondition() && (
 				<div className="game__control-board">
 					{currentPlayer.canHit === true && (
