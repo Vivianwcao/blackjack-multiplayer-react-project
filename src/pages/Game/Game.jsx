@@ -23,13 +23,19 @@ const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const Game = () => {
 	const { user, users } = useAuth();
-	// const { removeEmptyGame } = useGameContext();
+	const { gamesListRef } = useGameContext();
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
-	const prePlayerIdListRef = useRef({ prePlayerIdList: [], counter: 0 }); //list
+
+	const prePlayerIdListRef = useRef({
+		prePlayerIdList:
+			gamesListRef.current.find((game) => game.id === gameId)?.playerId || [],
+		counter: 0,
+	});
+	console.log("XXXXXXXXXXXXXX", prePlayerIdListRef.current);
 	const [render, setRender] = useState(0); //force re-redner
 
 	const nav = useNavigate();
@@ -295,7 +301,7 @@ const Game = () => {
 					} left ...`
 				);
 			//if initial draw not performed -> go back to lobby page.
-			//game?.gameStatus === "waiting" && nav("/");
+			game?.gameStatus === "waiting" && nav("/");
 		}
 
 		prePlayerIdListRef.current.prePlayerIdList = game.playerId;
