@@ -29,6 +29,13 @@ const Game = () => {
 	const gameDocRef = useRef(null);
 	const betRef = useRef(null);
 
+	const gameRef = useRef(game);
+
+	//get the latest game doc before next batch re-render
+	useEffect(() => {
+		gameRef.current = game;
+	}, [game]);
+
 	const playersRef = useRef(players);
 
 	//get the latest players list before next batch re-render
@@ -60,10 +67,17 @@ const Game = () => {
 	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
 
-	const findMe = () => players?.find((player) => player.id === user?.uid);
-	const me = findMe();
-	const currentPlayer = players?.at(game?.currentPlayerIndex);
-	const opponents = players?.filter((player) => player.id !== user?.uid);
+	const getMe = (playersList) =>
+		playersList?.find((player) => player?.id === user?.uid);
+	const me = getMe(players);
+
+	const getOpponents = (playersList) =>
+		playersList?.filter((player) => player?.id !== user?.uid);
+	const opponents = getOpponents(players);
+
+	const getCurrentPlayer = (playersList) =>
+		playersList?.find((player) => player?.donePlaying === false);
+	const currentPlayer = getCurrentPlayer(players);
 
 	//listeners on list of players
 	const addPlayersListeners = (gameRef) => {
@@ -156,9 +170,42 @@ const Game = () => {
 		}
 	};
 
+	const blackjackOutcome = async () => {
+		//create a local me off the updated playersRef.
+		const updatedMe = getMe(playersRef.current);
+
+		//get the latest game from gameRef.
+		const updatedGame = gameRef.current;
+
+		console.log("!!!!!!!!!!!!", updatedMe.hand, updatedGame.dealer);
+
+		//check for if anyone has natural blackjack(first 2 cards)
+		const IHaveBlackjack = cardsCalculator.hasBlackJack(updatedMe.hand);
+		const dealerHasBlackjack = cardsCalculator.hasBlackJack(updatedGame.dealer);
+
+		let updates = { donePlaying: true, canHit: false };
+		if (IHaveBlackjack && !dealerHasBlackjack) {
+			//I win against the dealer
+			updates = { ...updates, status: "win", hasBlackJack: true };
+		} else if (!IHaveBlackjack && dealerHasBlackjack) {
+			//I lost against the dealer
+			updates = { ...updates, status: "lost", hasBlackJack: false };
+		} else if (IHaveBlackjack && dealerHasBlackjack) {
+			//push/tie
+			updates = { ...updates, status: "push", hasBlackJack: true };
+		}
+		//if neither has -> continue game
+		try {
+			const res = await fbGame.updatePlayer(updatedMe, updates);
+			console.log(res);
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
 	//gameStatus -> "dealing"
 	//api call -> get deck, first 2 cards
-	//player status -> "playing"
+	//immediately check for blackjack
 	const playingInitialDraw = async (deck_id) => {
 		try {
 			//draw two cards each ->setGame, setPlayers
@@ -173,11 +220,8 @@ const Game = () => {
 			promises.push(fbGame.updateGameDealer(gameDocRef.current, cards));
 			const resp = await Promise.all(promises);
 			resp.forEach((msg) => console.log(msg));
-			// //check for if anyone has natural blackjack(first 2 cards)
-			// if (cardsCalculator.hasBlackJack(updatedCurrentPlayer.hand)) {
-			// 	await updateHasBlackjack(updatedCurrentPlayer);
-			// 	return;
-			// }
+
+			await blackjackOutcome();
 		} catch (err) {
 			console.error(err);
 		}
@@ -188,30 +232,26 @@ const Game = () => {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
 
 			nav("/");
-			await fbGame.removeEmptyGame(game.gameRef);
+			let delay = setTimeout(
+				async () => await fbGame.removeEmptyGame(game.gameRef),
+				300
+			);
+			const cancelTimeout = () => clearTimeout(delay);
 		} catch (err) {
 			console.log(err);
 		}
 	};
 
 	const checkForNextPlayer = async () => {
+		//create a local currentPlayer with the latest players list from ref.
+		const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
 		try {
 			//check if last player yes -> dealer turn
-			const currentPlayerI = game.currentPlayerIndex;
-			if (currentPlayerI === game.playersCount - 1) {
+			if (!updatedCurrentPlayer) {
 				//yes -> dealer turn
 				const res = await fbGame.updateGame(game.gameRef, {
 					gameStatus: "dealerTurn",
 				});
-				console.log(res);
-				return;
-			}
-			if (currentPlayerI < game.playersCount - 1) {
-				//yes -> change gameStatus currentPlayerIndex +1
-				const res = await fbGame.updateGame(game.gameRef, {
-					currentPlayerIndex: increment(1),
-				});
-
 				console.log(res);
 				return;
 			}
@@ -225,20 +265,8 @@ const Game = () => {
 			const res = await fbGame.updatePlayer(player.playerRef, {
 				busted: true,
 				canHit: false,
+				donePlaying: true,
 				status: "lost",
-			});
-			console.log(res);
-			return;
-		} catch (err) {
-			console.log(err);
-		}
-	};
-
-	const updateHasBlackjack = async (player) => {
-		try {
-			const res = await fbGame.updatePlayer(player.playerRef, {
-				hasBlackJack: true,
-				canHit: false,
 			});
 			console.log(res);
 			return;
@@ -264,9 +292,8 @@ const Game = () => {
 			}
 
 			//create a local currentPlayer with the latest players list from ref.
-			const updatedCurrentPlayer = playersRef.current.at(
-				game?.currentPlayerIndex
-			);
+			const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
+
 			//check if busted  === true -> canHit -> false
 			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
 				await updateIsBusted(updatedCurrentPlayer);
@@ -278,9 +305,21 @@ const Game = () => {
 		}
 	};
 	const handleStand = async () => {
-		//check if last player is a player or dealer
-		await checkForNextPlayer();
+		try {
+			const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+				canHit: false,
+				donePlaying: true,
+			});
+			console.log(res);
+
+			//check if last player is a player or dealer
+			await checkForNextPlayer();
+			return;
+		} catch (err) {
+			console.log(err);
+		}
 	};
+
 	const handleDBet = async () => {
 		try {
 			const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
@@ -393,7 +432,7 @@ const Game = () => {
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
-		currentPlayer?.busted === false;
+		currentPlayer?.donePlaying === false;
 
 	const handleDBetCondition = () =>
 		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
@@ -459,7 +498,9 @@ const Game = () => {
 						<img
 							className="game__card game__card--dealer"
 							src={
-								i === 1 && game?.gameStatus !== "dealerTurn"
+								i === 1 &&
+								game?.gameStatus !== "dealerTurn" &&
+								me.hasBlackJack === false
 									? backOfCardImg
 									: image
 							}

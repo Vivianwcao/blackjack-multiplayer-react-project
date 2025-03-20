@@ -99,6 +99,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 					hasBlackJack: false,
 					busted: false,
 					canHit: true,
+					donePlaying: false,
 					deckId: null,
 				};
 				await runTransaction(db, async (transaction) => {
