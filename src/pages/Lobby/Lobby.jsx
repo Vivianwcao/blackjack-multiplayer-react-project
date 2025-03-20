@@ -21,8 +21,6 @@ const Lobby = () => {
 
 	const navigate = useNavigate();
 	const handleEnterGame = (navigateTo, game) => {
-		//let path = game.isOngoing ? `/ongoing/${game.gameId}` : `/${game.gameId}`;
-
 		navigateTo(`/${game.gameId}`);
 	};
 
@@ -33,6 +31,7 @@ const Lobby = () => {
 			if (game?.playersCount > 0 && game.playerId.includes(uid)) {
 				//side effects here
 				if (
+					game.isOngoing ||
 					game.playersCount === game.maxPlayers ||
 					game.gameStatus !== "waiting"
 				)
@@ -132,11 +131,18 @@ const Lobby = () => {
 		}
 	};
 
-	const joinGameConditions = (game) =>
-		user &&
-		!joined &&
-		game.playersCount < game.maxPlayers &&
-		game.gameStatus === "waiting";
+	const joinGameConditions = (game) => {
+		const basicCondition =
+			user && !joined && game.playersCount < game.maxPlayers;
+		if (game.isOngoing) {
+			return (
+				basicCondition &&
+				(game.gameStatus !== "dealerTurn" || game.status !== "gameOver")
+			);
+		} else {
+			return basicCondition && game.gameStatus === "waiting";
+		}
+	};
 
 	useEffect(() => {
 		if (!user) {

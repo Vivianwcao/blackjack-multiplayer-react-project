@@ -187,12 +187,15 @@ const GameOngoing = () => {
 		if (IHaveBlackjack && !dealerHasBlackjack) {
 			//I win against the dealer
 			updates = { ...updates, status: "win", hasBlackJack: true };
+			//game continues for the rest
 		} else if (!IHaveBlackjack && dealerHasBlackjack) {
 			//I lost against the dealer
 			updates = { ...updates, status: "lost", hasBlackJack: false };
+			//also gameStatus -> "gameOver"
 		} else if (IHaveBlackjack && dealerHasBlackjack) {
 			//push/tie
 			updates = { ...updates, status: "push", hasBlackJack: true };
+			//same check for the rest
 		}
 		//if neither has -> continue game
 		try {
@@ -332,6 +335,7 @@ const GameOngoing = () => {
 		}
 	};
 
+	//Notify as other player enter/leaves
 	useEffect(() => {
 		if (!user) {
 			console.log("User not loaded yet");
@@ -396,14 +400,14 @@ const GameOngoing = () => {
 		if (
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
-			game?.gameStatus === "waiting" &&
-			game?.playersCount === game?.maxPlayers
+			game?.gameStatus === "waiting"
 		)
 			//ask to place a bet
 			toggleTrueBet();
 		else toggleFalseBet();
 	}, [players, game]);
 
+	//attach listeners
 	useEffect(() => {
 		if (!user?.uid) {
 			console.log("User not loaded yet");
