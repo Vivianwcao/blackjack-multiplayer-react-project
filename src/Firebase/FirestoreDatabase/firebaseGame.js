@@ -47,7 +47,6 @@ export const addNewGame = async (gamesCollectionRef, maxPlayers) => {
 			gameStatus: "waiting",
 			deckId: null,
 			playersCount: 0,
-			currentPlayerIndex: 0,
 			maxPlayers,
 		},
 		{ merge: true }

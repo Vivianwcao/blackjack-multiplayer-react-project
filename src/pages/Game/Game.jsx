@@ -173,6 +173,11 @@ const Game = () => {
 			promises.push(fbGame.updateGameDealer(gameDocRef.current, cards));
 			const resp = await Promise.all(promises);
 			resp.forEach((msg) => console.log(msg));
+			// //check for if anyone has natural blackjack(first 2 cards)
+			// if (cardsCalculator.hasBlackJack(updatedCurrentPlayer.hand)) {
+			// 	await updateHasBlackjack(updatedCurrentPlayer);
+			// 	return;
+			// }
 		} catch (err) {
 			console.error(err);
 		}
@@ -215,12 +220,39 @@ const Game = () => {
 		}
 	};
 
+	const updateIsBusted = async (player) => {
+		try {
+			const res = await fbGame.updatePlayer(player.playerRef, {
+				busted: true,
+				canHit: false,
+				status: "lost",
+			});
+			console.log(res);
+			return;
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const updateHasBlackjack = async (player) => {
+		try {
+			const res = await fbGame.updatePlayer(player.playerRef, {
+				hasBlackJack: true,
+				canHit: false,
+			});
+			console.log(res);
+			return;
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
 	const handleHit = async () => {
 		try {
 			//Re-shuffle deck
-			await cardMachine.shuffleDeck(currentPlayer.deckId);
+			await cardMachine.shuffleDeck(game.deckId);
 			//draw one card
-			const { cards } = await cardMachine.drawSingleCard(currentPlayer.deckId);
+			const { cards } = await cardMachine.drawSingleCard(game.deckId);
 			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);
 
 			//check if doubleBet === true -> canHit -> false
@@ -237,12 +269,7 @@ const Game = () => {
 			);
 			//check if busted  === true -> canHit -> false
 			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
-				const res = await fbGame.updatePlayer(updatedCurrentPlayer.playerRef, {
-					busted: true,
-					canHit: false,
-					status: "lost",
-				});
-				console.log(res);
+				await updateIsBusted(updatedCurrentPlayer);
 				await checkForNextPlayer();
 				return;
 			}
@@ -366,8 +393,7 @@ const Game = () => {
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
-		currentPlayer?.busted === false &&
-		currentPlayer?.hasBlackJack === false;
+		currentPlayer?.busted === false;
 
 	const handleDBetCondition = () =>
 		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
