@@ -132,7 +132,7 @@ const Lobby = () => {
 		}
 	};
 
-	const joinGameCondition = (game) =>
+	const joinGameConditions = (game) =>
 		user &&
 		!joined &&
 		game.playersCount < game.maxPlayers &&
@@ -220,16 +220,15 @@ const Lobby = () => {
 						<p>{`Game room ${game.gameId}`}</p>
 						<p>{`Players in: ${game.playersCount}/${game.maxPlayers}`}</p>
 
-						{joinGameCondition(game) && (
+						{joinGameConditions(game) && (
 							<button onClick={() => handleJoinGame(game.gameId)}>
 								Join game
 							</button>
 						)}
-						{user && joined?.gameId === game.gameId ? (
+						{user && joined?.gameId === game.gameId && (
 							<button onClick={() => handleLeaveGame(game)}>Leave game</button>
-						) : (
-							<p>Game is in progress ...</p>
 						)}
+						{game.gameStatus !== "waiting" && <p>Game is in progress ...</p>}
 					</div>
 				))}
 			{user && !joined && (
