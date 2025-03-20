@@ -4,6 +4,7 @@ import { ToastContainer, toast, Slide } from "react-toastify";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import Lobby from "./pages/Lobby/Lobby";
 import Game from "./pages/Game/Game";
+import GameOngoing from "./pages/GameOngoing/GameOngoing";
 import {
 	handleGoogleSignIn,
 	handleSignOut,
@@ -49,6 +50,7 @@ const App = () => {
 				{/* <Route path="/" element={<ProtectedRoute component={Lobby} />} /> */}
 				<Route path="/" element={<Lobby />} />
 				<Route path="/:gameId" element={<Game />} />
+				<Route path="/:gameOngoingId" element={<GameOngoing />} />
 			</Routes>
 			{/* </GameProvider> */}
 		</BrowserRouter>

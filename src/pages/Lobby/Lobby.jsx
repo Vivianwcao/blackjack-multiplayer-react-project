@@ -14,14 +14,14 @@ const Lobby = () => {
 
 	const gameDocRef = useRef(null);
 	const playerDocRef = useRef(null);
-	const userLobby = useRef({ uid: null, joinedGameId: null });
+	const userLobby = useRef({ uid: null, joinedGame: null });
 
 	const [popEnterGame, toggleTrueEnterGame, toggleFalseEnterGame] =
 		useToggle(false);
 
 	const navigate = useNavigate();
-	const handleEnterGame = (navigateTo, gameId) => {
-		navigateTo(`/${gameId}`);
+	const handleEnterGame = (navigateTo, game) => {
+		navigateTo(`/${game.gameId}`);
 	};
 
 	//Helper -- Check if user has already joined a game
@@ -37,7 +37,7 @@ const Lobby = () => {
 					toggleTrueEnterGame();
 				else toggleFalseEnterGame();
 
-				return game.id; //return game.id of the user
+				return game; //return game.id of the user
 			}
 		}
 		toggleFalseEnterGame();
@@ -76,7 +76,7 @@ const Lobby = () => {
 	};
 
 	const handleJoinGame = async (gameId) => {
-		let { uid, joinedGameId } = userLobby.current;
+		let { uid, joinedGame } = userLobby.current;
 		if (!user) {
 			console.log("User not signed in");
 			return;
@@ -85,27 +85,28 @@ const Lobby = () => {
 			console.log("Something went wrong here....not the correct user.");
 			return;
 		}
-		if (joinedGameId) {
-			console.log(`User ${user.uid} has already joined game: ${joinedGameId}`);
+		if (joinedGame) {
+			console.log(
+				`User ${user.uid} has already joined game: ${joinedGame.gameId}`
+			);
 		}
-		if (!joinedGameId) {
+		if (!joinedGame) {
 			// add player to game.
 			const gameRef = fbGame.getGameDocRef(fbGame.gamesCollectionName, gameId);
 			try {
 				await fbGame.createPlayer(gameRef, "waiting", user.uid);
-				userLobby.current.joinedGameId = gameId; //minimizing latency
 			} catch (err) {
 				console.error("Error joining game: ", err);
 			}
 		}
 	};
 
-	const handleLeaveGame = async (gameId) => {
+	const handleLeaveGame = async (game) => {
 		if (!user) {
 			console.log("User not signed in");
 			return;
 		}
-		if (gameId !== userLobby.current.joinedGameId) {
+		if (game.gameId !== userLobby.current.joinedGame.gameId) {
 			console.log("User not in this game.");
 			return;
 		}
@@ -114,10 +115,13 @@ const Lobby = () => {
 				playerDocRef.current,
 				gameDocRef.current
 			);
-			userLobby.current.joinedGameId = null; // Reset here. Minimizing latency
+			userLobby.current.joinedGame = null; // Reset here. Minimizing latency
 			//setTimeout(removeEmptyGame, 100); //debounce for latency
 
-			const gameRef = fbGame.getGameDocRef(fbGame.gamesCollectionName, gameId);
+			const gameRef = fbGame.getGameDocRef(
+				fbGame.gamesCollectionName,
+				game.gameId
+			);
 			await fbGame.removeEmptyGame(gameRef);
 
 			toggleFalseEnterGame();
@@ -137,18 +141,18 @@ const Lobby = () => {
 		userLobby.current.uid = user.uid;
 
 		if (!joined) {
-			userLobby.current.joinedGameId = null;
+			userLobby.current.joinedGame = null;
 			return;
 		}
 
-		userLobby.current.joinedGameId = joined;
+		userLobby.current.joinedGame = joined;
 		gameDocRef.current = fbGame.getGameDocRef(
 			fbGame.gamesCollectionName,
-			joined
+			joined.gameId
 		);
 		playerDocRef.current = fbGame.getPlayerDocRef(
 			fbGame.gamesCollectionName,
-			joined,
+			joined.gameId,
 			fbGame.playersCollectionName,
 			user.uid
 		);
@@ -179,7 +183,11 @@ const Lobby = () => {
 
 	return (
 		<div className="lobby">
-			{console.log("* * * * * re-render * * * * *userLobby in jsx")}
+			{console.log(
+				"* * * * * re-render * * * * *userLobby in jsx",
+				gamesList,
+				userLobby.current
+			)}
 
 			<Popup
 				isOpen={popEnterGame}
@@ -198,23 +206,21 @@ const Lobby = () => {
 
 			{gamesList
 				.sort((a, b) => a.timestamp - b.timestamp)
-				.map((game) => (
-					<div className="game-room" key={game.id}>
-						<p>{`Game room ${game.id}`}</p>
+				.map((game, i) => (
+					<div className="game-room" key={i}>
+						<p>{`Game room ${game.gameId}`}</p>
 						<p>{`Players in: ${game.playersCount}`}</p>
 
 						{user &&
 							!joined &&
 							game.playersCount < game.maxPlayers &&
 							game.gameStatus === "waiting" && (
-								<button onClick={() => handleJoinGame(game.id)}>
+								<button onClick={() => handleJoinGame(game.gameId)}>
 									Join game
 								</button>
 							)}
-						{user && joined === game.id && (
-							<button onClick={() => handleLeaveGame(game.id)}>
-								Leave game
-							</button>
+						{user && joined?.gameId === game.gameId && (
+							<button onClick={() => handleLeaveGame(game)}>Leave game</button>
 						)}
 					</div>
 				))}
