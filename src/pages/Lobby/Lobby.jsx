@@ -47,7 +47,11 @@ const Lobby = () => {
 	//UI add/leave/join game buttons toggle
 	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
 
-	const handleCreateNewGame = async (maxPlayers) => {
+	const handleCreateNewGame = async (
+		maxPlayers,
+		isOngoing = false,
+		deckId = null
+	) => {
 		if (!user) {
 			console.log("User not signed in");
 			return;
@@ -56,7 +60,9 @@ const Lobby = () => {
 			//create new game
 			const gameRef = await fbGame.addNewGame(
 				fbGame.gamesCollectionRef,
-				maxPlayers
+				maxPlayers,
+				isOngoing,
+				deckId
 			);
 			await fbGame.updateGame(gameRef, {
 				gameRef,

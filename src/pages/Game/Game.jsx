@@ -131,11 +131,12 @@ const Game = () => {
 			//get new deck
 			const { deck_id } = await cardMachine.newDeck(game.maxPlayers);
 
+			//get the latest players from playersRef.
+			const updatedPlayers = playersRef.current;
+			console.log("~~~~~~~~~~", updatedPlayers);
 			if (
 				//meaning "me" is the last to place bet
-				players
-					.filter((player) => player.id !== user.uid)
-					.every((player) => player.bet > 0)
+				updatedPlayers.every((player) => player.bet > 0)
 			) {
 				//Everyone has placed their bet
 				//update gameStatus -> dealing
@@ -500,7 +501,7 @@ const Game = () => {
 							src={
 								i === 1 &&
 								game?.gameStatus !== "dealerTurn" &&
-								me.hasBlackJack === false
+								me?.hasBlackJack === false
 									? backOfCardImg
 									: image
 							}

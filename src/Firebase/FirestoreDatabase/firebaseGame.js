@@ -39,13 +39,19 @@ export const getPlayerDocRef = (
 ) =>
 	doc(db, gamescollectionName, gameDocName, playersCollectionName, playerDocId);
 
-export const addNewGame = async (gamesCollectionRef, maxPlayers) => {
+export const addNewGame = async (
+	gamesCollectionRef,
+	maxPlayers,
+	isOngoing = false,
+	deckId = null
+) => {
 	let gameDocRef = await addDoc(
 		gamesCollectionRef,
 		{
+			isOngoing,
 			timestamp: Date.now(),
 			gameStatus: "waiting",
-			deckId: null,
+			deckId,
 			playersCount: 0,
 			maxPlayers,
 		},
@@ -169,6 +175,7 @@ export const removeEmptyGame = async (gameDocRef) => {
 	try {
 		const gameDocSnap = await getDoc(gameDocRef);
 		if (gameDocSnap.exists()) {
+			if (gameDocSnap.data().isOngoing === true) return;
 			const playersCollectionRef = collection(
 				gameDocRef,
 				playersCollectionName
