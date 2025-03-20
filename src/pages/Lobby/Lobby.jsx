@@ -131,6 +131,13 @@ const Lobby = () => {
 			console.error(err);
 		}
 	};
+
+	const joinGameCondition = (game) =>
+		user &&
+		!joined &&
+		game.playersCount < game.maxPlayers &&
+		game.gameStatus === "waiting";
+
 	useEffect(() => {
 		if (!user) {
 			//not signed in/not loaded
@@ -211,18 +218,17 @@ const Lobby = () => {
 				.map((game, i) => (
 					<div className="game-room" key={i}>
 						<p>{`Game room ${game.gameId}`}</p>
-						<p>{`Players in: ${game.playersCount}`}</p>
+						<p>{`Players in: ${game.playersCount}/${game.maxPlayers}`}</p>
 
-						{user &&
-							!joined &&
-							game.playersCount < game.maxPlayers &&
-							game.gameStatus === "waiting" && (
-								<button onClick={() => handleJoinGame(game.gameId)}>
-									Join game
-								</button>
-							)}
-						{user && joined?.gameId === game.gameId && (
+						{joinGameCondition(game) && (
+							<button onClick={() => handleJoinGame(game.gameId)}>
+								Join game
+							</button>
+						)}
+						{user && joined?.gameId === game.gameId ? (
 							<button onClick={() => handleLeaveGame(game)}>Leave game</button>
+						) : (
+							<p>Game is in progress ...</p>
 						)}
 					</div>
 				))}
