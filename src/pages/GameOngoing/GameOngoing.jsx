@@ -22,7 +22,7 @@ const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
 
 const GameOngoing = () => {
 	const { user, users } = useAuth();
-	const { gameOngoingId } = useParams();
+	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null);
@@ -413,7 +413,7 @@ const GameOngoing = () => {
 		//set ref using game id from params.
 		gameDocRef.current = fbGame.getGameDocRef(
 			fbGame.gamesCollectionName,
-			gameOngoingId
+			gameId
 		);
 		//attach listeners
 		const unsubscribeGame = addGameListener(gameDocRef.current);
@@ -427,7 +427,7 @@ const GameOngoing = () => {
 			unsubscribePlayers?.();
 			console.log("**Firestore listener on players UNmounted/attached.**");
 		};
-	}, [user?.uid, gameOngoingId]);
+	}, [user?.uid, gameId]);
 
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
@@ -474,7 +474,9 @@ const GameOngoing = () => {
 				</h2>
 			</Popup>
 
-			{console.log("* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ * in game")}
+			{console.log(
+				"^ ~ ^ ~ ^ ~ ^ ~ ^ re-render ^ ~ ^ ~ ^ ~ ^ ~ ^ in ongoing game"
+			)}
 			{console.log(players)}
 			{/* { console.log( user ) } */}
 

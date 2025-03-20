@@ -21,6 +21,8 @@ const Lobby = () => {
 
 	const navigate = useNavigate();
 	const handleEnterGame = (navigateTo, game) => {
+		//let path = game.isOngoing ? `/ongoing/${game.gameId}` : `/${game.gameId}`;
+
 		navigateTo(`/${game.gameId}`);
 	};
 

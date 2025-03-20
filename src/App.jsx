@@ -47,10 +47,13 @@ const App = () => {
 				)}
 			</header>
 			<Routes>
-				{/* <Route path="/" element={<ProtectedRoute component={Lobby} />} /> */}
 				<Route path="/" element={<Lobby />} />
-				<Route path="/:gameId" element={<Game />} />
-				<Route path="/:gameOngoingId" element={<GameOngoing />} />
+				<Route
+					path="/:gameId"
+					element={<ProtectedRoute game={Game} gameOngoing={GameOngoing} />}
+				/>
+				{/* <Route path="/:gameId" element={<Game />} /> */}
+				{/* <Route path="/ongoing/:gameId" element={<GameOngoing />} /> */}
 			</Routes>
 			{/* </GameProvider> */}
 		</BrowserRouter>
