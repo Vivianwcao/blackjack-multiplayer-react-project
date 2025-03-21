@@ -11,8 +11,8 @@ export const calculateHand = (handList) => {
 	return total;
 };
 
-export const hasBlackJack = (handList) => calculateHand(handList).max === 21;
-// export const hasBlackJack = (handList) => true;
+export const hasBlackjack = (handList) => calculateHand(handList).max === 21;
+// export const hasBlackjack = (handList) => true;
 
 export const isBusted = (handList) => calculateHand(handList).min > 21;
 

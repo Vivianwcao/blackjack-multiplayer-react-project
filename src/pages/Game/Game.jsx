@@ -181,23 +181,23 @@ const Game = () => {
 		console.log("!!!!!!!!!!!!", updatedMe.hand, updatedGame.dealer);
 
 		//check for if anyone has natural blackjack(first 2 cards)
-		const IHaveBlackjack = cardsCalculator.hasBlackJack(updatedMe.hand);
-		const dealerHasBlackjack = cardsCalculator.hasBlackJack(updatedGame.dealer);
+		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
+		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
 		let updates = { donePlaying: true, canHit: false };
 		if (IHaveBlackjack && !dealerHasBlackjack) {
 			//I win against the dealer
-			updates = { ...updates, status: "win", hasBlackJack: true };
+			updates = { ...updates, status: "won", hasBlackjack: true };
 		} else if (!IHaveBlackjack && dealerHasBlackjack) {
 			//I lost against the dealer
-			updates = { ...updates, status: "lost", hasBlackJack: false };
+			updates = { ...updates, status: "lost", hasBlackjack: false };
 		} else if (IHaveBlackjack && dealerHasBlackjack) {
 			//push/tie
-			updates = { ...updates, status: "push", hasBlackJack: true };
+			updates = { ...updates, status: "push", hasBlackjack: true };
 		}
 		//if neither has -> continue game
 		try {
-			const res = await fbGame.updatePlayer(updatedMe, updates);
+			const res = await fbGame.updatePlayer(updatedMe.playerRef, updates);
 			console.log(res);
 		} catch (err) {
 			console.log(err);
@@ -501,11 +501,11 @@ const Game = () => {
 							src={
 								i === 1 &&
 								game?.gameStatus !== "dealerTurn" &&
-								me?.hasBlackJack === false
+								me?.hasBlackjack === false &&
+								game?.dealerHasBlackjack === false
 									? backOfCardImg
 									: image
 							}
-							alt={code}
 						/>
 					</div>
 				))}

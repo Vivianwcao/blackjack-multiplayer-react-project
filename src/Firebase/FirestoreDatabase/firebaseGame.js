@@ -49,6 +49,7 @@ export const addNewGame = async (
 		gamesCollectionRef,
 		{
 			isOngoing,
+			dealerHasBlackjack: false,
 			timestamp: Date.now(),
 			gameStatus: "waiting",
 			deckId,
@@ -102,7 +103,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 					timestamp: Date.now(),
 					bet: 0,
 					doubleBet: false,
-					hasBlackJack: false,
+					hasBlackjack: false,
 					busted: false,
 					canHit: true,
 					donePlaying: false,

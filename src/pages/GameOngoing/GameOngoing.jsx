@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
+import { db } from "../../Firebase/Config";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
 import {
 	onSnapshot,
@@ -9,6 +10,7 @@ import {
 	getDocs,
 	doc,
 	increment,
+	runTransaction,
 } from "firebase/firestore";
 import { toast, Slide } from "react-toastify";
 import Popup from "../../components/Popup/Popup";
@@ -25,7 +27,7 @@ const GameOngoing = () => {
 	const { gameId } = useParams();
 	const [game, setGame] = useState(null);
 	const [players, setPlayers] = useState(null);
-	const gameDocRef = useRef(null);
+	const gameDocRef = useRef(null); //from gameId in params
 	const betRef = useRef(null);
 
 	const gameRef = useRef(game);
@@ -61,7 +63,7 @@ const GameOngoing = () => {
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
+	const [popGameOver, toggleTrueGameOver, toggleFalseGameOver] =
 		useToggle(false);
 	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
@@ -75,8 +77,10 @@ const GameOngoing = () => {
 	const opponents = getOpponents(players);
 
 	const getCurrentPlayer = (playersList) =>
+		// game?.gameStatus !== "gameOver" &&
+		// game?.gameStatus !== "dealerTurn" &&
 		playersList?.find(
-			(player) => player?.donePlaying === false && player?.status !== "waiting" // waiting -> before bet and initial draws
+			(player) => player?.donePlaying === false && player?.status === "playing" // with bet and initial draws ready, not lost/won/tie yet
 		);
 	const currentPlayer = getCurrentPlayer(players);
 
@@ -111,11 +115,6 @@ const GameOngoing = () => {
 			setGame(snapshot.data());
 			console.log("**setGame successfully.**");
 		});
-	};
-
-	const handleGameCloses = () => {
-		if (game?.gameStatus === "waiting") nav("/");
-		toggleFalseGameCloses();
 	};
 
 	//pop & ask to place a bet & update deckId
@@ -174,6 +173,9 @@ const GameOngoing = () => {
 			);
 			const res = await Promise.all(promiseList);
 			res.forEach((msg) => console.log(msg)); //success message
+
+			//immediately check for blackjack
+			await blackjackOutcome();
 		} catch (err) {
 			console.error(err);
 		}
@@ -189,42 +191,44 @@ const GameOngoing = () => {
 		console.log("!!!!!!!!!!!!", updatedMe.hand, updatedGame.dealer);
 
 		//check for if anyone has natural blackjack(first 2 cards)
-		const IHaveBlackjack = cardsCalculator.hasBlackJack(updatedMe.hand);
-		const dealerHasBlackjack = cardsCalculator.hasBlackJack(updatedGame.dealer);
+		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
+		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
-		let updates = { donePlaying: true, canHit: false };
+		let playerUpdates = { donePlaying: true, canHit: false };
+		let dealerUpdates;
+
 		if (IHaveBlackjack && !dealerHasBlackjack) {
-			//I win against the dealer
-			updates = { ...updates, status: "win", hasBlackJack: true };
+			//I won against the dealer
 			//game continues for the rest
+			playerUpdates = { ...playerUpdates, status: "won", hasBlackjack: true };
+			toggleTrueGameOver(); //only scenario where i win before game is over.
 		} else if (!IHaveBlackjack && dealerHasBlackjack) {
 			//I lost against the dealer
-			updates = { ...updates, status: "lost", hasBlackJack: false };
-			//also gameStatus -> "gameOver"
-		} else if (IHaveBlackjack && dealerHasBlackjack) {
+			playerUpdates = { ...playerUpdates, status: "lost", hasBlackjack: false };
+			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
+		} else if (true) {
 			//push/tie
-			updates = { ...updates, status: "push", hasBlackJack: true };
-			//same check for the rest
+			playerUpdates = { ...playerUpdates, status: "push", hasBlackjack: true };
+			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 		//if neither has -> continue game
 		try {
-			const res = await fbGame.updatePlayer(updatedMe, updates);
-			console.log(res);
-		} catch (err) {
-			console.log(err);
-		}
-	};
+			if (dealerUpdates) {
+				await runTransaction(db, async (transaction) => {
+					transaction.update(updatedGame.gameRef, dealerUpdates);
+					transaction.update(updatedMe.playerRef, playerUpdates);
+				});
+				console.log("Updated player and dealer");
+			} else {
+				const res = await fbGame.updatePlayer(
+					updatedMe.playerRef,
+					playerUpdates
+				);
+				console.log(res);
+				console.log("Updated player");
+			}
 
-	const handleQuitGame = async () => {
-		try {
-			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-
-			nav("/");
-			let delay = setTimeout(
-				async () => await fbGame.removeEmptyGame(game.gameRef),
-				300
-			);
-			const cancelTimeout = () => clearTimeout(delay);
+			await checkForNextPlayer();
 		} catch (err) {
 			console.log(err);
 		}
@@ -233,9 +237,20 @@ const GameOngoing = () => {
 	const checkForNextPlayer = async () => {
 		//create a local currentPlayer with the latest players list from ref.
 		const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
+
+		//get the latest game from gameRef.
+		const updatedGame = gameRef.current;
+
+		console.log(
+			"111111111",
+			game,
+			updatedGame,
+			currentPlayer,
+			updatedCurrentPlayer
+		);
 		try {
 			//check if last player yes -> dealer turn
-			if (!updatedCurrentPlayer) {
+			if (!updatedCurrentPlayer && game.gameStatus !== "gameOver") {
 				//yes -> dealer turn
 				if (game.gameStatus !== "dealerTurn") {
 					const res = await fbGame.updateGame(game.gameRef, {
@@ -250,13 +265,70 @@ const GameOngoing = () => {
 		}
 	};
 
+	const handleQuitGame = async () => {
+		try {
+			//resets game if player leaves game before 5 sends debounce
+			//Prevent every player resets the game.
+			if (game.gameStatus === "gameOver") {
+				await fbGame.updateGame(game.gameRef, resetDataGame);
+				console.log("Reset game before leaving game");
+			}
+			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
+
+			nav("/");
+			let delay = setTimeout(
+				async () => await fbGame.removeEmptyGame(game.gameRef),
+				300
+			);
+			const cancelTimeout = () => clearTimeout(delay);
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const resetDataMe = {
+		bet: 0,
+		busted: false,
+		canHit: true,
+		donePlaying: false,
+		doubleBet: false,
+		hasBlackjack: false,
+		status: "waiting",
+		hand: [],
+		timestamp: Date.now(),
+	};
+	const resetDataGame = {
+		dealerHasBlackjack: false,
+		gameStatus: "waiting",
+		dealer: [],
+	};
+	//determine to clean-up game or me or both.
+	const handleResetGame = async () => {
+		try {
+			//Prevent every player resets the game.
+			if (game.gameStatus === "gameOver") {
+				await Promise.all([
+					fbGame.updatePlayer(me.playerRef, resetDataMe),
+					fbGame.updateGame(game.gameRef, resetDataGame),
+				]);
+				console.log("Reset both game and myself");
+			} else {
+				await fbGame.updatePlayer(me.playerRef, resetDataMe);
+				console.log("Reset myself");
+			}
+		} catch (err) {
+			console.log(err.message);
+		}
+		toggleFalseGameOver();
+	};
+
 	const updateIsBusted = async (player) => {
 		try {
 			const res = await fbGame.updatePlayer(player.playerRef, {
 				busted: true,
 				canHit: false,
 				donePlaying: true,
-				status: "lost",
+				status: "busted",
 			});
 			console.log(res);
 			return;
@@ -288,6 +360,7 @@ const GameOngoing = () => {
 			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
 				await updateIsBusted(updatedCurrentPlayer);
 				await checkForNextPlayer();
+				toggleTrueGameOver();
 				return;
 			}
 		} catch (err) {
@@ -440,6 +513,22 @@ const GameOngoing = () => {
 		if (game.deckId === null) updateNewDeck();
 	}, [game?.deckId]);
 
+	//if gameStatus ==="gameOver" -> cleanup game doc
+	useEffect(() => {
+		if (!game) return;
+		let timer;
+		if (game.gameStatus === "gameOver") {
+			toggleTrueGameOver();
+			timer = setTimeout(() => handleResetGame(), 5000); //reset
+		}
+		return () => {
+			if (timer) {
+				clearTimeout(timer);
+				console.log("Timer cleared");
+			}
+		};
+	}, [game?.gameStatus]);
+
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
@@ -465,13 +554,31 @@ const GameOngoing = () => {
 				/>
 			</Popup>
 			<Popup
-				isOpen={popGameCloses}
-				handleBtnLeft={handleGameCloses}
-				btnLeftText="Confirm"
+				isOpen={popGameOver}
+				handleBtnLeft={handleQuitGame}
+				handleBtnRight={handleResetGame}
+				btnLeftText="Leave Game"
+				btnRightText="Stay for another round"
 			>
-				<h2 className="pop-title">
-					Someone has left the game ... game continues ...
-				</h2>
+				<div>
+					<h2 className="popup___title">Blackjack result</h2>
+					{console.log(me)}
+					{me?.status === "won" && me.hasBlackjack === true ? (
+						<div className="popup__text">
+							You beat dealer with Blackjack and won ${(me.bet * 3) / 2}!
+						</div>
+					) : me?.status === "push" ? (
+						<div className="popup__text">You are tie with dealer!</div>
+					) : me?.status === "lost" && game.dealerHasBlackjack === true ? (
+						<div className="popup__text">
+							The dealer beat you with Blackjack and you lost ${me.bet}
+						</div>
+					) : me?.status === "busted" ? (
+						<div className="popup__text">You are busted.</div>
+					) : (
+						<></>
+					)}
+				</div>
 			</Popup>
 			<Popup
 				isOpen={popQuitGame}
@@ -480,9 +587,7 @@ const GameOngoing = () => {
 				btnLeftText="Cancel"
 				btnRightText="Quit Game"
 			>
-				<h2 className="pop-title">
-					Someone has left the game ... going back to lobby
-				</h2>
+				<h2 className="pop-title">Going back to lobby</h2>
 			</Popup>
 
 			{console.log(
@@ -513,7 +618,8 @@ const GameOngoing = () => {
 							src={
 								i === 1 &&
 								game?.gameStatus !== "dealerTurn" &&
-								me?.hasBlackJack === false
+								me?.hasBlackjack === false &&
+								game?.dealerHasBlackjack === false
 									? backOfCardImg
 									: image
 							}
@@ -531,7 +637,7 @@ const GameOngoing = () => {
 			</div>
 			{controlBoardCondition() && (
 				<div className="game__control-board">
-					{currentPlayer.canHit === true && (
+					{currentPlayer?.canHit === true && (
 						<button onClick={handleHit}>Hit!</button>
 					)}
 					<button onClick={handleStand}>Stand</button>

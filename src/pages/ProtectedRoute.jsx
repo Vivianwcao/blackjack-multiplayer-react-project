@@ -24,7 +24,7 @@ const ProtectedRoute = ({ game: Game, gameOngoing: GameOngoing }) => {
 		}
 	};
 	checkIfOngoingGame(gameId);
-	if (isOngoingGame === null) return <p>Loading ...</p>;
+	if (isOngoingGame === null) return <p>Game does not exist ...</p>;
 	else if (isOngoingGame === true) return <GameOngoing />;
 	else if (isOngoingGame === false) return <Game />;
 };
