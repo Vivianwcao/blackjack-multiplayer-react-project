@@ -524,7 +524,7 @@ const Game = () => {
 					)}
 					<button onClick={handleStand}>Stand</button>
 					{handleDBetCondition() && (
-						<button onClick={handleDBet}>Double bet</button>
+						<button onClick={handleDBet}>Double down</button>
 					)}
 				</div>
 			)}

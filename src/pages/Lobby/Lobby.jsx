@@ -135,10 +135,7 @@ const Lobby = () => {
 		const basicCondition =
 			user && !joined && game.playersCount < game.maxPlayers;
 		if (game.isOngoing) {
-			return (
-				basicCondition &&
-				(game.gameStatus !== "dealerTurn" || game.status !== "gameOver")
-			);
+			return basicCondition; //any time
 		} else {
 			return basicCondition && game.gameStatus === "waiting";
 		}
@@ -204,6 +201,12 @@ const Lobby = () => {
 				userLobby.current
 			)}
 
+			<button
+				hidden={false}
+				onClick={() => handleCreateNewGame(5, true, "b7u5yr1uqy1z")}
+			>
+				generate an ongoing game for test
+			</button>
 			<Popup
 				isOpen={popEnterGame}
 				handleBtnLeft={() => handleLeaveGame(joined)}

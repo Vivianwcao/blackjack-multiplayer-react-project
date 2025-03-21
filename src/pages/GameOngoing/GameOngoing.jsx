@@ -75,7 +75,9 @@ const GameOngoing = () => {
 	const opponents = getOpponents(players);
 
 	const getCurrentPlayer = (playersList) =>
-		playersList?.find((player) => player?.donePlaying === false);
+		playersList?.find(
+			(player) => player?.donePlaying === false && player?.status !== "waiting" // waiting -> before bet and initial draws
+		);
 	const currentPlayer = getCurrentPlayer(players);
 
 	//listeners on list of players
@@ -116,55 +118,62 @@ const GameOngoing = () => {
 		toggleFalseGameCloses();
 	};
 
-	//pop & ask to place a bet
+	//pop & ask to place a bet & update deckId
 	const handleAddBet = async () => {
 		const betStr = betRef.current.value;
-		//update player's bet in db
-		await fbGame.updatePlayer(me.playerRef, {
-			bet: +betStr,
-		}); //get number
-		toggleFalseBet();
-
-		// set up game intial draw stage
+		//validate betStr a positive integer
+		if (!/^[1-9]\d*$/.test(betStr.trim())) {
+			console.log("Invalid bet");
+			return;
+		}
 		try {
-			//get new deck
-			const { deck_id } = await cardMachine.newDeck(game.maxPlayers);
+			//update player's bet in db
+			await fbGame.updatePlayer(me.playerRef, {
+				bet: +betStr, //get number
+				deckId: game.deckId,
+			});
+			toggleFalseBet();
+			await drawInitalCards(game.deckId);
+		} catch (err) {
+			console.error(err);
+		}
+	};
 
-			//get the latest players from playersRef.
-			const updatedPlayers = playersRef.current;
-			console.log("~~~~~~~~~~", updatedPlayers);
+	//pop & ask to place a bet
+	const drawInitalCards = async (deckId) => {
+		// Game intial draws for both dealer and I.
+		const num = 2;
+		try {
 			if (
-				//meaning "me" is the last to place bet
-				updatedPlayers.every((player) => player.bet > 0)
+				//dealer has not drawn 2 cards -> draw 2 cards
+				!game.dealer ||
+				!game.dealer.length
 			) {
-				//Everyone has placed their bet
-				//update gameStatus -> dealing
-				//update deckId in db : game && all players
-				let promiseList = [];
-				promiseList.push(
-					fbGame.updateGame(gameDocRef.current, {
-						deckId: deck_id,
-						gameStatus: "dealing",
-					})
-				);
-				players.forEach((player) =>
-					promiseList.push(
-						fbGame.updatePlayer(player.playerRef, {
-							deckId: deck_id,
-							status: "playing",
-						})
-					)
-				);
-				const res = await Promise.all(promiseList);
-				res.forEach((msg) => console.log(msg)); //success message
-
-				await playingInitialDraw(deck_id);
-				//update gameStatus -> playerTurn
-				const res1 = await fbGame.updateGame(game.gameRef, {
-					gameStatus: "playerTurn",
-				});
-				console.log(res1);
+				const { cards } = await cardMachine.drawCards(deckId, num);
+				const resp = await fbGame.updateGameDealer(gameDocRef.current, cards);
+				console.log(resp);
 			}
+
+			if (
+				//draw initial 2 cards for myself if not done yet.
+				!me.hand ||
+				!me.hand.length
+			) {
+				const { cards } = await cardMachine.drawCards(deckId, num);
+				const resp = await fbGame.updatePlayerHand(me.playerRef, cards);
+				console.log(resp);
+			}
+			let promiseList = [];
+			if (game.gameStatus === "waiting") {
+				promiseList.push(
+					fbGame.updateGame(gameDocRef.current, { gameStatus: "playerTurn" })
+				);
+			}
+			promiseList.push(
+				fbGame.updatePlayer(me.playerRef, { deckId, status: "playing" })
+			);
+			const res = await Promise.all(promiseList);
+			res.forEach((msg) => console.log(msg)); //success message
 		} catch (err) {
 			console.error(err);
 		}
@@ -206,30 +215,6 @@ const GameOngoing = () => {
 		}
 	};
 
-	//gameStatus -> "dealing"
-	//api call -> get deck, first 2 cards
-	//immediately check for blackjack
-	const playingInitialDraw = async (deck_id) => {
-		try {
-			//draw two cards each ->setGame, setPlayers
-			const totalNum = 2 * (game.playersCount + 1);
-			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
-
-			//populate each player's hand
-			let promises = players.map((player) => {
-				let cardsForEach = cards.splice(0, 2);
-				return fbGame.updatePlayerHand(player.playerRef, cardsForEach);
-			});
-			promises.push(fbGame.updateGameDealer(gameDocRef.current, cards));
-			const resp = await Promise.all(promises);
-			resp.forEach((msg) => console.log(msg));
-
-			await blackjackOutcome();
-		} catch (err) {
-			console.error(err);
-		}
-	};
-
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
@@ -252,11 +237,13 @@ const GameOngoing = () => {
 			//check if last player yes -> dealer turn
 			if (!updatedCurrentPlayer) {
 				//yes -> dealer turn
-				const res = await fbGame.updateGame(game.gameRef, {
-					gameStatus: "dealerTurn",
-				});
-				console.log(res);
-				return;
+				if (game.gameStatus !== "dealerTurn") {
+					const res = await fbGame.updateGame(game.gameRef, {
+						gameStatus: "dealerTurn",
+					});
+					console.log(res);
+					return;
+				}
 			}
 		} catch (err) {
 			throw new Error(err);
@@ -335,6 +322,32 @@ const GameOngoing = () => {
 		}
 	};
 
+	//attach listeners
+	useEffect(() => {
+		if (!user?.uid) {
+			console.log("User not loaded yet");
+			return; // No cleanup needed if user isn’t ready
+		}
+
+		//set ref using game id from params.
+		gameDocRef.current = fbGame.getGameDocRef(
+			fbGame.gamesCollectionName,
+			gameId
+		);
+		//attach listeners
+		const unsubscribeGame = addGameListener(gameDocRef.current);
+		console.log("**Firestore listener on game mounted/attached.**");
+		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
+		console.log("**Firestore listener on players mounted/attached.**");
+
+		return () => {
+			unsubscribeGame?.();
+			console.log("**Firestore listener on game UNmounted/attached.**");
+			unsubscribePlayers?.();
+			console.log("**Firestore listener on players UNmounted/attached.**");
+		};
+	}, [user?.uid, gameId]);
+
 	//Notify as other player enter/leaves
 	useEffect(() => {
 		if (!user) {
@@ -390,6 +403,7 @@ const GameOngoing = () => {
 		prePlayerIdRef.current.prePlayerId = game.playerId;
 	}, [game?.playersCount]);
 
+	//ask to place a bet
 	useEffect(() => {
 		if (!players || !game) {
 			console.log("Players or game state not loaded.");
@@ -399,39 +413,32 @@ const GameOngoing = () => {
 		//ask to place a bet
 		if (
 			me?.status === "waiting" &&
-			me?.bet == 0 &&
-			game?.gameStatus === "waiting"
+			me?.bet === 0 &&
+			game?.gameStatus !== "gameOver" &&
+			game?.gameStatus !== "dealerTurn"
 		)
 			//ask to place a bet
 			toggleTrueBet();
 		else toggleFalseBet();
 	}, [players, game]);
 
-	//attach listeners
+	//if deck is not ready
 	useEffect(() => {
-		if (!user?.uid) {
-			console.log("User not loaded yet");
-			return; // No cleanup needed if user isn’t ready
-		}
+		if (!game) return;
+		if (game.deckId !== null) return;
+		const updateNewDeck = async () => {
+			try {
+				//get new deck
+				const { deck_id } = await cardMachine.newDeck(game.maxPlayers);
 
-		//set ref using game id from params.
-		gameDocRef.current = fbGame.getGameDocRef(
-			fbGame.gamesCollectionName,
-			gameId
-		);
-		//attach listeners
-		const unsubscribeGame = addGameListener(gameDocRef.current);
-		console.log("**Firestore listener on game mounted/attached.**");
-		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
-		console.log("**Firestore listener on players mounted/attached.**");
-
-		return () => {
-			unsubscribeGame?.();
-			console.log("**Firestore listener on game UNmounted/attached.**");
-			unsubscribePlayers?.();
-			console.log("**Firestore listener on players UNmounted/attached.**");
+				await fbGame.updateGame(game.gameRef, { deckId: deck_id });
+				console.log(`Updated game deckId -> ${deck_id}`);
+			} catch (err) {
+				console.error(err);
+			}
 		};
-	}, [user?.uid, gameId]);
+		if (game.deckId === null) updateNewDeck();
+	}, [game?.deckId]);
 
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
@@ -439,7 +446,7 @@ const GameOngoing = () => {
 		currentPlayer?.donePlaying === false;
 
 	const handleDBetCondition = () =>
-		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
+		currentPlayer?.hand?.length === 2 && currentPlayer?.doubleBet === false;
 
 	return !user?.uid ? (
 		<div>Please log in first</div>
@@ -529,7 +536,7 @@ const GameOngoing = () => {
 					)}
 					<button onClick={handleStand}>Stand</button>
 					{handleDBetCondition() && (
-						<button onClick={handleDBet}>Double bet</button>
+						<button onClick={handleDBet}>Double Down</button>
 					)}
 				</div>
 			)}
