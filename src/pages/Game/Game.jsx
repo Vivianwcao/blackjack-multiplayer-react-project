@@ -278,8 +278,6 @@ const Game = () => {
 
 	const handleHit = async () => {
 		try {
-			//Re-shuffle deck
-			await cardMachine.shuffleDeck(game.deckId);
 			//draw one card
 			const { cards } = await cardMachine.drawSingleCard(game.deckId);
 			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);

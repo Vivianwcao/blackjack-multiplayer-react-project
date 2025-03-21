@@ -17,19 +17,26 @@ export const newDeck = async (numOfDecks) => {
 		);
 		return deck.data;
 	} catch (err) {
-		throw new Error(err.message);
+		throw err;
 	}
 };
 
 //draw #num of card
 export const drawCards = async (deckId, num) => {
 	try {
+		//shuffle
+		await axios.get(
+			`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/?remaining=true`
+		);
+		//draw
 		const deck = await axios.get(
 			`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${num}`
 		);
+		//reset deck after every draw
+		await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/return/`);
 		return deck.data;
 	} catch (err) {
-		throw new Error(err.message);
+		throw err;
 	}
 };
 
@@ -38,15 +45,3 @@ export const drawSingleCard = async (deckId) => await drawCards(deckId, 1);
 
 //draw a two cards
 export const drawTwoCards = async (deckId) => await drawCards(deckId, 2);
-
-//shuffle the deck
-export const shuffleDeck = async (deckId) => {
-	try {
-		const deck = await axios.get(
-			`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/?remaining=true`
-		);
-		return deck.data;
-	} catch (err) {
-		throw new Error(err.message);
-	}
-};

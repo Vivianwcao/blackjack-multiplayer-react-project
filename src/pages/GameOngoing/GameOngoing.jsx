@@ -202,11 +202,11 @@ const GameOngoing = () => {
 			//game continues for the rest
 			playerUpdates = { ...playerUpdates, status: "won", hasBlackjack: true };
 			toggleTrueGameOver(); //only scenario where i win before game is over.
-		} else if (!IHaveBlackjack && dealerHasBlackjack) {
+		} else if (true) {
 			//I lost against the dealer
 			playerUpdates = { ...playerUpdates, status: "lost", hasBlackjack: false };
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
-		} else if (true) {
+		} else if (IHaveBlackjack && dealerHasBlackjack) {
 			//push/tie
 			playerUpdates = { ...playerUpdates, status: "push", hasBlackjack: true };
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
@@ -250,15 +250,14 @@ const GameOngoing = () => {
 		);
 		try {
 			//check if last player yes -> dealer turn
-			if (!updatedCurrentPlayer && game.gameStatus !== "gameOver") {
-				//yes -> dealer turn
-				if (game.gameStatus !== "dealerTurn") {
-					const res = await fbGame.updateGame(game.gameRef, {
-						gameStatus: "dealerTurn",
-					});
-					console.log(res);
-					return;
-				}
+			if (!updatedCurrentPlayer && game.gameStatus === "playerTurn") {
+				//if not updated by other players yet
+
+				const res = await fbGame.updateGame(game.gameRef, {
+					gameStatus: "dealerTurn",
+				});
+				console.log(res);
+				return;
 			}
 		} catch (err) {
 			throw new Error(err);
@@ -267,12 +266,9 @@ const GameOngoing = () => {
 
 	const handleQuitGame = async () => {
 		try {
-			//resets game if player leaves game before 5 sends debounce
+			//resets game if player leaves game before setTimeOut
 			//Prevent every player resets the game.
-			if (game.gameStatus === "gameOver") {
-				await fbGame.updateGame(game.gameRef, resetDataGame);
-				console.log("Reset game before leaving game");
-			}
+			await handleResetGame();
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
 
 			nav("/");
@@ -286,7 +282,7 @@ const GameOngoing = () => {
 		}
 	};
 
-	const resetDataMe = {
+	const resetDataPlayer = {
 		bet: 0,
 		busted: false,
 		canHit: true,
@@ -307,19 +303,21 @@ const GameOngoing = () => {
 		try {
 			//Prevent every player resets the game.
 			if (game.gameStatus === "gameOver") {
-				await Promise.all([
-					fbGame.updatePlayer(me.playerRef, resetDataMe),
-					fbGame.updateGame(game.gameRef, resetDataGame),
-				]);
-				console.log("Reset both game and myself");
+				//reset game and EVERY player
+				let promises = players.map((player) =>
+					fbGame.updatePlayer(player.playerRef, resetDataPlayer)
+				);
+				promises.push(fbGame.updateGame(game.gameRef, resetDataGame));
+				let res = await Promise.all(promises);
+				res.forEach((msg) => console.log(msg));
 			} else {
-				await fbGame.updatePlayer(me.playerRef, resetDataMe);
+				await fbGame.updatePlayer(me.playerRef, resetDataPlayer);
 				console.log("Reset myself");
 			}
 		} catch (err) {
 			console.log(err.message);
 		}
-		toggleFalseGameOver();
+		toggleFalseGameOver(); //please stop here it is the working version!!!
 	};
 
 	const updateIsBusted = async (player) => {
@@ -339,8 +337,6 @@ const GameOngoing = () => {
 
 	const handleHit = async () => {
 		try {
-			//Re-shuffle deck
-			await cardMachine.shuffleDeck(game.deckId);
 			//draw one card
 			const { cards } = await cardMachine.drawSingleCard(game.deckId);
 			await fbGame.updatePlayerHand(currentPlayer.playerRef, cards);
@@ -469,8 +465,6 @@ const GameOngoing = () => {
 						users?.find((user) => user.id === pId)?.name || "Someone "
 					} left ...`
 				);
-			//if !initial draw -> go back to lobby page.
-			game?.gameStatus === "waiting" && nav("/");
 		}
 		//updates prePlayerId ref
 		prePlayerIdRef.current.prePlayerId = game.playerId;
@@ -515,12 +509,12 @@ const GameOngoing = () => {
 
 	//if gameStatus ==="gameOver" -> cleanup game doc
 	useEffect(() => {
-		if (!game) return;
+		if (!game || !users || !players) return;
 		let timer;
-		if (game.gameStatus === "gameOver") {
+		if (game.gameStatus === "gameOver" && me.status !== "waiting") {
 			toggleTrueGameOver();
-			timer = setTimeout(() => handleResetGame(), 5000); //reset
-		}
+			timer = setTimeout(async () => await handleResetGame(), 8000); //reset
+		} else toggleFalseGameOver();
 		return () => {
 			if (timer) {
 				clearTimeout(timer);
