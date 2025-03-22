@@ -184,6 +184,8 @@ const Game = () => {
 		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
 		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
+		console.log(cardsCalculator.calculateHand(updatedMe.hand));
+		console.log(cardsCalculator.calculateHand(updatedGame.dealer));
 		let playerUpdates;
 		let dealerUpdates;
 
@@ -193,7 +195,6 @@ const Game = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "won",
 				hasBlackjack: true,
 			};
@@ -203,7 +204,6 @@ const Game = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "lost",
 				hasBlackjack: false,
 			};
@@ -213,12 +213,14 @@ const Game = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "push",
 				hasBlackjack: true,
 			};
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
+
+		console.log(dealerUpdates);
+		console.log(playerUpdates);
 		//if neither has -> continue game
 		try {
 			if (dealerUpdates && playerUpdates) {

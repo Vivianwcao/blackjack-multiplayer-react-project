@@ -194,6 +194,8 @@ const GameOngoing = () => {
 		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
 		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
+		console.log(cardsCalculator.calculateHand(updatedMe.hand));
+		console.log(cardsCalculator.calculateHand(updatedGame.dealer));
 		let playerUpdates;
 		let dealerUpdates;
 
@@ -203,7 +205,6 @@ const GameOngoing = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "won",
 				hasBlackjack: true,
 			};
@@ -213,7 +214,6 @@ const GameOngoing = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "lost",
 				hasBlackjack: false,
 			};
@@ -223,12 +223,14 @@ const GameOngoing = () => {
 			playerUpdates = {
 				donePlaying: true,
 				canHit: false,
-				playerUpdates,
 				status: "push",
 				hasBlackjack: true,
 			};
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
+
+		console.log(dealerUpdates);
+		console.log(playerUpdates);
 		//if neither has -> continue game
 		try {
 			if (dealerUpdates && playerUpdates) {
@@ -418,6 +420,25 @@ const GameOngoing = () => {
 		}
 	};
 
+	const dealerMove = async () => {
+		const { max } = cardsCalculator.calculateHand(game.dealer);
+		console.log("@@@@@@@@@", max);
+		try {
+			if (max <= 16) {
+				//must hit
+				const { cards } = await cardMachine.drawSingleCard(game.deckId);
+				const res = await fbGame.updateGameDealer(game.gameRef, cards);
+				console.log(res);
+			}
+			if (max >= 17) {
+				//must stand
+				await fbGame.updateGame(gameDocRef.current, { gameStatus: "gameOver" });
+			}
+		} catch (err) {
+			console.log(err.message);
+		}
+	};
+
 	//attach listeners
 	useEffect(() => {
 		if (!user?.uid) {
@@ -533,6 +554,15 @@ const GameOngoing = () => {
 		};
 		if (game.deckId === null) updateNewDeck();
 	}, [game?.deckId]);
+
+	useEffect(() => {
+		if (!players || !game) return;
+		console.log("%%%%%%%%%%", game.gameStatus);
+		//ask to place a bet
+		if (game.gameStatus === "dealerTurn")
+			//dealer's draw(s)
+			dealerMove();
+	}, [players, game]);
 
 	//if gameStatus ==="gameOver" -> cleanup game doc
 	//if me.status ==="won" or "busted" -> cleanup myself
