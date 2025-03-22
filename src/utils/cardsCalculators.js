@@ -10,10 +10,18 @@ export const calculateHand = (handList) => {
 	}
 	return total;
 };
-
 export const hasBlackjack = (handList) => calculateHand(handList).max === 21;
-// export const hasBlackjack = (handList) => true;
+
+export const has21 = (handList) => {
+	let { min, max } = calculateHand(handList);
+	return max === 21 || min === 21;
+};
+// export const has21 = (handList) => true;
 
 export const isBusted = (handList) => calculateHand(handList).min > 21;
 
 //calculate scores
+export const calculateResult = (myHand, dealerHand) => {
+	const { myMin, myMax } = calculateHand(myHand);
+	const { dealerMin, dealerMax } = calculateHand(dealerHand);
+};

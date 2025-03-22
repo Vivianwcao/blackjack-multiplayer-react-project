@@ -184,21 +184,61 @@ const Game = () => {
 		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
 		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
-		let updates = { donePlaying: true, canHit: false };
+		let playerUpdates;
+		let dealerUpdates;
+
 		if (IHaveBlackjack && !dealerHasBlackjack) {
-			//I win against the dealer
-			updates = { ...updates, status: "won", hasBlackjack: true };
+			//I won against the dealer
+			//game continues for the rest
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "won",
+				hasBlackjack: true,
+			};
+			//toggleTrueGameOver(); //only scenario where i won before game is over.
 		} else if (!IHaveBlackjack && dealerHasBlackjack) {
 			//I lost against the dealer
-			updates = { ...updates, status: "lost", hasBlackjack: false };
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "lost",
+				hasBlackjack: false,
+			};
+			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		} else if (IHaveBlackjack && dealerHasBlackjack) {
 			//push/tie
-			updates = { ...updates, status: "push", hasBlackjack: true };
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "push",
+				hasBlackjack: true,
+			};
+			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 		//if neither has -> continue game
 		try {
-			const res = await fbGame.updatePlayer(updatedMe.playerRef, updates);
-			console.log(res);
+			if (dealerUpdates && playerUpdates) {
+				await runTransaction(db, async (transaction) => {
+					transaction.update(updatedGame.gameRef, dealerUpdates);
+					transaction.update(updatedMe.playerRef, playerUpdates);
+				});
+				console.log("Updated player and dealer");
+			} else if (dealerUpdates) {
+				const res = await fbGame.updateGame(updatedGame.gameRef, dealerUpdates);
+				console.log(res);
+			} else if (playerUpdates) {
+				const res = await fbGame.updatePlayer(
+					updatedMe.playerRef,
+					playerUpdates
+				);
+				console.log(res);
+			}
+
+			await checkForNextPlayer();
 		} catch (err) {
 			console.log(err);
 		}

@@ -75,7 +75,7 @@ const GameOngoing = () => {
 	const getOpponents = (playersList) =>
 		playersList?.filter((player) => player?.id !== user?.uid);
 	const opponents = getOpponents(players);
-
+	89;
 	const getCurrentPlayer = (playersList) =>
 		// game?.gameStatus !== "gameOver" &&
 		// game?.gameStatus !== "dealerTurn" &&
@@ -145,8 +145,8 @@ const GameOngoing = () => {
 		try {
 			if (
 				//dealer has not drawn 2 cards -> draw 2 cards
-				!game.dealer ||
-				!game.dealer.length
+				game.gameStatus === "waiting" &&
+				(!game.dealer || !game.dealer.length)
 			) {
 				const { cards } = await cardMachine.drawCards(deckId, num);
 				const resp = await fbGame.updateGameDealer(gameDocRef.current, cards);
@@ -194,38 +194,58 @@ const GameOngoing = () => {
 		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
 		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
 
-		let playerUpdates = { donePlaying: true, canHit: false };
+		let playerUpdates;
 		let dealerUpdates;
 
 		if (IHaveBlackjack && !dealerHasBlackjack) {
 			//I won against the dealer
 			//game continues for the rest
-			playerUpdates = { ...playerUpdates, status: "won", hasBlackjack: true };
-			toggleTrueGameOver(); //only scenario where i win before game is over.
-		} else if (true) {
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "won",
+				hasBlackjack: true,
+			};
+			//toggleTrueGameOver(); //only scenario where i won before game is over.
+		} else if (!IHaveBlackjack && dealerHasBlackjack) {
 			//I lost against the dealer
-			playerUpdates = { ...playerUpdates, status: "lost", hasBlackjack: false };
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "lost",
+				hasBlackjack: false,
+			};
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		} else if (IHaveBlackjack && dealerHasBlackjack) {
 			//push/tie
-			playerUpdates = { ...playerUpdates, status: "push", hasBlackjack: true };
+			playerUpdates = {
+				donePlaying: true,
+				canHit: false,
+				playerUpdates,
+				status: "push",
+				hasBlackjack: true,
+			};
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 		//if neither has -> continue game
 		try {
-			if (dealerUpdates) {
+			if (dealerUpdates && playerUpdates) {
 				await runTransaction(db, async (transaction) => {
 					transaction.update(updatedGame.gameRef, dealerUpdates);
 					transaction.update(updatedMe.playerRef, playerUpdates);
 				});
 				console.log("Updated player and dealer");
-			} else {
+			} else if (dealerUpdates) {
+				const res = await fbGame.updateGame(updatedGame.gameRef, dealerUpdates);
+				console.log(res);
+			} else if (playerUpdates) {
 				const res = await fbGame.updatePlayer(
 					updatedMe.playerRef,
 					playerUpdates
 				);
 				console.log(res);
-				console.log("Updated player");
 			}
 
 			await checkForNextPlayer();
@@ -241,20 +261,17 @@ const GameOngoing = () => {
 		//get the latest game from gameRef.
 		const updatedGame = gameRef.current;
 
-		console.log(
-			"111111111",
-			game,
-			updatedGame,
-			currentPlayer,
-			updatedCurrentPlayer
+		console.log("|||||||||||||||", updatedCurrentPlayer);
+		const needDealerTurn = playersRef.current.some(
+			(player) => player.donePlaying === true && player.status === "playing"
 		);
 		try {
-			//check if last player yes -> dealer turn
-			if (!updatedCurrentPlayer && game.gameStatus === "playerTurn") {
-				//if not updated by other players yet
+			//check if last player
+			if (!updatedCurrentPlayer && updatedGame.gameStatus === "playerTurn") {
+				let status = needDealerTurn ? "dealerTurn" : "gameOver";
 
 				const res = await fbGame.updateGame(game.gameRef, {
-					gameStatus: "dealerTurn",
+					gameStatus: status,
 				});
 				console.log(res);
 				return;
@@ -303,14 +320,15 @@ const GameOngoing = () => {
 		try {
 			//Prevent every player resets the game.
 			if (game.gameStatus === "gameOver") {
-				//reset game and EVERY player
-				let promises = players.map((player) =>
-					fbGame.updatePlayer(player.playerRef, resetDataPlayer)
-				);
+				//reset game and EVERY player in curent round.
+				let promises = players.map((player) => {
+					if (player.status !== "waiting")
+						fbGame.updatePlayer(player.playerRef, resetDataPlayer);
+				});
 				promises.push(fbGame.updateGame(game.gameRef, resetDataGame));
 				let res = await Promise.all(promises);
 				res.forEach((msg) => console.log(msg));
-			} else {
+			} else if (me.status === "won" || me.status === "busted") {
 				await fbGame.updatePlayer(me.playerRef, resetDataPlayer);
 				console.log("Reset myself");
 			}
@@ -352,11 +370,20 @@ const GameOngoing = () => {
 			//create a local currentPlayer with the latest players list from ref.
 			const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
 
+			//check if total === 21 -> canHit -> false/must stand
+			if (cardsCalculator.has21(updatedCurrentPlayer.hand)) {
+				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+					canHit: false,
+				});
+				console.log(res);
+				return;
+			}
+
 			//check if busted  === true -> canHit -> false
 			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
 				await updateIsBusted(updatedCurrentPlayer);
 				await checkForNextPlayer();
-				toggleTrueGameOver();
+				//toggleTrueGameOver();
 				return;
 			}
 		} catch (err) {
@@ -508,12 +535,17 @@ const GameOngoing = () => {
 	}, [game?.deckId]);
 
 	//if gameStatus ==="gameOver" -> cleanup game doc
+	//if me.status ==="won" or "busted" -> cleanup myself
 	useEffect(() => {
-		if (!game || !users || !players) return;
+		if (!game || !user || !players) return;
 		let timer;
-		if (game.gameStatus === "gameOver" && me.status !== "waiting") {
+		if (
+			(game.gameStatus === "gameOver" && me.status !== "waiting") ||
+			me.status === "won" ||
+			me.status === "busted"
+		) {
 			toggleTrueGameOver();
-			timer = setTimeout(async () => await handleResetGame(), 8000); //reset
+			timer = setTimeout(async () => await handleResetGame(), 10000); //reset
 		} else toggleFalseGameOver();
 		return () => {
 			if (timer) {
@@ -521,7 +553,7 @@ const GameOngoing = () => {
 				console.log("Timer cleared");
 			}
 		};
-	}, [game?.gameStatus]);
+	}, [game?.gameStatus, players, user]);
 
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
@@ -569,6 +601,12 @@ const GameOngoing = () => {
 						</div>
 					) : me?.status === "busted" ? (
 						<div className="popup__text">You are busted.</div>
+					) : me?.status === "won" ? (
+						<div></div>
+					) : me?.status === "lost" ? (
+						<div></div>
+					) : me?.status === "push" ? (
+						<></>
 					) : (
 						<></>
 					)}
