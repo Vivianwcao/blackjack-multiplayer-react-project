@@ -60,8 +60,8 @@ const GameOngoing = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
-	const timerResetGame = 10000;
-	const timerPlayerMove = 30000; //30 secs
+	const timerResetGame = 10000; //time before resetGame() is triggered.
+	const timerPlayerMove = 10000; //30 secs for the current player to make a move
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
@@ -79,8 +79,6 @@ const GameOngoing = () => {
 	const opponents = getOpponents(players);
 	89;
 	const getCurrentPlayer = (playersList) =>
-		// game?.gameStatus !== "gameOver" &&
-		// game?.gameStatus !== "dealerTurn" &&
 		playersList?.find(
 			(player) => player?.donePlaying === false && player?.status === "playing" // with bet and initial draws ready, not lost/won/tie yet
 		);
@@ -233,8 +231,9 @@ const GameOngoing = () => {
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 
-		console.log(dealerUpdates);
-		console.log(playerUpdates);
+		// console.log(dealerUpdates);
+		// console.log(playerUpdates);
+
 		//if neither has -> continue game
 		try {
 			if (dealerUpdates && playerUpdates) {
@@ -267,7 +266,6 @@ const GameOngoing = () => {
 		//get the latest game from gameRef.
 		const updatedGame = gameRef.current;
 
-		console.log("|||||||||||||||", updatedCurrentPlayer);
 		const needDealerTurn = playersRef.current.some(
 			(player) => player.donePlaying === true && player.status === "playing"
 		);
@@ -281,6 +279,13 @@ const GameOngoing = () => {
 				});
 				console.log(res);
 				return;
+			} else {
+				//if next player exists
+				//add a initial timestamp to currentPlayer at the beginning of his turn
+				const res = await fbGame.updatePlayer(updatedCurrentPlayer.playerRef, {
+					playerTurnTimestamp: Date.now(),
+				});
+				console.log(res);
 			}
 		} catch (err) {
 			throw new Error(err);
@@ -312,6 +317,7 @@ const GameOngoing = () => {
 		status: "waiting",
 		hand: [],
 		timestamp: Date.now(),
+		playerTurnTimestamp: null,
 	};
 	const resetDataGame = {
 		dealerHasBlackjack: false,
@@ -556,6 +562,7 @@ const GameOngoing = () => {
 		if (game.deckId === null) updateNewDeck();
 	}, [game?.deckId]);
 
+	//trigger dealer move
 	useEffect(() => {
 		if (!players || !game) return;
 		console.log("%%%%%%%%%%", game.gameStatus);
@@ -590,16 +597,31 @@ const GameOngoing = () => {
 		};
 	}, [game?.gameStatus, players, user]);
 
-	//trigger toastify ->"wait for dealer to prepare ..."
+	//if current player timed out -> update current Player with action "stand"
 	useEffect(() => {
-		if (!me) return;
-		if (game.gameStatus === "gameOver") {
-			me.status === "waiting" &&
-				showToastResetGame(
-					`Hang on, dealer is preparing for the next round ...`
-				);
+		if (!players) return;
+		//playerTurnTimestamp is null until player's turn
+		if (!currentPlayer?.playerTurnTimestamp) return;
+		console.log(
+			"?????????????????",
+			Date.now() - currentPlayer.playerTurnTimestamp
+		);
+		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
+			//perform "stand" on current player
+			handleStand();
 		}
-	}, [me?.timestamp]);
+	}, [players]);
+
+	// //trigger toastify ->"wait for dealer to prepare ..."
+	// useEffect(() => {
+	// 	if (!me) return;
+	// 	if (game.gameStatus === "gameOver") {
+	// 		me.status === "waiting" &&
+	// 			showToastResetGame(
+	// 				`Hang on, dealer is preparing for the next round ...`
+	// 			);
+	// 	}
+	// }, [me?.timestamp]);
 
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&

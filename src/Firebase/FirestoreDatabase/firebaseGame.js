@@ -101,6 +101,7 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 					gameRef: gameDocRef,
 					gameId: gameDocRef.id,
 					timestamp: Date.now(),
+					playerTurnTimestamp: null,
 					bet: 0,
 					doubleBet: false,
 					hasBlackjack: false,
