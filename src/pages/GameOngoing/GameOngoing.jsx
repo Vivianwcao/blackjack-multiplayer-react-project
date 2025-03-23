@@ -17,7 +17,7 @@ import Popup from "../../components/Popup/Popup";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
-import { showToast } from "../../components/Toasts/Toast";
+import { showToast, showToastResetGame } from "../../components/Toasts/Toast";
 import "./GameOngoing.scss";
 
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
@@ -60,6 +60,8 @@ const GameOngoing = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
+	const timerResetGame = 10000;
+	const timerPlayerMove = 30000; //30 secs
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
@@ -127,9 +129,11 @@ const GameOngoing = () => {
 		}
 		try {
 			//update player's bet in db
+			//update timestamp -> playing order based on who places bet first
 			await fbGame.updatePlayer(me.playerRef, {
 				bet: +betStr, //get number
 				deckId: game.deckId,
+				timestamp: Date.now(),
 			});
 			toggleFalseBet();
 			await drawInitalCards(game.deckId);
@@ -138,7 +142,7 @@ const GameOngoing = () => {
 		}
 	};
 
-	//pop & ask to place a bet
+	//Initial draw 2cards
 	const drawInitalCards = async (deckId) => {
 		// Game intial draws for both dealer and I.
 		const num = 2;
@@ -285,9 +289,6 @@ const GameOngoing = () => {
 
 	const handleQuitGame = async () => {
 		try {
-			//resets game if player leaves game before setTimeOut
-			//Prevent every player resets the game.
-			await handleResetGame();
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
 
 			nav("/");
@@ -322,7 +323,7 @@ const GameOngoing = () => {
 		try {
 			//Prevent every player resets the game.
 			if (game.gameStatus === "gameOver") {
-				//reset game and EVERY player in curent round.
+				//reset game and EVERY player in CURRENT round.
 				let promises = players.map((player) => {
 					if (player.status !== "waiting")
 						fbGame.updatePlayer(player.playerRef, resetDataPlayer);
@@ -570,12 +571,16 @@ const GameOngoing = () => {
 		if (!game || !user || !players) return;
 		let timer;
 		if (
-			(game.gameStatus === "gameOver" && me.status !== "waiting") ||
+			game.gameStatus === "gameOver" ||
 			me.status === "won" ||
 			me.status === "busted"
 		) {
-			toggleTrueGameOver();
-			timer = setTimeout(async () => await handleResetGame(), 10000); //reset
+			//only players in current round will be notified the result.
+			me.status !== "waiting" && toggleTrueGameOver();
+
+			//triggers resetGame() after setTimeOut
+			//any player can trigger resetGame() ->from current round or not
+			timer = setTimeout(async () => await handleResetGame(), timerResetGame); //reset
 		} else toggleFalseGameOver();
 		return () => {
 			if (timer) {
@@ -584,6 +589,17 @@ const GameOngoing = () => {
 			}
 		};
 	}, [game?.gameStatus, players, user]);
+
+	//trigger toastify ->"wait for dealer to prepare ..."
+	useEffect(() => {
+		if (!me) return;
+		if (game.gameStatus === "gameOver") {
+			me.status === "waiting" &&
+				showToastResetGame(
+					`Hang on, dealer is preparing for the next round ...`
+				);
+		}
+	}, [me?.timestamp]);
 
 	const controlBoardCondition = () =>
 		game?.gameStatus === "playerTurn" &&
