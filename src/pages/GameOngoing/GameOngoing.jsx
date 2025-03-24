@@ -316,7 +316,7 @@ const GameOngoing = () => {
 		hasBlackjack: false,
 		status: "waiting",
 		hand: [],
-		timestamp: Date.now(),
+		timestamp: Date.now(), //optional or redundent -> order is based on when bet is placed
 		playerTurnTimestamp: null,
 	};
 	const resetDataGame = {
@@ -490,8 +490,8 @@ const GameOngoing = () => {
 		const prePIds = prePlayerIdRef.current.prePlayerId;
 
 		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
-		if (game.playersCount > prePIds.length) {
-			// let pId = game.playerId[game.playersCount - 1];
+		if (game.playerId.length > prePIds.length) {
+			// let pId = game.playerId[game.playerId.length - 1];
 			let pId;
 			for (let id of game.playerId) {
 				if (!prePIds?.includes(id)) {
@@ -506,7 +506,7 @@ const GameOngoing = () => {
 				);
 		}
 
-		if (game.playersCount < prePIds.length) {
+		if (game.playerId.length < prePIds.length) {
 			let pId;
 			for (let id of prePIds) {
 				if (!game.playerId.includes(id)) {
@@ -523,7 +523,7 @@ const GameOngoing = () => {
 		}
 		//updates prePlayerId ref
 		prePlayerIdRef.current.prePlayerId = game.playerId;
-	}, [game?.playersCount]);
+	}, [game?.playerId]);
 
 	//ask to place a bet
 	useEffect(() => {
@@ -579,11 +579,11 @@ const GameOngoing = () => {
 		let timer;
 		if (
 			game.gameStatus === "gameOver" ||
-			me.status === "won" ||
-			me.status === "busted"
+			me?.status === "won" ||
+			me?.status === "busted"
 		) {
 			//only players in current round will be notified the result.
-			me.status !== "waiting" && toggleTrueGameOver();
+			me?.status !== "waiting" && toggleTrueGameOver();
 
 			//triggers resetGame() after setTimeOut
 			//any player can trigger resetGame() ->from current round or not
@@ -602,13 +602,14 @@ const GameOngoing = () => {
 		if (!players) return;
 		//playerTurnTimestamp is null until player's turn
 		if (!currentPlayer?.playerTurnTimestamp) return;
-		console.log(
-			"?????????????????",
-			Date.now() - currentPlayer.playerTurnTimestamp
-		);
+		console.log("???????????", Date.now() - currentPlayer.playerTurnTimestamp);
+
+		//if current player is inactive
 		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
-			//perform "stand" on current player
-			handleStand();
+			//remove inactive player
+			fbGame
+				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
+				.catch((err) => console.log(err));
 		}
 	}, [players]);
 
@@ -623,18 +624,20 @@ const GameOngoing = () => {
 	// 	}
 	// }, [me?.timestamp]);
 
-	const controlBoardCondition = () =>
+	const controlBoardCondition =
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
 		currentPlayer?.donePlaying === false;
 
-	const handleDBetCondition = () =>
+	const handleDBetCondition =
 		currentPlayer?.hand?.length === 2 && currentPlayer?.doubleBet === false;
+
+	const handleNavigate = () => setTimeout(() => nav("/"), 2000);
 
 	return !user?.uid ? (
 		<div>Please log in first</div>
 	) : !game?.playerId.includes(user.uid) ? (
-		<div>You are not in this game</div>
+		nav("/")
 	) : (
 		<div className="game">
 			<Popup isOpen={popBet} handleBtnLeft={handleAddBet} btnLeftText="Confirm">
@@ -735,13 +738,13 @@ const GameOngoing = () => {
 					</div>
 				))}
 			</div>
-			{controlBoardCondition() && (
+			{controlBoardCondition && (
 				<div className="game__control-board">
 					{currentPlayer?.canHit === true && (
 						<button onClick={handleHit}>Hit!</button>
 					)}
 					<button onClick={handleStand}>Stand</button>
-					{handleDBetCondition() && (
+					{handleDBetCondition && (
 						<button onClick={handleDBet}>Double Down</button>
 					)}
 				</div>

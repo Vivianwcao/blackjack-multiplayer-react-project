@@ -53,7 +53,6 @@ export const addNewGame = async (
 			timestamp: Date.now(),
 			gameStatus: "waiting",
 			deckId,
-			playersCount: 0,
 			maxPlayers,
 		},
 		{ merge: true }
@@ -87,9 +86,9 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 	if (gameSnap.exists()) {
 		try {
 			const gameData = gameSnap.data();
-			const numOfPlayers = gameData.playersCount;
+			const numOfPlayers = gameData?.playerId?.length;
 			const maxPlayers = gameData.maxPlayers;
-			if (numOfPlayers === maxPlayers) {
+			if (numOfPlayers && numOfPlayers === maxPlayers) {
 				console.log(`${maxPlayers} players maximum. The room is full`);
 				return;
 			} else {
@@ -113,7 +112,6 @@ export const createPlayer = async (gameDocRef, status, uid) => {
 				await runTransaction(db, async (transaction) => {
 					transaction.set(playerDocRef, playerData);
 					transaction.update(gameDocRef, {
-						playersCount: increment(1),
 						playerRef: arrayUnion(playerDocRef),
 						playerId: arrayUnion(playerDocRef.id),
 					});
@@ -151,13 +149,13 @@ export const updatePlayerHand = async (playerDocRef, cardList) => {
 };
 
 export const removePlayerFromGame = async (playerDocRef, gameDocRef) => {
-	const playerDocSnapshot = await getDoc(playerDocRef);
 	try {
+		const playerDocSnapshot = await getDoc(playerDocRef);
+
 		if (playerDocSnapshot.exists()) {
 			await runTransaction(db, async (transaction) => {
 				transaction.delete(playerDocRef);
 				transaction.update(gameDocRef, {
-					playersCount: increment(-1),
 					playerRef: arrayRemove(playerDocRef),
 					playerId: arrayRemove(playerDocRef.id),
 				});

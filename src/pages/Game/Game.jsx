@@ -252,7 +252,7 @@ const Game = () => {
 	const playingInitialDraw = async (deck_id) => {
 		try {
 			//draw two cards each ->setGame, setPlayers
-			const totalNum = 2 * (game.playersCount + 1);
+			const totalNum = 2 * (game.playerId.length + 1);
 			const { cards } = await cardMachine.drawCards(deck_id, totalNum);
 
 			//populate each player's hand
@@ -373,6 +373,7 @@ const Game = () => {
 		}
 	};
 
+	//Notify as other player enter/leaves
 	useEffect(() => {
 		if (!user) {
 			console.log("User not loaded yet");
@@ -390,8 +391,8 @@ const Game = () => {
 		const prePIds = prePlayerIdRef.current.prePlayerId;
 
 		//notify user of player quits (anytime))/joins(while gameStatus === 'waiting')
-		if (game.playersCount > prePIds.length) {
-			// let pId = game.playerId[game.playersCount - 1];
+		if (game.playerId.length > prePIds.length) {
+			// let pId = game.playerId[game.playerId.length - 1];
 			let pId;
 			for (let id of game.playerId) {
 				if (!prePIds?.includes(id)) {
@@ -406,7 +407,7 @@ const Game = () => {
 				);
 		}
 
-		if (game.playersCount < prePIds.length) {
+		if (game.playerId.length < prePIds.length) {
 			let pId;
 			for (let id of prePIds) {
 				if (!game.playerId.includes(id)) {
@@ -420,12 +421,10 @@ const Game = () => {
 						users?.find((user) => user.id === pId)?.name || "Someone "
 					} left ...`
 				);
-			//if !initial draw -> go back to lobby page.
-			game?.gameStatus === "waiting" && nav("/");
 		}
 		//updates prePlayerId ref
 		prePlayerIdRef.current.prePlayerId = game.playerId;
-	}, [game?.playersCount]);
+	}, [game?.playerId]);
 
 	useEffect(() => {
 		if (!players || !game) {
@@ -438,7 +437,7 @@ const Game = () => {
 			me?.status === "waiting" &&
 			me?.bet == 0 &&
 			game?.gameStatus === "waiting" &&
-			game?.playersCount === game?.maxPlayers
+			game?.playerId?.length === game?.maxPlayers
 		)
 			//ask to place a bet
 			toggleTrueBet();

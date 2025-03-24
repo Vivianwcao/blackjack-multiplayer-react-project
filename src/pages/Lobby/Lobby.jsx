@@ -28,11 +28,11 @@ const Lobby = () => {
 	const userJoinedGame = (uid) => {
 		for (let game of gamesList) {
 			//find the game where the user is in
-			if (game?.playersCount > 0 && game.playerId.includes(uid)) {
+			if (game?.playerId?.length > 0 && game.playerId.includes(uid)) {
 				//side effects here
 				if (
 					game.isOngoing ||
-					game.playersCount === game.maxPlayers ||
+					game.playerId.length === game.maxPlayers ||
 					game.gameStatus !== "waiting"
 				)
 					toggleTrueEnterGame();
@@ -133,7 +133,7 @@ const Lobby = () => {
 
 	const joinGameConditions = (game) => {
 		const basicCondition =
-			user && !joined && game.playersCount < game.maxPlayers;
+			user && !joined && game?.playerId?.length < game.maxPlayers;
 		if (game.isOngoing) {
 			return basicCondition; //any time
 		} else {
@@ -227,7 +227,9 @@ const Lobby = () => {
 				.map((game, i) => (
 					<div className="game-room" key={i}>
 						<p>{`Game room ${game.gameId}`}</p>
-						<p>{`Players in: ${game.playersCount}/${game.maxPlayers}`}</p>
+						<p>{`Players in: ${
+							game?.playerId?.length ? game?.playerId?.length : ""
+						}/${game.maxPlayers}`}</p>
 
 						{joinGameConditions(game) && (
 							<button onClick={() => handleJoinGame(game.gameId)}>
