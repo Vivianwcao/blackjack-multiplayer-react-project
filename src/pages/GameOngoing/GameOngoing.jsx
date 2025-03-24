@@ -597,22 +597,6 @@ const GameOngoing = () => {
 		};
 	}, [game?.gameStatus, players, user]);
 
-	//if current player timed out -> update current Player with action "stand"
-	useEffect(() => {
-		if (!players) return;
-		//playerTurnTimestamp is null until player's turn
-		if (!currentPlayer?.playerTurnTimestamp) return;
-		console.log("???????????", Date.now() - currentPlayer.playerTurnTimestamp);
-
-		//if current player is inactive
-		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
-			//remove inactive player
-			fbGame
-				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
-				.catch((err) => console.log(err));
-		}
-	}, [players]);
-
 	// //trigger toastify ->"wait for dealer to prepare ..."
 	// useEffect(() => {
 	// 	if (!me) return;
@@ -624,6 +608,17 @@ const GameOngoing = () => {
 	// 	}
 	// }, [me?.timestamp]);
 
+	const removeInactiveCurrentPlayer = () => {
+		if (!currentPlayer?.playerTurnTimestamp) return;
+		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
+			//remove inactive player
+			fbGame
+				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
+				.catch((err) => console.log(err));
+		} else {
+			showToast("The current player is still active");
+		}
+	};
 	const controlBoardCondition =
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
@@ -747,6 +742,16 @@ const GameOngoing = () => {
 					{handleDBetCondition && (
 						<button onClick={handleDBet}>Double Down</button>
 					)}
+				</div>
+			)}
+			{currentPlayer !== me && me.status !== "waiting" && (
+				<div className="game__btn-wrapper">
+					<button
+						className="game__remove-inactive-player-btn"
+						onClick={removeInactiveCurrentPlayer}
+					>
+						Remove inactive player
+					</button>
 				</div>
 			)}
 			<div className="game__info">
