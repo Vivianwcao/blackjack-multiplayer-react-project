@@ -24,7 +24,7 @@ export const showToast = (message) => {
 	});
 };
 
-export const showToastResetGame = (message) => {
+export const showToastCenter = (message) => {
 	toast(<CustomToast message={message} />, {
 		position: "top-center",
 		autoClose: 4000,

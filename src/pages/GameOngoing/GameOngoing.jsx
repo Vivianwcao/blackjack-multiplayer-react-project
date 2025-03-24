@@ -17,7 +17,7 @@ import Popup from "../../components/Popup/Popup";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
-import { showToast, showToastResetGame } from "../../components/Toasts/Toast";
+import { showToast, showToastCenter } from "../../components/Toasts/Toast";
 import "./GameOngoing.scss";
 
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
@@ -29,6 +29,9 @@ const GameOngoing = () => {
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null); //from gameId in params
 	const betRef = useRef(null);
+
+	//check if toast has been displayed for "waiting" players while game is pending to be rest.
+	const resetGameToastRef = useRef(true);
 
 	const gameRef = useRef(game);
 
@@ -344,7 +347,7 @@ const GameOngoing = () => {
 		} catch (err) {
 			console.log(err.message);
 		}
-		toggleFalseGameOver(); //please stop here it is the working version!!!
+		popGameOver && toggleFalseGameOver(); //close pop-up if open
 	};
 
 	const updateIsBusted = async (player) => {
@@ -585,10 +588,10 @@ const GameOngoing = () => {
 			//only players in current round will be notified the result.
 			me?.status !== "waiting" && toggleTrueGameOver();
 
-			me.status === "waiting" &&
-				showToastResetGame(
-					`Hang on, dealer is preparing for the next round ...`
-				);
+			if (resetGameToastRef.current && me?.status === "waiting") {
+				showToastCenter(`Hang on, dealer is preparing for the next round ...`);
+				resetGameToastRef.current = false; //Only show toast once
+			}
 
 			//triggers resetGame() after setTimeOut
 			//any player can trigger resetGame() ->from current round or new
@@ -602,16 +605,12 @@ const GameOngoing = () => {
 		};
 	}, [game?.gameStatus, players, user]);
 
-	// //trigger toastify ->"wait for dealer to prepare ..."
-	// useEffect(() => {
-	// 	if (!me) return;
-	// 	if (game.gameStatus === "gameOver") {
-	// 		me.status === "waiting" &&
-	// 			showToastResetGame(
-	// 				`Hang on, dealer is preparing for the next round ...`
-	// 			);
-	// 	}
-	// }, [me?.timestamp]);
+	//reset resetGameToastRef.current to true for next toast
+	useEffect(() => {
+		if (!game || !user || !players) return;
+		if (game.gameStatus !== "gameOver" && resetGameToastRef.current === false)
+			resetGameToastRef.current = true; //reset for next round.
+	}, [game?.gameStatus, players, user]);
 
 	const removeInactiveCurrentPlayer = () => {
 		if (!currentPlayer?.playerTurnTimestamp) return;
@@ -621,7 +620,7 @@ const GameOngoing = () => {
 				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
 				.catch((err) => console.log(err));
 		} else {
-			showToast("The current player is still active");
+			showToastCenter("The current player is still active");
 		}
 	};
 	const controlBoardCondition =
@@ -749,7 +748,7 @@ const GameOngoing = () => {
 					)}
 				</div>
 			)}
-			{currentPlayer !== me && me.status !== "waiting" && (
+			{currentPlayer !== me && me?.status !== "waiting" && (
 				<div className="game__btn-wrapper">
 					<button
 						className="game__remove-inactive-player-btn"
