@@ -27,8 +27,8 @@ export const showToast = (message) => {
 export const showToastResetGame = (message) => {
 	toast(<CustomToast message={message} />, {
 		position: "top-center",
-		autoClose: 2000,
-		hideProgressBar: false,
+		autoClose: 4000,
+		hideProgressBar: true,
 		closeOnClick: false,
 		pauseOnFocusLoss: false,
 		draggable: true,

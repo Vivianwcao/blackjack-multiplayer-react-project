@@ -585,8 +585,13 @@ const GameOngoing = () => {
 			//only players in current round will be notified the result.
 			me?.status !== "waiting" && toggleTrueGameOver();
 
+			me.status === "waiting" &&
+				showToastResetGame(
+					`Hang on, dealer is preparing for the next round ...`
+				);
+
 			//triggers resetGame() after setTimeOut
-			//any player can trigger resetGame() ->from current round or not
+			//any player can trigger resetGame() ->from current round or new
 			timer = setTimeout(async () => await handleResetGame(), timerResetGame); //reset
 		} else toggleFalseGameOver();
 		return () => {
