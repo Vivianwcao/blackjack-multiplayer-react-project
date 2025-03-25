@@ -24,14 +24,19 @@ export const newDeck = async (numOfDecks) => {
 //draw #num of card
 export const drawCards = async (deckId, num) => {
 	try {
+		//reset deck before every draw
+		await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/return/`);
+
 		//shuffle
 		await axios.get(
 			`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/?remaining=true`
 		);
+
 		//draw
 		const deck = await axios.get(
 			`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${num}`
 		);
+
 		//reset deck after every draw
 		await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/return/`);
 		return deck.data;

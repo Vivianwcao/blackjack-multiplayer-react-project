@@ -15,8 +15,7 @@ import Popup from "../../components/Popup/Popup";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
-import { useGameContext } from "../../components/GameProvider";
-import { showToast } from "../../components/Toasts/Toast";
+import { showToast, showToastCenter } from "../../components/Toasts/Toast";
 import "./Game.scss";
 
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
@@ -59,10 +58,13 @@ const Game = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
+	const timerResetGame = 20000; //time before resetGame() is triggered.
+	const timerToggleOpenPop = 2000; //time before pop-up is triggered.
+	const timerPlayerMove = 60000; //60 secs for the current player to make a move
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
-	const [popGameCloses, toggleTrueGameCloses, toggleFalseGameCloses] =
+	const [popGameOver, toggleTrueGameOver, toggleFalseGameOver] =
 		useToggle(false);
 	const [popQuitGame, toggleTrueQuitGame, toggleFalseQuitGame] =
 		useToggle(false);
@@ -112,42 +114,32 @@ const Game = () => {
 		});
 	};
 
-	const handleGameCloses = () => {
-		if (game?.gameStatus === "waiting") nav("/");
-		toggleFalseGameCloses();
-	};
-
 	//pop & ask to place a bet
 	const handleAddBet = async () => {
 		const betStr = betRef.current.value;
-		//update player's bet in db
-		await fbGame.updatePlayer(me.playerRef, {
-			bet: +betStr,
-		}); //get number
-		toggleFalseBet();
-
-		// set up game intial draw stage
+		//validate betStr a positive integer
+		if (!/^[1-9]\d*$/.test(betStr.trim())) {
+			console.log("Invalid bet");
+			return;
+		}
 		try {
+			//update player's bet in db
+			await fbGame.updatePlayer(me.playerRef, {
+				bet: +betStr,
+			}); //get number
+			toggleFalseBet();
+
+			// set up game intial draw stage
 			//get new deck
 			const { deck_id } = await cardMachine.newDeck(game.maxPlayers);
 
 			//get the latest players from playersRef.
 			const updatedPlayers = playersRef.current;
-			console.log("~~~~~~~~~~", updatedPlayers);
-			if (
-				//meaning "me" is the last to place bet
-				updatedPlayers.every((player) => player.bet > 0)
-			) {
+			if (updatedPlayers.every((player) => player.bet > 0)) {
 				//Everyone has placed their bet
 				//update gameStatus -> dealing
 				//update deckId in db : game && all players
 				let promiseList = [];
-				promiseList.push(
-					fbGame.updateGame(gameDocRef.current, {
-						deckId: deck_id,
-						gameStatus: "dealing",
-					})
-				);
 				players.forEach((player) =>
 					promiseList.push(
 						fbGame.updatePlayer(player.playerRef, {
@@ -160,8 +152,9 @@ const Game = () => {
 				res.forEach((msg) => console.log(msg)); //success message
 
 				await playingInitialDraw(deck_id);
-				//update gameStatus -> playerTurn
+				//update gameStatus -> playerTurn, update deck_id
 				const res1 = await fbGame.updateGame(game.gameRef, {
+					deckId: deck_id,
 					gameStatus: "playerTurn",
 				});
 				console.log(res1);
@@ -184,8 +177,6 @@ const Game = () => {
 		const IHaveBlackjack = cardsCalculator.has21(updatedMe.hand);
 		const dealerHasBlackjack = cardsCalculator.has21(updatedGame.dealer);
 
-		console.log(cardsCalculator.calculateHand(updatedMe.hand));
-		console.log(cardsCalculator.calculateHand(updatedGame.dealer));
 		let playerUpdates;
 		let dealerUpdates;
 
@@ -219,8 +210,6 @@ const Game = () => {
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 
-		console.log(dealerUpdates);
-		console.log(playerUpdates);
 		//if neither has -> continue game
 		try {
 			if (dealerUpdates && playerUpdates) {
@@ -266,14 +255,49 @@ const Game = () => {
 
 			await blackjackOutcome();
 		} catch (err) {
-			console.error(err);
+			console.log(err);
+		}
+	};
+
+	const checkForNextPlayer = async () => {
+		//create a local currentPlayer with the latest players list from ref.
+		const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
+
+		//get the latest game from gameRef.
+		const updatedGame = gameRef.current;
+
+		const needDealerTurn = playersRef.current.some(
+			(player) => player.donePlaying === true && player.status === "playing"
+		);
+		try {
+			//check if last player
+			if (!updatedCurrentPlayer && updatedGame.gameStatus === "playerTurn") {
+				let status = needDealerTurn ? "dealerTurn" : "gameOver";
+
+				const res = await fbGame.updateGame(game.gameRef, {
+					gameStatus: status,
+				});
+				console.log(res);
+				//trigger dealer moves.
+				if (status === "dealerTurn") await dealerMoves();
+				return;
+			} else {
+				//if next player exists
+				//add a initial timestamp to currentPlayer at the beginning of his turn
+				const res = await fbGame.updatePlayer(updatedCurrentPlayer.playerRef, {
+					playerTurnTimestamp: Date.now(),
+				});
+				console.log(res);
+			}
+		} catch (err) {
+			console.log(err);
 		}
 	};
 
 	const handleQuitGame = async () => {
 		try {
 			await fbGame.removePlayerFromGame(me.playerRef, game.gameRef);
-
+			toggleFalseGameOver();
 			nav("/");
 			let delay = setTimeout(
 				async () => await fbGame.removeEmptyGame(game.gameRef),
@@ -285,31 +309,13 @@ const Game = () => {
 		}
 	};
 
-	const checkForNextPlayer = async () => {
-		//create a local currentPlayer with the latest players list from ref.
-		const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
-		try {
-			//check if last player yes -> dealer turn
-			if (!updatedCurrentPlayer) {
-				//yes -> dealer turn
-				const res = await fbGame.updateGame(game.gameRef, {
-					gameStatus: "dealerTurn",
-				});
-				console.log(res);
-				return;
-			}
-		} catch (err) {
-			throw new Error(err);
-		}
-	};
-
 	const updateIsBusted = async (player) => {
 		try {
 			const res = await fbGame.updatePlayer(player.playerRef, {
 				busted: true,
 				canHit: false,
 				donePlaying: true,
-				status: "lost",
+				status: "busted",
 			});
 			console.log(res);
 			return;
@@ -334,6 +340,15 @@ const Game = () => {
 
 			//create a local currentPlayer with the latest players list from ref.
 			const updatedCurrentPlayer = getCurrentPlayer(playersRef.current);
+
+			//check if total === 21 -> canHit -> false/must stand
+			if (cardsCalculator.has21(updatedCurrentPlayer.hand)) {
+				const res = await fbGame.updatePlayer(currentPlayer.playerRef, {
+					canHit: false,
+				});
+				console.log(res);
+				return;
+			}
 
 			//check if busted  === true -> canHit -> false
 			if (cardsCalculator.isBusted(updatedCurrentPlayer.hand)) {
@@ -372,6 +387,148 @@ const Game = () => {
 			console.log(err);
 		}
 	};
+
+	const removeInactiveCurrentPlayer = () => {
+		if (!currentPlayer?.playerTurnTimestamp) return;
+		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
+			//remove inactive player
+			fbGame
+				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
+				.catch((err) => console.log(err));
+		} else {
+			showToastCenter("The current player is still active");
+		}
+	};
+
+	const dealerMoves = async () => {
+		//get the latest game from gameRef.
+		const updatedGame = gameRef.current;
+		if (updatedGame.gameStatus !== "dealerTurn") return;
+
+		//create local copies
+		let tempCardsList = updatedGame.dealer;
+		let localScore = cardsCalculator.calculateHand(tempCardsList);
+
+		console.log("@@@@@@@@, ", gameRef.current.dealer);
+
+		//draw all cards locally, and update at once.
+		try {
+			while (localScore <= 16) {
+				//must hit
+				const { cards } = await cardMachine.drawSingleCard(updatedGame.deckId);
+				tempCardsList.push(...cards);
+				localScore += cardsCalculator.calculateHand(cards);
+			}
+			console.log("OOOOOOOOOOOO", tempCardsList);
+			//check dealer busted
+			if (localScore > 21) {
+				const res = await fbGame.updateGame(gameDocRef.current, {
+					dealer: tempCardsList,
+					gameStatus: "gameOver",
+					dealerisBusted: true,
+				});
+				console.log(res);
+			} else if (localScore >= 17) {
+				//including exactly 21 -> must stand
+				const res = fbGame.updateGame(gameDocRef.current, {
+					dealer: tempCardsList,
+					gameStatus: "gameOver",
+				});
+				console.log(res);
+			}
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const displayResult = (me, game) => {
+		if (
+			me?.status === "won" &&
+			me.hasBlackjack === true &&
+			game.dealerHasBlackjack === false
+		) {
+			return (
+				<div className="popup__text">
+					You beat the dealer with Blackjack and won ${(me.bet * 3) / 2}!
+				</div>
+			);
+		} else if (
+			me?.status === "push" &&
+			me.hasBlackjack === true &&
+			game.dealerHasBlackjack === true
+		) {
+			return (
+				<div className="popup__text">
+					Both you and the dealer have Blackjack—it's a tie!
+				</div>
+			);
+		} else if (
+			me?.status === "lost" &&
+			me.hasBlackjack === false &&
+			game.dealerHasBlackjack === true
+		) {
+			return (
+				<div className="popup__text">
+					The dealer won with Blackjack. You lost ${me.bet}.
+				</div>
+			);
+		} else if (me?.status === "busted") {
+			return <div className="popup__text">You're busted!</div>;
+		}
+
+		if (game.gameStatus === "gameOver") {
+			const myScore = cardsCalculator.calculateHand(me.hand);
+			const dealerScore = cardsCalculator.calculateHand(game.dealer);
+			console.log("Result:", myScore, dealerScore);
+
+			if (myScore === dealerScore) {
+				return <div className="popup__text">It's a tie with the dealer!</div>;
+			}
+			if (game.dealerisBusted) {
+				return (
+					<div className="popup__text">
+						The dealer busted! You won ${me.bet}!
+					</div>
+				);
+			} else if (myScore > dealerScore) {
+				return (
+					<div className="popup__text">
+						You beat the dealer and won ${me.bet}!
+					</div>
+				);
+			} else if (myScore < dealerScore) {
+				return (
+					<div className="popup__text">The dealer won. You lost ${me.bet}.</div>
+				);
+			}
+		}
+	};
+
+	//attach listeners
+	useEffect(() => {
+		if (!user?.uid) {
+			console.log("User not loaded yet");
+			return; // No cleanup needed if user isn’t ready
+		}
+
+		//set ref using game id from params.
+		gameDocRef.current = fbGame.getGameDocRef(
+			fbGame.gamesCollectionName,
+			gameId
+		);
+		//attach listeners
+		const unsubscribeGame = addGameListener(gameDocRef.current);
+		console.log("**Firestore listener on game mounted/attached.**");
+		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
+		console.log("**Firestore listener on players mounted/attached.**");
+
+		return () => {
+			unsubscribeGame?.();
+			console.log("**Firestore listener on game UNmounted/attached.**");
+			unsubscribePlayers?.();
+			console.log("**Firestore listener on players UNmounted/attached.**");
+		};
+	}, [user?.uid, gameId]);
 
 	//Notify as other player enter/leaves
 	useEffect(() => {
@@ -426,6 +583,7 @@ const Game = () => {
 		prePlayerIdRef.current.prePlayerId = game.playerId;
 	}, [game?.playerId]);
 
+	//ask to place a bet
 	useEffect(() => {
 		if (!players || !game) {
 			console.log("Players or game state not loaded.");
@@ -435,52 +593,46 @@ const Game = () => {
 		//ask to place a bet
 		if (
 			me?.status === "waiting" &&
-			me?.bet == 0 &&
+			me?.bet === 0 &&
 			game?.gameStatus === "waiting" &&
 			game?.playerId?.length === game?.maxPlayers
 		)
-			//ask to place a bet
+			//pop -> ask to place a bet
 			toggleTrueBet();
 		else toggleFalseBet();
 	}, [players, game]);
 
+	//if gameStatus ==="gameOver" -> cleanup game doc
+	//if me.status ==="won" or "busted" -> cleanup myself
 	useEffect(() => {
-		if (!user?.uid) {
-			console.log("User not loaded yet");
-			return; // No cleanup needed if user isn’t ready
-		}
-
-		//set ref using game id from params.
-		gameDocRef.current = fbGame.getGameDocRef(
-			fbGame.gamesCollectionName,
-			gameId
-		);
-		//attach listeners
-		const unsubscribeGame = addGameListener(gameDocRef.current);
-		console.log("**Firestore listener on game mounted/attached.**");
-		const unsubscribePlayers = addPlayersListeners(gameDocRef.current);
-		console.log("**Firestore listener on players mounted/attached.**");
+		if (!game || !user || !players) return;
+		let timer;
+		if (
+			game.gameStatus === "gameOver" ||
+			me?.status === "won" ||
+			me?.status === "busted"
+		)
+			timer = setTimeout(() => toggleTrueGameOver(), timerToggleOpenPop);
 
 		return () => {
-			unsubscribeGame?.();
-			console.log("**Firestore listener on game UNmounted/attached.**");
-			unsubscribePlayers?.();
-			console.log("**Firestore listener on players UNmounted/attached.**");
+			if (timer) {
+				clearTimeout(timer);
+				console.log("Timer cleared");
+			}
 		};
-	}, [user?.uid, gameId]);
-
-	const controlBoardCondition = () =>
+	}, [game?.gameStatus, players, user]);
+	const controlBoardCondition =
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
 		currentPlayer?.donePlaying === false;
 
-	const handleDBetCondition = () =>
-		currentPlayer?.hand.length === 2 && currentPlayer?.doubleBet === false;
+	const handleDBetCondition =
+		currentPlayer?.hand?.length === 2 && currentPlayer?.doubleBet === false;
 
 	return !user?.uid ? (
 		<div>Please log in first</div>
 	) : !game?.playerId.includes(user.uid) ? (
-		<div>You are not in this game</div>
+		nav("/")
 	) : (
 		<div className="game">
 			<Popup isOpen={popBet} handleBtnLeft={handleAddBet} btnLeftText="Confirm">
@@ -494,13 +646,21 @@ const Game = () => {
 				/>
 			</Popup>
 			<Popup
-				isOpen={popGameCloses}
-				handleBtnLeft={handleGameCloses}
-				btnLeftText="Confirm"
+				isOpen={popGameOver}
+				handleBtnLeft={handleQuitGame}
+				btnLeftText="Leave Game"
 			>
-				<h2 className="pop-title">
-					Someone has left the game ... game continues ...
-				</h2>
+				<div>
+					<h2 className="popup___title">Blackjack result</h2>
+					<div className="popup__text">
+						My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
+					</div>
+					<div className="popup__text">
+						Dealer score:{" "}
+						{game?.dealer && cardsCalculator.calculateHand(game?.dealer)}
+					</div>
+					{me?.hand && game?.dealer && displayResult(me, game)}
+				</div>
 			</Popup>
 			<Popup
 				isOpen={popQuitGame}
@@ -509,11 +669,8 @@ const Game = () => {
 				btnLeftText="Cancel"
 				btnRightText="Quit Game"
 			>
-				<h2 className="pop-title">
-					Someone has left the game ... going back to lobby
-				</h2>
+				<h2 className="pop-title">Going back to lobby</h2>
 			</Popup>
-
 			{console.log("* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ * in game")}
 			{console.log(players)}
 			{/* { console.log( user ) } */}
@@ -540,8 +697,7 @@ const Game = () => {
 							src={
 								i === 1 &&
 								game?.gameStatus !== "dealerTurn" &&
-								me?.hasBlackjack === false &&
-								game?.dealerHasBlackjack === false
+								game?.gameStatus !== "gameOver"
 									? backOfCardImg
 									: image
 							}
@@ -556,23 +712,34 @@ const Game = () => {
 					</div>
 				))}
 			</div>
-			{controlBoardCondition() && (
+			{controlBoardCondition && (
 				<div className="game__control-board">
-					{currentPlayer.canHit === true && (
+					{currentPlayer?.canHit === true && (
 						<button onClick={handleHit}>Hit!</button>
 					)}
 					<button onClick={handleStand}>Stand</button>
-					{handleDBetCondition() && (
-						<button onClick={handleDBet}>Double down</button>
+					{handleDBetCondition && (
+						<button onClick={handleDBet}>Double Down</button>
 					)}
+				</div>
+			)}
+			{currentPlayer !== me && game?.gameStatus === "playerTurn" && (
+				<div className="game__btn-wrapper">
+					<button
+						className="game__remove-inactive-player-btn"
+						onClick={removeInactiveCurrentPlayer}
+					>
+						Remove inactive player
+					</button>
 				</div>
 			)}
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 				<p>
-					My total hand: Low:
-					{me?.hand && cardsCalculator.calculateHand(me.hand).min} High:
-					{me?.hand && cardsCalculator.calculateHand(me.hand).max}
+					My total score:
+					{me?.hand && cardsCalculator.calculateHand(me.hand)}
+					{/* Dealer score:
+					{game?.dealer && cardsCalculator.calculateHand(game.dealer)} */}
 				</p>
 			</div>
 		</div>

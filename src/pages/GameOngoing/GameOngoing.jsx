@@ -81,7 +81,7 @@ const GameOngoing = () => {
 	const getOpponents = (playersList) =>
 		playersList?.filter((player) => player?.id !== user?.uid);
 	const opponents = getOpponents(players);
-	89;
+
 	const getCurrentPlayer = (playersList) =>
 		playersList?.find(
 			(player) => player?.donePlaying === false && player?.status === "playing" // with bet and initial draws ready, not lost/won/tie yet
@@ -233,9 +233,6 @@ const GameOngoing = () => {
 			dealerUpdates = { dealerHasBlackjack: true, gameStatus: "gameOver" };
 		}
 
-		// console.log(dealerUpdates);
-		// console.log(playerUpdates);
-
 		//if neither has -> continue game
 		try {
 			if (dealerUpdates && playerUpdates) {
@@ -292,7 +289,7 @@ const GameOngoing = () => {
 				console.log(res);
 			}
 		} catch (err) {
-			throw new Error(err);
+			console.log(err);
 		}
 	};
 
@@ -493,7 +490,7 @@ const GameOngoing = () => {
 		) {
 			return (
 				<div className="popup__text">
-					You beat dealer with Blackjack and won ${(me.bet * 3) / 2}!
+					You beat the dealer with Blackjack and won ${(me.bet * 3) / 2}!
 				</div>
 			);
 		} else if (
@@ -503,7 +500,7 @@ const GameOngoing = () => {
 		) {
 			return (
 				<div className="popup__text">
-					Both you and dealer has Blackjack and you are tie with dealer!
+					Both you and the dealer have Blackjack—it's a tie!
 				</div>
 			);
 		} else if (
@@ -513,37 +510,37 @@ const GameOngoing = () => {
 		) {
 			return (
 				<div className="popup__text">
-					The dealer beat you with Blackjack and you lost ${me.bet}.
+					The dealer won with Blackjack. You lost ${me.bet}.
 				</div>
 			);
 		} else if (me?.status === "busted") {
-			return <div className="popup__text">You are busted.</div>;
+			return <div className="popup__text">You're busted!</div>;
 		}
+
 		if (game.gameStatus === "gameOver") {
 			const myScore = cardsCalculator.calculateHand(me.hand);
 			const dealerScore = cardsCalculator.calculateHand(game.dealer);
-			console.log("result: ", myScore, dealerScore);
+			console.log("Result:", myScore, dealerScore);
+
 			if (myScore === dealerScore) {
-				<div className="popup__text">You are tie with dealer!</div>;
+				return <div className="popup__text">It's a tie with the dealer!</div>;
 			}
 			if (game.dealerisBusted) {
 				return (
 					<div className="popup__text">
-						Dealer is busted and you won ${me.bet}!
+						The dealer busted! You won ${me.bet}!
 					</div>
 				);
 			} else if (myScore > dealerScore) {
 				return (
-					<div className="popup__text">You beat dealer and won ${me.bet}!</div>
+					<div className="popup__text">
+						You beat the dealer and won ${me.bet}!
+					</div>
 				);
 			} else if (myScore < dealerScore) {
 				return (
-					<div className="popup__text">
-						Dealer beat you and you lost ${me.bet}!
-					</div>
+					<div className="popup__text">The dealer won. You lost ${me.bet}.</div>
 				);
-			} else if (myScore === dealerScore) {
-				return <div className="popup__text">You are tie with dealer!</div>;
 			}
 		}
 	};
@@ -641,7 +638,7 @@ const GameOngoing = () => {
 			game?.gameStatus !== "gameOver" &&
 			game?.gameStatus !== "dealerTurn"
 		)
-			//ask to place a bet
+			//pop -> ask to place a bet
 			toggleTrueBet();
 		else toggleFalseBet();
 	}, [players, game]);
@@ -747,6 +744,8 @@ const GameOngoing = () => {
 					<h2 className="popup___title">Blackjack result</h2>
 					<div className="popup__text">
 						My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
+					</div>
+					<div className="popup__text">
 						Dealer score:{" "}
 						{game?.dealer && cardsCalculator.calculateHand(game?.dealer)}
 					</div>
@@ -833,8 +832,8 @@ const GameOngoing = () => {
 				<p>
 					My total score:
 					{me?.hand && cardsCalculator.calculateHand(me.hand)}
-					<n /> Dealer score:
-					{game?.dealer && cardsCalculator.calculateHand(game.dealer)}
+					{/* Dealer score:
+					{game?.dealer && cardsCalculator.calculateHand(game.dealer)} */}
 				</p>
 			</div>
 		</div>
