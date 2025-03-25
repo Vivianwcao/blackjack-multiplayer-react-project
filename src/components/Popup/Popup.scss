@@ -1,4 +1,4 @@
-// Block: popup
+// popup
 .popup {
 	&__overlay {
 		position: fixed;
@@ -12,32 +12,37 @@
 			0,
 			0.6
 		); // Darker background with slight opacity for the backdrop
-		backdrop-filter: blur(0.625rem); // Blurred background effect
+		backdrop-filter: blur(10px); // Blurred background effect
+		opacity: 0; // Initially hidden for fade-in effect
+		animation: fadeIn 0.3s ease forwards; // Fade in animation
 	}
 
 	&__content {
 		display: block;
 		width: 80%; // Adjust to be a percentage of screen width
-		max-width: 25rem; // Set max-width for classic modal look
+		max-width: 400px; // Set max-width for classic modal look
 		background: rgba(255, 255, 255, 0.92); // Semi-transparent white
-		padding: 24px;
-		border-radius: 0.75rem; // Rounded corners for a modern feel
-		box-shadow: 0rem 0.25rem 0.625rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
+		padding: 1.5rem;
+		border-radius: 12px; // Rounded corners for a modern feel
+		box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); // Subtle shadow effect
 		text-align: center;
 		position: relative;
+		opacity: 0; // Initially hidden for fade-in effect
+		transform: scale(0.9); // Slightly smaller to scale up to normal size
+		animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
 	}
 
 	&__title {
-		font-size: 1.5rem;
+		font-size: 24px;
 		font-weight: bold;
 		color: #333;
-		margin-bottom: 1rem;
+		margin-bottom: 16px;
 	}
 
 	&__text {
-		font-size: 1rem;
+		font-size: 16px;
 		color: #666;
-		margin-bottom: 1.5rem;
+		margin-bottom: 24px;
 	}
 
 	&__btn-wrapper {
@@ -45,32 +50,14 @@
 		flex-direction: row;
 		justify-content: center;
 		width: 100%;
-		gap: 16px;
+		gap: 1rem;
 		position: relative;
-	}
-
-	&__btn {
-		background: transparent;
-		color: #007aff; // Blue for button text
-		border: none;
-		padding: 10px 16px; // Button padding
-		font-size: 17.6px;
-		font-weight: bold; // Bold text
-		cursor: pointer;
-		transition: background 0.3s ease;
-		border-radius: 8px; // Rounded button corners
-		width: 100%;
-		text-align: center;
-	}
-
-	&__btn:active {
-		background: rgba(0, 0, 0, 0.08); // Shade covers button when clicked
 	}
 
 	// Divider moved below buttons and spans the full width
 	&__btn-divider {
 		width: 100%;
-		border-top: 0.0625rem solid rgba(31, 17, 17, 0.15); // Lighter divider line
+		border-top: 1px solid rgba(31, 17, 17, 0.15); // Lighter divider line
 		position: absolute;
 		bottom: 0; // Aligns the divider to the bottom
 		left: 0;
@@ -80,32 +67,65 @@
 		background: #ff4d4d;
 		color: white;
 		border: none;
-		padding: 10px 16px;
-		border-radius: 8px;
-		font-size: 17.6px;
+		padding: 0.625rem 1rem;
+		border-radius: 0.5rem;
+		font-size: 1.1rem;
 		font-weight: bold;
 		cursor: pointer;
-		transition: background 0.1s ease;
+		transition: all 0.05s ease;
+		box-shadow: 0rem 0.25rem 0.375rem rgba(0, 0, 0, 0.3);
 
 		&:hover {
 			background: #cc0000;
+			box-shadow: 0rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4); // Hover effect for close button
+			transform: translateY(-0.0313rem); // Floating effect
+		}
+
+		&:active {
+			transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
+			box-shadow: 0rem 0.125rem 0.35rem rgba(0, 0, 0, 0.4); // Reduced shadow when pressed
 		}
 	}
 }
 
-// Block: app (for your open button)
-.app {
-	&__open-btn {
-		background: #4caf50;
-		color: white;
-		border: none;
-		padding: 10px 20px;
-		border-radius: 5px;
-		cursor: pointer;
-		transition: 0.3s;
+// Keyframes for fade in and scale up animations
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
 
-		&:hover {
-			background: #388e3c;
-		}
+@keyframes scaleFadeIn {
+	from {
+		opacity: 0;
+		transform: scale(0.9); // Start with smaller size
+	}
+	to {
+		opacity: 1;
+		transform: scale(1); // End with normal size
+	}
+}
+
+// Keyframes for fade out and scale down animations
+@keyframes fadeOut {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes scaleFadeOut {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.9); // Shrink while fading out
 	}
 }

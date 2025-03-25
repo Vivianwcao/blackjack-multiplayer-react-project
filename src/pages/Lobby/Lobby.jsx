@@ -6,6 +6,7 @@ import { onSnapshot, collection } from "firebase/firestore";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
 import useToggle from "../../utils/hooks/useToggle";
 import { useGameContext } from "../../components/GameProvider";
+import "../style.scss";
 import "./Lobby.scss";
 
 const Lobby = () => {
@@ -202,6 +203,7 @@ const Lobby = () => {
 			)}
 
 			<button
+				className="btn btn--lobby"
 				hidden={false}
 				onClick={() => handleCreateNewGame(5, true, "b7u5yr1uqy1z")}
 			>
@@ -232,25 +234,42 @@ const Lobby = () => {
 						}/${game.maxPlayers}`}</p>
 
 						{joinGameConditions(game) && (
-							<button onClick={() => handleJoinGame(game.gameId)}>
+							<button
+								className="btn btn--lobby"
+								onClick={() => handleJoinGame(game.gameId)}
+							>
 								Join game
 							</button>
 						)}
 						{user && joined?.gameId === game.gameId && (
-							<button onClick={() => handleLeaveGame(game)}>Leave game</button>
+							<button
+								className="btn btn--lobby"
+								onClick={() => handleLeaveGame(game)}
+							>
+								Leave game
+							</button>
 						)}
 						{game.gameStatus !== "waiting" && <p>Game is in progress ...</p>}
 					</div>
 				))}
 			{user && !joined && (
 				<div className="game-room__create-game-wrapper">
-					<button onClick={() => handleCreateNewGame(1)}>
+					<button
+						className="btn btn--lobby"
+						onClick={() => handleCreateNewGame(1)}
+					>
 						Create and join new single player game
 					</button>
-					<button onClick={() => handleCreateNewGame(2)}>
+					<button
+						className="btn btn--lobby"
+						onClick={() => handleCreateNewGame(2)}
+					>
 						Create and join a new two-player game
 					</button>
-					<button onClick={() => handleCreateNewGame(3)}>
+					<button
+						className="btn btn--lobby"
+						onClick={() => handleCreateNewGame(3)}
+					>
 						Create and join a new three-player game
 					</button>
 				</div>

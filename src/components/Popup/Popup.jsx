@@ -33,15 +33,4 @@ const Popup = ({
 	);
 };
 
-// const [isPopupOpen, setIsPopupOpen] = useState(false);
-
-// return (
-// 	<div className="app">
-// 		<button className="open-btn" onClick={() => setIsPopupOpen(true)}>
-// 			Open Pop-up
-// 		</button>
-// 		<Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />
-// 	</div>
-// );
-
 export default Popup;

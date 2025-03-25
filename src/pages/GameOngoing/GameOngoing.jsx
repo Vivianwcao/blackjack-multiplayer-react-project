@@ -18,6 +18,7 @@ import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
 import * as cardsCalculator from "../../utils/cardsCalculators";
 import { showToast, showToastCenter } from "../../components/Toasts/Toast";
+import "../style.scss";
 import "./GameOngoing.scss";
 
 const backOfCardImg = "https://deckofcardsapi.com/static/img/back.png";
@@ -768,7 +769,9 @@ const GameOngoing = () => {
 			{console.log(players)}
 			{/* { console.log( user ) } */}
 
-			<button onClick={toggleTrueQuitGame}>Quit game</button>
+			<button className="btn btn--gameOnGoing" onClick={toggleTrueQuitGame}>
+				Quit game
+			</button>
 			<div className="game__opponents-container">
 				{opponents?.map((player) =>
 					player?.hand?.map(({ image, code }, i) => (
@@ -809,18 +812,24 @@ const GameOngoing = () => {
 			{controlBoardCondition && (
 				<div className="game__control-board">
 					{currentPlayer?.canHit === true && (
-						<button onClick={handleHit}>Hit!</button>
+						<button className="btn btn--gameOnGoing" onClick={handleHit}>
+							Hit!
+						</button>
 					)}
-					<button onClick={handleStand}>Stand</button>
+					<button className="btn btn--gameOnGoing" onClick={handleStand}>
+						Stand
+					</button>
 					{handleDBetCondition && (
-						<button onClick={handleDBet}>Double Down</button>
+						<button className="btn btn--gameOnGoing" onClick={handleDBet}>
+							Double Down
+						</button>
 					)}
 				</div>
 			)}
 			{currentPlayer !== me && game?.gameStatus === "playerTurn" && (
 				<div className="game__btn-wrapper">
 					<button
-						className="game__remove-inactive-player-btn"
+						className="btn btn--gameOnGoing game__remove-inactive-player-btn"
 						onClick={removeInactiveCurrentPlayer}
 					>
 						Remove inactive player
@@ -830,8 +839,7 @@ const GameOngoing = () => {
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 				<p>
-					My total score:
-					{me?.hand && cardsCalculator.calculateHand(me.hand)}
+					My total score: {me?.hand && cardsCalculator.calculateHand(me.hand)}
 					{/* Dealer score:
 					{game?.dealer && cardsCalculator.calculateHand(game.dealer)} */}
 				</p>
