@@ -29,8 +29,6 @@ const GameOngoing = () => {
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null); //from gameId in params
 	const betRef = useRef(null);
-	const dealerHasDrawnRef = useRef(false);
-	const [dealerHasDrawn, setDealerHasDrawn] = useState(false);
 
 	//check if toast has been displayed for "waiting" players while game is pending to be rest.
 	const resetGameToastRef = useRef(true);
@@ -65,9 +63,9 @@ const GameOngoing = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
-	const timerResetGame = 900000; //time before resetGame() is triggered.
-	const timerPlayerMove = 12000; //30 secs for the current player to make a move
-	const timerToggleOpenPop = 2500;
+	const timerResetGame = 20000; //time before resetGame() is triggered.
+	const timerToggleOpenPop = 2000; //time before pop-up is triggered.
+	const timerPlayerMove = 60000; //60 secs for the current player to make a move
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
@@ -666,17 +664,12 @@ const GameOngoing = () => {
 		if (game.deckId === null) updateNewDeck();
 	}, [game?.deckId]);
 
-	// //trigger dealer move
-	// useEffect(() => {
-	// 	if (game?.gameStatus === "dealerTurn") dealerMoves();
-	// }, [game?.dealer, game?.gameStatus, game?.deckId, players]);
-
 	//if gameStatus ==="gameOver" -> cleanup game doc
 	//if me.status ==="won" or "busted" -> cleanup myself
 	useEffect(() => {
 		if (!game || !user || !players) return;
 		let timer;
-		// let timer2;
+		let timer2;
 		if (
 			game.gameStatus === "gameOver" ||
 			me?.status === "won" ||
@@ -684,8 +677,8 @@ const GameOngoing = () => {
 		) {
 			//only players in current round will be notified the result.
 			if (me?.status !== "waiting") {
-				toggleTrueGameOver();
-				// timer2 = setTimeout(() => toggleTrueGameOver(), timerToggleOpenPop);
+				//toggleTrueGameOver();
+				timer2 = setTimeout(() => toggleTrueGameOver(), timerToggleOpenPop);
 			}
 
 			if (resetGameToastRef.current && me?.status === "waiting") {
@@ -703,10 +696,10 @@ const GameOngoing = () => {
 				clearTimeout(timer);
 				console.log("Timer cleared");
 			}
-			// if (timer2) {
-			// 	clearTimeout(timer2);
-			// 	console.log("Timer2 cleared");
-			// }
+			if (timer2) {
+				clearTimeout(timer2);
+				console.log("Timer2 cleared");
+			}
 		};
 	}, [game?.gameStatus, players, user]);
 
@@ -725,7 +718,7 @@ const GameOngoing = () => {
 	const handleDBetCondition =
 		currentPlayer?.hand?.length === 2 && currentPlayer?.doubleBet === false;
 
-	const handleNavigate = () => setTimeout(() => nav("/"), 2000);
+	const handleNavigate = () => setTimeout(() => nav("/"), timerToggleOpenPop);
 
 	return !user?.uid ? (
 		<div>Please log in first</div>
@@ -825,7 +818,7 @@ const GameOngoing = () => {
 					)}
 				</div>
 			)}
-			{currentPlayer !== me && me?.status !== "waiting" && (
+			{currentPlayer !== me && game?.gameStatus === "playerTurn" && (
 				<div className="game__btn-wrapper">
 					<button
 						className="game__remove-inactive-player-btn"
