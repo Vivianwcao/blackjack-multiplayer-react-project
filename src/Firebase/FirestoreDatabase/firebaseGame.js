@@ -50,6 +50,7 @@ export const addNewGame = async (
 		{
 			isOngoing,
 			dealerHasBlackjack: false,
+			dealerisBusted: false,
 			timestamp: Date.now(),
 			gameStatus: "waiting",
 			deckId,
@@ -232,31 +233,3 @@ export const deleteGame = async (
 		console.log(`Game: ${gameDocName} deleted`);
 	}
 };
-
-// export const checkNumberOfHands = async (playerDocRef) => {
-//  let handsCollectionRef = collection(playerDocRef, "hands");
-//  let handSnapShot = await getDocs(handsCollectionRef);
-//  let numberOfHands = handSnapShot.size;
-//  console.log("numberOfHands:  ", numberOfHands);
-//  return { handsCollectionRef, numberOfHands };
-// };
-
-// export const createHand = async (playerDocRef, initialBet) => {
-//  let { handsCollectionRef, numberOfHands } = await checkNumberOfHands(
-//    playerDocRef
-//  );
-//  let handDocRef = doc(
-//    handsCollectionRef,
-//    playerDocRef.id.concat(numberOfHands.toString())
-//  );
-//  await setDoc(
-//    handDocRef,
-//    { bet: initialBet, payout: 0, split: false, playerId: playerDocRef.id },
-//    { merge: true }
-//  );
-//  return handDocRef;
-// };
-
-// export const updateHand = async (handDocRef, obj) => {
-//  await updateDoc(handDocRef, obj);
-// };

@@ -181,8 +181,8 @@ const Game = () => {
 		console.log("!!!!!!!!!!!!", updatedMe.hand, updatedGame.dealer);
 
 		//check for if anyone has natural blackjack(first 2 cards)
-		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
-		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
+		const IHaveBlackjack = cardsCalculator.has21(updatedMe.hand);
+		const dealerHasBlackjack = cardsCalculator.has21(updatedGame.dealer);
 
 		console.log(cardsCalculator.calculateHand(updatedMe.hand));
 		console.log(cardsCalculator.calculateHand(updatedGame.dealer));

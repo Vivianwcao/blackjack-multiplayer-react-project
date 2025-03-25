@@ -29,6 +29,8 @@ const GameOngoing = () => {
 	const [players, setPlayers] = useState(null);
 	const gameDocRef = useRef(null); //from gameId in params
 	const betRef = useRef(null);
+	const dealerHasDrawnRef = useRef(false);
+	const [dealerHasDrawn, setDealerHasDrawn] = useState(false);
 
 	//check if toast has been displayed for "waiting" players while game is pending to be rest.
 	const resetGameToastRef = useRef(true);
@@ -63,8 +65,9 @@ const GameOngoing = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
-	const timerResetGame = 10000; //time before resetGame() is triggered.
-	const timerPlayerMove = 10000; //30 secs for the current player to make a move
+	const timerResetGame = 900000; //time before resetGame() is triggered.
+	const timerPlayerMove = 12000; //30 secs for the current player to make a move
+	const timerToggleOpenPop = 2500;
 
 	//Toggle functions
 	const [popBet, toggleTrueBet, toggleFalseBet] = useToggle(false);
@@ -196,11 +199,9 @@ const GameOngoing = () => {
 		console.log("!!!!!!!!!!!!", updatedMe.hand, updatedGame.dealer);
 
 		//check for if anyone has natural blackjack(first 2 cards)
-		const IHaveBlackjack = cardsCalculator.hasBlackjack(updatedMe.hand);
-		const dealerHasBlackjack = cardsCalculator.hasBlackjack(updatedGame.dealer);
+		const IHaveBlackjack = cardsCalculator.has21(updatedMe.hand);
+		const dealerHasBlackjack = cardsCalculator.has21(updatedGame.dealer);
 
-		console.log(cardsCalculator.calculateHand(updatedMe.hand));
-		console.log(cardsCalculator.calculateHand(updatedGame.dealer));
 		let playerUpdates;
 		let dealerUpdates;
 
@@ -281,6 +282,8 @@ const GameOngoing = () => {
 					gameStatus: status,
 				});
 				console.log(res);
+				//trigger dealer moves.
+				if (status === "dealerTurn") await dealerMoves();
 				return;
 			} else {
 				//if next player exists
@@ -324,6 +327,7 @@ const GameOngoing = () => {
 	};
 	const resetDataGame = {
 		dealerHasBlackjack: false,
+		dealerisBusted: false,
 		gameStatus: "waiting",
 		dealer: [],
 	};
@@ -430,22 +434,119 @@ const GameOngoing = () => {
 		}
 	};
 
-	const dealerMove = async () => {
-		const { max } = cardsCalculator.calculateHand(game.dealer);
-		console.log("@@@@@@@@@", max);
+	const removeInactiveCurrentPlayer = () => {
+		if (!currentPlayer?.playerTurnTimestamp) return;
+		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
+			//remove inactive player
+			fbGame
+				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
+				.catch((err) => console.log(err));
+		} else {
+			showToastCenter("The current player is still active");
+		}
+	};
+
+	const dealerMoves = async () => {
+		//get the latest game from gameRef.
+		const updatedGame = gameRef.current;
+		if (updatedGame.gameStatus !== "dealerTurn") return;
+
+		//create local copies
+		let tempCardsList = updatedGame.dealer;
+		let localScore = cardsCalculator.calculateHand(tempCardsList);
+
+		console.log("@@@@@@@@, ", gameRef.current.dealer);
+
+		//draw all cards locally, and update at once.
 		try {
-			if (max <= 16) {
+			while (localScore <= 16) {
 				//must hit
-				const { cards } = await cardMachine.drawSingleCard(game.deckId);
-				const res = await fbGame.updateGameDealer(game.gameRef, cards);
+				const { cards } = await cardMachine.drawSingleCard(updatedGame.deckId);
+				tempCardsList.push(...cards);
+				localScore += cardsCalculator.calculateHand(cards);
+			}
+			console.log("OOOOOOOOOOOO", tempCardsList);
+			//check dealer busted
+			if (localScore > 21) {
+				const res = await fbGame.updateGame(gameDocRef.current, {
+					dealer: tempCardsList,
+					gameStatus: "gameOver",
+					dealerisBusted: true,
+				});
+				console.log(res);
+			} else if (localScore >= 17) {
+				//including exactly 21 -> must stand
+				const res = fbGame.updateGame(gameDocRef.current, {
+					dealer: tempCardsList,
+					gameStatus: "gameOver",
+				});
 				console.log(res);
 			}
-			if (max >= 17) {
-				//must stand
-				await fbGame.updateGame(gameDocRef.current, { gameStatus: "gameOver" });
-			}
 		} catch (err) {
-			console.log(err.message);
+			console.log(err);
+		}
+	};
+
+	const displayResult = (me, game) => {
+		if (
+			me?.status === "won" &&
+			me.hasBlackjack === true &&
+			game.dealerHasBlackjack === false
+		) {
+			return (
+				<div className="popup__text">
+					You beat dealer with Blackjack and won ${(me.bet * 3) / 2}!
+				</div>
+			);
+		} else if (
+			me?.status === "push" &&
+			me.hasBlackjack === true &&
+			game.dealerHasBlackjack === true
+		) {
+			return (
+				<div className="popup__text">
+					Both you and dealer has Blackjack and you are tie with dealer!
+				</div>
+			);
+		} else if (
+			me?.status === "lost" &&
+			me.hasBlackjack === false &&
+			game.dealerHasBlackjack === true
+		) {
+			return (
+				<div className="popup__text">
+					The dealer beat you with Blackjack and you lost ${me.bet}.
+				</div>
+			);
+		} else if (me?.status === "busted") {
+			return <div className="popup__text">You are busted.</div>;
+		}
+		if (game.gameStatus === "gameOver") {
+			const myScore = cardsCalculator.calculateHand(me.hand);
+			const dealerScore = cardsCalculator.calculateHand(game.dealer);
+			console.log("result: ", myScore, dealerScore);
+			if (myScore === dealerScore) {
+				<div className="popup__text">You are tie with dealer!</div>;
+			}
+			if (game.dealerisBusted) {
+				return (
+					<div className="popup__text">
+						Dealer is busted and you won ${me.bet}!
+					</div>
+				);
+			} else if (myScore > dealerScore) {
+				return (
+					<div className="popup__text">You beat dealer and won ${me.bet}!</div>
+				);
+			} else if (myScore < dealerScore) {
+				return (
+					<div className="popup__text">
+						Dealer beat you and you lost ${me.bet}!
+					</div>
+				);
+			} else if (myScore === dealerScore) {
+				return <div className="popup__text">You are tie with dealer!</div>;
+			}
 		}
 	};
 
@@ -565,28 +666,27 @@ const GameOngoing = () => {
 		if (game.deckId === null) updateNewDeck();
 	}, [game?.deckId]);
 
-	//trigger dealer move
-	useEffect(() => {
-		if (!players || !game) return;
-		console.log("%%%%%%%%%%", game.gameStatus);
-		//ask to place a bet
-		if (game.gameStatus === "dealerTurn")
-			//dealer's draw(s)
-			dealerMove();
-	}, [players, game]);
+	// //trigger dealer move
+	// useEffect(() => {
+	// 	if (game?.gameStatus === "dealerTurn") dealerMoves();
+	// }, [game?.dealer, game?.gameStatus, game?.deckId, players]);
 
 	//if gameStatus ==="gameOver" -> cleanup game doc
 	//if me.status ==="won" or "busted" -> cleanup myself
 	useEffect(() => {
 		if (!game || !user || !players) return;
 		let timer;
+		// let timer2;
 		if (
 			game.gameStatus === "gameOver" ||
 			me?.status === "won" ||
 			me?.status === "busted"
 		) {
 			//only players in current round will be notified the result.
-			me?.status !== "waiting" && toggleTrueGameOver();
+			if (me?.status !== "waiting") {
+				toggleTrueGameOver();
+				// timer2 = setTimeout(() => toggleTrueGameOver(), timerToggleOpenPop);
+			}
 
 			if (resetGameToastRef.current && me?.status === "waiting") {
 				showToastCenter(`Hang on, dealer is preparing for the next round ...`);
@@ -597,11 +697,16 @@ const GameOngoing = () => {
 			//any player can trigger resetGame() ->from current round or new
 			timer = setTimeout(async () => await handleResetGame(), timerResetGame); //reset
 		} else toggleFalseGameOver();
+
 		return () => {
 			if (timer) {
 				clearTimeout(timer);
 				console.log("Timer cleared");
 			}
+			// if (timer2) {
+			// 	clearTimeout(timer2);
+			// 	console.log("Timer2 cleared");
+			// }
 		};
 	}, [game?.gameStatus, players, user]);
 
@@ -612,17 +717,6 @@ const GameOngoing = () => {
 			resetGameToastRef.current = true; //reset for next round.
 	}, [game?.gameStatus, players, user]);
 
-	const removeInactiveCurrentPlayer = () => {
-		if (!currentPlayer?.playerTurnTimestamp) return;
-		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
-			//remove inactive player
-			fbGame
-				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
-				.catch((err) => console.log(err));
-		} else {
-			showToastCenter("The current player is still active");
-		}
-	};
 	const controlBoardCondition =
 		game?.gameStatus === "playerTurn" &&
 		currentPlayer?.id === user?.uid &&
@@ -658,28 +752,12 @@ const GameOngoing = () => {
 			>
 				<div>
 					<h2 className="popup___title">Blackjack result</h2>
-					{console.log(me)}
-					{me?.status === "won" && me.hasBlackjack === true ? (
-						<div className="popup__text">
-							You beat dealer with Blackjack and won ${(me.bet * 3) / 2}!
-						</div>
-					) : me?.status === "push" ? (
-						<div className="popup__text">You are tie with dealer!</div>
-					) : me?.status === "lost" && game.dealerHasBlackjack === true ? (
-						<div className="popup__text">
-							The dealer beat you with Blackjack and you lost ${me.bet}
-						</div>
-					) : me?.status === "busted" ? (
-						<div className="popup__text">You are busted.</div>
-					) : me?.status === "won" ? (
-						<div></div>
-					) : me?.status === "lost" ? (
-						<div></div>
-					) : me?.status === "push" ? (
-						<></>
-					) : (
-						<></>
-					)}
+					<div className="popup__text">
+						My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
+						Dealer score:{" "}
+						{game?.dealer && cardsCalculator.calculateHand(game?.dealer)}
+					</div>
+					{me?.hand && game?.dealer && displayResult(me, game)}
 				</div>
 			</Popup>
 			<Popup
@@ -720,8 +798,7 @@ const GameOngoing = () => {
 							src={
 								i === 1 &&
 								game?.gameStatus !== "dealerTurn" &&
-								me?.hasBlackjack === false &&
-								game?.dealerHasBlackjack === false
+								game?.gameStatus !== "gameOver"
 									? backOfCardImg
 									: image
 							}
@@ -761,9 +838,10 @@ const GameOngoing = () => {
 			<div className="game__info">
 				<p>My bet: ${me?.bet}</p>
 				<p>
-					My total hand: Low:
-					{me?.hand && cardsCalculator.calculateHand(me.hand).min} High:
-					{me?.hand && cardsCalculator.calculateHand(me.hand).max}
+					My total score:
+					{me?.hand && cardsCalculator.calculateHand(me.hand)}
+					<n /> Dealer score:
+					{game?.dealer && cardsCalculator.calculateHand(game.dealer)}
 				</p>
 			</div>
 		</div>
