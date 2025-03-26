@@ -4,7 +4,7 @@ import {
 	handleGoogleSignIn,
 	handleSignOut,
 } from "../../Firebase/FirebaseAuthentification/signInPartners/googleSignIn";
-import { handleMicrosoftSignIn } from "../../Firebase/FirebaseAuthentification/signInPartners/microsoftSignIn";
+import { handleMicrosoftSignIn } from "../../Firebase/FirebaseAuthentification/signInPartners/MicrosoftSignIn";
 import {
 	handleSignIn,
 	handleSignUp,
