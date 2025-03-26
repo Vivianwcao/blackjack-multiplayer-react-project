@@ -27,8 +27,8 @@ Core Functionality
 - Two Game Types:
   - 1. Continuous Game Mode – Mimics real Blackjack in a casino, where up to 5 players can join at any stage to play against the dealer.
        - Inactive players can be kicked out upon request to prevent the game from stalling.
-       - Game data and/or player data will reset when game is over, and immediately when user wins against the dealer or get busted. 
-  - 2. Fixed-Player Game Mode – Allows a player to create a game with a set number of players. Different groups can play simultaneously in separate rooms.
+       - Game data and/or player data will reset when game is over, and immediately when user wins against the dealer or get busted.
+  - 2. Fixed-Player Game Mode – Allows a player to create a game with a set number of players (currently allows up to four players). Different groups can play simultaneously in separate rooms.
 - Authentication Management – Users must log in to create or join games. Only players in a specific game can view and participate.
 - Game Expansion Potential – Future support for 5+ players per game, additional third-party login options, and more game features.
 
@@ -39,7 +39,7 @@ Core Functionality
 Frontend: React.js using Vite, axios,
 Database: Firestore real-time database
 Authentication: Firebase Google Auth
-Styling: SCSS/SASS 
+Styling: SCSS/SASS
 Hosting: GitHub Pages / Netlify
 
 ### APIs
@@ -77,18 +77,16 @@ Firestore Database Structure
 
 ## Roadmap
 
-Setup Project & Firebase 
-Implement Authentication & Lobby page 
+Setup Project & Firebase
+Implement Authentication & Lobby page
 Implement Game page which links with the lobby page after the user joins a game,
-Game Logic & Firestore Real-Time Updates UI Design, Improvements Testing, Bug Fixes 
-Deployment & Final Review 
-
+Game Logic & Firestore Real-Time Updates UI Design, Improvements Testing, Bug Fixes
+Deployment & Final Review
 
 ## Future Implementations
+
 Implementing a regular email sign-up and sign-in pop-up form.
 Expanding support for more than 5 players per game.
 Implementing betting and chips for a more authentic Blackjack experience.
 Adding more features to the game such as split hands.
 Using BootStrap or Tailwind CSS to decorate the UI.
-
-

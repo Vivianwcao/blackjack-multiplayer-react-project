@@ -1,28 +1,48 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@400;700&family=Press+Start+2P&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;700&family=Montserrat:wght@400;700&display=swap");
 
-$font-main: "Poppins", sans-serif;
-$font-header: "Montserrat", sans-serif;
+$font-main: "Crimson Pro", serif; // Body font
+$font-header: "Montserrat", sans-serif; // Header font
+
 * {
 	text-align: center;
-}
-
-body {
-	font-family: $font-main;
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
 }
 
 h1,
-h2 {
+h2,
+h3,
+h4 {
+	font-family: $font-main;
+}
+
+p {
+	font-family: $font-main;
+	font-size: 1rem;
+}
+body {
+	font-family: $font-main;
+	font-size: 1rem;
+	background-image: url("../../../public/assets/background.jfif");
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+button {
 	font-family: $font-header;
+	text-transform: uppercase;
+	font-weight: bold;
 }
 
 .btn {
+	text-align: center;
+	font-size: 0.8rem;
 	background: #ff4d4d;
 	color: white;
 	border: none;
-	padding: 0.625rem 1rem;
-	margin: 0.4rem;
+	padding: 0.75rem 0.85rem;
+	margin: 0.3rem;
 	border-radius: 0.5rem;
-	font-size: 1.1rem;
 	font-weight: bold;
 	cursor: pointer;
 	transition: all 0.01s ease;
@@ -41,10 +61,10 @@ h2 {
 
 	// Game Button
 	&--game {
-		background: #ba3aff;
+		background: #bc09d4;
 
 		&:hover {
-			background: #8749ce;
+			background: #a70dce;
 		}
 	}
 
@@ -59,9 +79,12 @@ h2 {
 
 	// App Button
 	&--sign-in-google {
+		width: 12rem;
 		background: #e24141;
 		display: flex;
 		flex-direction: row;
+		justify-content: center;
+		align-items: center;
 		gap: 0.5rem;
 		&:hover {
 			background: #b23641;
@@ -71,23 +94,23 @@ h2 {
 		@extend .btn--sign-in-google;
 		background: #3c72ee;
 		&:hover {
-			background: #425a96;
+			background: #4363b3;
 		}
 	}
 	&--sign-out {
 		@extend .btn--sign-in-google;
 		background: #e42323;
 		&:hover {
-			background: #a85057;
+			background: #b23641;
 		}
 	}
 
 	// Lobby Button
 	&--lobby {
-		background: #4dd3ff;
-
+		width: 12rem;
+		background: #bc3838;
 		&:hover {
-			background: #6ca3af;
+			background: #951b1b;
 		}
 	}
 }

@@ -18,12 +18,12 @@ const Popup = ({
 				{children}
 				<div className="popup__btn-wrapper">
 					{handleBtnLeft && (
-						<button className="popup__close-btn" onClick={handleBtnLeft}>
+						<button className="popup__left-btn" onClick={handleBtnLeft}>
 							{btnLeftText}
 						</button>
 					)}
 					{handleBtnRight && (
-						<button className="popup__close-btn" onClick={handleBtnRight}>
+						<button className="popup__right-btn" onClick={handleBtnRight}>
 							{btnRightText}
 						</button>
 					)}

@@ -1,0 +1,38 @@
+@use "../../styles/partials/mixins" as *;
+@use "../../styles/partials/variables" as *;
+
+.game-room {
+	background: rgb(230, 230, 237);
+	background: linear-gradient(
+		90deg,
+		rgba(207, 207, 213, 0.7) 0%,
+		rgba(255, 255, 255, 0.7) 50%,
+		rgba(207, 207, 213, 0.7) 100%
+	);
+	border: none;
+	border-radius: 0.5rem;
+	height: 12rem;
+	width: auto;
+	margin: 1rem;
+	padding: 1.2rem;
+
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	justify-content: space-around;
+	align-items: center;
+	//gap: 1rem;
+	@include tablet {
+		width: 100%;
+	}
+
+	&__player-name-container {
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 1rem;
+	}
+}

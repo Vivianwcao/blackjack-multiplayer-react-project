@@ -5,6 +5,7 @@ import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection } from "firebase/firestore";
 import * as fbGame from "../../Firebase/FirestoreDatabase/firebaseGame";
 import useToggle from "../../utils/hooks/useToggle";
+import GameRoom from "../../components/GameRoom/GameRoom";
 import { useGameContext } from "../../components/GameProvider";
 import "../style.scss";
 import "./Lobby.scss";
@@ -202,13 +203,13 @@ const Lobby = () => {
 				userLobby.current
 			)}
 
-			<button
+			{/* <button
 				className="btn btn--lobby"
 				hidden={false}
 				onClick={() => handleCreateNewGame(5, true, "b7u5yr1uqy1z")}
 			>
-				generate an ongoing game for test
-			</button>
+				generate an ongoing game for test purposes
+			</button> */}
 			<Popup
 				isOpen={popEnterGame}
 				handleBtnLeft={() => handleLeaveGame(joined)}
@@ -217,63 +218,52 @@ const Lobby = () => {
 				btnRightText="Enter Game !"
 			>
 				<div>
-					<h2 className="popup__title">Floating Window</h2>
-					<p className="popup__text">
-						This is a pop-up modal in React with SCSS!
-					</p>
+					<h2 className="popup__title">Enter game♣️</h2>
+					<p className="popup__text">Have a good time!♥️</p>
 				</div>
 			</Popup>
-
-			{gamesList
-				.sort((a, b) => a.timestamp - b.timestamp)
-				.map((game, i) => (
-					<div className="game-room" key={i}>
-						<p>{`Game room ${game.gameId}`}</p>
-						<p>{`Players in: ${
-							game?.playerId?.length ? game?.playerId?.length : ""
-						}/${game.maxPlayers}`}</p>
-
-						{joinGameConditions(game) && (
-							<button
-								className="btn btn--lobby"
-								onClick={() => handleJoinGame(game.gameId)}
-							>
-								Join game
-							</button>
-						)}
-						{user && joined?.gameId === game.gameId && (
-							<button
-								className="btn btn--lobby"
-								onClick={() => handleLeaveGame(game)}
-							>
-								Leave game
-							</button>
-						)}
-						{game.gameStatus !== "waiting" && <p>Game is in progress ...</p>}
-					</div>
-				))}
 			{user && !joined && (
-				<div className="game-room__create-game-wrapper">
+				<div className="lobby__btn-wrapper">
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(1)}
 					>
-						Create and join new single player game
+						Single player game
 					</button>
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(2)}
 					>
-						Create and join a new two-player game
+						Two-player game
 					</button>
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(3)}
 					>
-						Create and join a new three-player game
+						Three-player game
+					</button>
+					<button
+						className="btn btn--lobby"
+						onClick={() => handleCreateNewGame(4)}
+					>
+						Four-player game
 					</button>
 				</div>
 			)}
+			<div className="lobby__game-room-container">
+				{gamesList
+					.sort((a, b) => a.timestamp - b.timestamp)
+					.map((game, i) => (
+						<GameRoom
+							game={game}
+							key={i}
+							joinGameConditions={joinGameConditions}
+							joined={joined}
+							handleJoinGame={handleJoinGame}
+							handleLeaveGame={handleLeaveGame}
+						/>
+					))}
+			</div>
 		</div>
 	);
 };

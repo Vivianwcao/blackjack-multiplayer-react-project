@@ -13,25 +13,24 @@ import { handleGithubSignIn } from "../../Firebase/FirebaseAuthentification/sign
 import ProfilePhoto from "../ProfilePhoto/ProfilePhoto";
 import "../../pages/style.scss";
 import "./Banner.scss";
+
 const Banner = () => {
 	const { user, users } = useAuth();
 	const me = users?.find((u) => u.id === user?.uid);
 
 	return (
 		<div className="banner">
-			{" "}
 			{user ? (
-				<div>
-					<div>
-						<div className="banner__profile-wrapper">
-							<p>Welcome {user.displayName}!</p>
-							<ProfilePhoto src={me?.photo} />
-						</div>
-						<p>
-							Last login at:
-							{` ${new Date(+user.metadata.lastLoginAt).toLocaleString()}`}
-						</p>
+				<div className="banner__content-wrapper">
+					<div className="banner__profile-wrapper">
+						<h1>♠️Welcome {user?.displayName}!</h1>
+						<ProfilePhoto src={me?.photo} />
 					</div>
+					<p>
+						Last login at:
+						{` ${new Date(+user.metadata.lastLoginAt).toLocaleString()}`}
+					</p>
+
 					<div className="btn-wrapper">
 						<button className="btn btn--sign-out" onClick={handleSignOut}>
 							<svg

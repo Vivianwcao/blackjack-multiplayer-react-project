@@ -21,7 +21,7 @@
 		display: block;
 		width: 80%; // Adjust to be a percentage of screen width
 		max-width: 400px; // Set max-width for classic modal look
-		background: rgba(255, 255, 255, 0.92); // Semi-transparent white
+		background: rgba(255, 255, 255, 0.8); // Semi-transparent white
 		padding: 1.5rem;
 		border-radius: 12px; // Rounded corners for a modern feel
 		box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); // Subtle shadow effect
@@ -63,20 +63,23 @@
 		left: 0;
 	}
 
-	&__close-btn {
-		background: #ff4d4d;
+	&__left-btn,
+	&__right-btn {
+		text-align: center;
+		font-size: 0.8rem;
+		background: #e53b3b;
 		color: white;
 		border: none;
-		padding: 0.625rem 1rem;
+		padding: 0.75rem 0.85rem;
+		margin: 0.3rem;
 		border-radius: 0.5rem;
-		font-size: 1.1rem;
 		font-weight: bold;
 		cursor: pointer;
 		transition: all 0.05s ease;
 		box-shadow: 0rem 0.25rem 0.375rem rgba(0, 0, 0, 0.3);
 
 		&:hover {
-			background: #cc0000;
+			background: #bb0101;
 			box-shadow: 0rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4); // Hover effect for close button
 			transform: translateY(-0.0313rem); // Floating effect
 		}
@@ -84,6 +87,12 @@
 		&:active {
 			transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
 			box-shadow: 0rem 0.125rem 0.35rem rgba(0, 0, 0, 0.4); // Reduced shadow when pressed
+		}
+	}
+	&__right-btn {
+		background: #367e30;
+		&:hover {
+			background: #2b684f;
 		}
 	}
 }
