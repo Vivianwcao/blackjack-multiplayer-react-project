@@ -26,7 +26,7 @@ p {
 body {
 	font-family: $font-main;
 	font-size: 1rem;
-	background-image: url("../../../public/assets/background.jpeg");
+	background-image: url("/assets/background.jpeg"); //no relative path for deployment
 	background-repeat: repeat;
 	background-size: cover;
 }
