@@ -64,7 +64,7 @@ const GameOngoing = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
-	const timerResetGame = 20000; //time before resetGame() is triggered.
+	const timerResetGame = 15000; //time before resetGame() is triggered.
 	const timerToggleOpenPop = 2000; //time before pop-up is triggered.
 	const timerPlayerMove = 60000; //60 secs for the current player to make a move
 
@@ -724,10 +724,14 @@ const GameOngoing = () => {
 		nav("/")
 	) : (
 		<div className="game">
-			<Popup isOpen={popBet} handleBtnLeft={handleAddBet} btnLeftText="Confirm">
-				<h2 className="pop-title">Place a bet</h2>
+			<Popup
+				isOpen={popBet}
+				handleBtnRight={handleAddBet}
+				btnRightText="Confirm"
+			>
+				<h2 className="popup__title">Place a bet</h2>
 				<input
-					className="pop-input"
+					className="popup__input"
 					ref={betRef}
 					placeholder="Enter a bet ..."
 					type="number"
@@ -742,7 +746,7 @@ const GameOngoing = () => {
 				btnRightText="Stay for another round"
 			>
 				<div>
-					<h2 className="popup___title">Blackjack result</h2>
+					<h2 className="popup__title">Blackjack result</h2>
 					<div className="popup__text">
 						My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
 					</div>
@@ -760,7 +764,7 @@ const GameOngoing = () => {
 				btnLeftText="Cancel"
 				btnRightText="Quit Game"
 			>
-				<h2 className="pop-title">Going back to lobby</h2>
+				<h2 className="popup__title">Going back to lobby</h2>
 			</Popup>
 
 			{console.log(
@@ -769,38 +773,51 @@ const GameOngoing = () => {
 			{console.log(players)}
 			{/* { console.log( user ) } */}
 
-			<button className="btn btn--gameOnGoing" onClick={toggleTrueQuitGame}>
+			<button className="btn btn--quit" onClick={toggleTrueQuitGame}>
 				Quit game
 			</button>
-			<div className="game__opponents-container">
-				{opponents?.map((player) =>
-					player?.hand?.map(({ image, code }, i) => (
+			{game?.playerId?.length > 1 && (
+				<div className="game__opponents-container-wrapper">
+					<h3>Players</h3>
+					<div className="game__opponents-container">
+						{opponents?.map((player) => (
+							<div className="game__opponent-wrapper-wrapper">
+								<h5>{users?.find((user) => user.id === player.id)?.name}</h5>
+								<div className="game__opponent-wrapper">
+									{player?.hand?.map(({ image, code }, i) => (
+										<div key={i}>
+											<img
+												className="game__card game__card--opponent"
+												src={image}
+												alt={code}
+											/>
+										</div>
+									))}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+			<div className="game__dealer-container-wrapper">
+				<h3>Dealer</h3>
+				<div className="game__dealer-container">
+					{game?.dealer?.map(({ image, code }, i) => (
 						<div key={i}>
 							<img
-								className="game__card game__card--opponent"
-								src={image}
+								className="game__card game__card--dealer"
+								src={
+									i === 1 &&
+									game?.gameStatus !== "dealerTurn" &&
+									game?.gameStatus !== "gameOver"
+										? backOfCardImg
+										: image
+								}
 								alt={code}
 							/>
 						</div>
-					))
-				)}
-			</div>
-			<div className="game__dealer-container">
-				{game?.dealer?.map(({ image, code }, i) => (
-					<div key={i}>
-						<img
-							className="game__card game__card--dealer"
-							src={
-								i === 1 &&
-								game?.gameStatus !== "dealerTurn" &&
-								game?.gameStatus !== "gameOver"
-									? backOfCardImg
-									: image
-							}
-							alt={code}
-						/>
-					</div>
-				))}
+					))}
+				</div>
 			</div>
 			<div className="game__me-container">
 				{me?.hand?.map(({ image, code }, i) => (
@@ -829,7 +846,7 @@ const GameOngoing = () => {
 			{currentPlayer !== me && game?.gameStatus === "playerTurn" && (
 				<div className="game__btn-wrapper">
 					<button
-						className="btn btn--gameOnGoing game__remove-inactive-player-btn"
+						className="btn btn--game-remove-player-btn"
 						onClick={removeInactiveCurrentPlayer}
 					>
 						Remove inactive player
@@ -837,12 +854,12 @@ const GameOngoing = () => {
 				</div>
 			)}
 			<div className="game__info">
-				<p>My bet: ${me?.bet}</p>
-				<p>
+				<h4>My bet: ${me?.bet}</h4>
+				<h4>
 					My total score: {me?.hand && cardsCalculator.calculateHand(me.hand)}
 					{/* Dealer score:
 					{game?.dealer && cardsCalculator.calculateHand(game.dealer)} */}
-				</p>
+				</h4>
 			</div>
 		</div>
 	);

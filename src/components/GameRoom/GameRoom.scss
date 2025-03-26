@@ -2,13 +2,15 @@
 @use "../../styles/partials/variables" as *;
 
 .game-room {
-	background: rgb(230, 230, 237);
+	z-index: 0;
 	background: linear-gradient(
 		90deg,
 		rgba(207, 207, 213, 0.7) 0%,
 		rgba(255, 255, 255, 0.7) 50%,
 		rgba(207, 207, 213, 0.7) 100%
 	);
+	box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
+
 	border: none;
 	border-radius: 0.5rem;
 	height: 12rem;
@@ -22,6 +24,10 @@
 	justify-content: space-around;
 	align-items: center;
 	//gap: 1rem;
+	opacity: 0; // Initially hidden for fade-in effect
+	transform: scale(0.9); // Slightly smaller to scale up to normal size
+	animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
+
 	@include tablet {
 		width: 100%;
 	}

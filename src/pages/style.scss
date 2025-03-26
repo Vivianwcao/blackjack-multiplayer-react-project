@@ -13,7 +13,9 @@ $font-header: "Montserrat", sans-serif; // Header font
 h1,
 h2,
 h3,
-h4 {
+h4,
+h5,
+h6 {
 	font-family: $font-main;
 }
 
@@ -25,7 +27,7 @@ body {
 	font-family: $font-main;
 	font-size: 1rem;
 	background-image: url("../../../public/assets/background.jfif");
-	background-repeat: no-repeat;
+	background-repeat: repeat;
 	background-size: cover;
 }
 button {
@@ -37,6 +39,7 @@ button {
 .btn {
 	text-align: center;
 	font-size: 0.8rem;
+	text-shadow: 0.125rem 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
 	background: #ff4d4d;
 	color: white;
 	border: none;
@@ -46,39 +49,56 @@ button {
 	font-weight: bold;
 	cursor: pointer;
 	transition: all 0.01s ease;
-	box-shadow: 0rem 0.25rem 0.375rem rgba(0, 0, 0, 0.3); // Default shadow
+	box-shadow: 0.2rem 0.15rem 0.375rem rgba(0, 0, 0, 0.4); // Default shadow
 
 	&:hover {
+		color: rgb(235, 235, 235);
 		background: #cc0000;
-		box-shadow: 0rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4); // Hover effect for close button
+		box-shadow: 0.2rem 0.15rem 0.5rem rgba(0, 0, 0, 0.5); // Hover effect for close button
 		transform: translateY(-0.015rem); // Floating effect
 	}
 
 	&:active {
+		color: rgb(232, 232, 232);
 		transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
-		box-shadow: 0rem 0.125rem 0.35rem rgba(0, 0, 0, 0.4); // Reduced shadow when pressed
+		box-shadow: 0.2rem 0.15rem 0.5rem rgba(0, 0, 0, 0.5); // Reduced shadow when pressed
 	}
 
 	// Game Button
 	&--game {
-		background: #bc09d4;
+		@extend .btn;
+		width: 10rem;
+		background: #9207a4;
 
 		&:hover {
-			background: #a70dce;
+			background: #7b1295;
+		}
+
+		&-remove-player-btn {
+			@extend .btn;
+			background: #1b5ac6;
+			font-size: 0.7rem;
+
+			&:hover {
+				background: #18479d;
+			}
 		}
 	}
 
 	// Game Ongoing Button
 	&--gameOnGoing {
-		background: #4dd3ff;
+		@extend .btn;
+		width: 10rem;
+		background: #988d34;
 
 		&:hover {
-			background: #6ca3af;
+			background: #7f7424;
 		}
 	}
 
 	// App Button
 	&--sign-in-google {
+		@extend .btn;
 		width: 12rem;
 		background: #e24141;
 		display: flex;
@@ -97,20 +117,30 @@ button {
 			background: #4363b3;
 		}
 	}
-	&--sign-out {
+	&--sign-out,
+	&--quit {
 		@extend .btn--sign-in-google;
-		background: #e42323;
+		background: #c71c1c;
 		&:hover {
 			background: #b23641;
+		}
+	}
+	&--quit {
+		@extend .btn;
+		background: #920707;
+		width: auto;
+		&:hover {
+			background: #7a0c15;
 		}
 	}
 
 	// Lobby Button
 	&--lobby {
+		@extend .btn;
 		width: 12rem;
-		background: #bc3838;
+		background: #c21a1a;
 		&:hover {
-			background: #951b1b;
+			background: #8a1616;
 		}
 	}
 }

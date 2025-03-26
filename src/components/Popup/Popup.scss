@@ -1,6 +1,7 @@
 // popup
 .popup {
 	&__overlay {
+		z-index: 1;
 		position: fixed;
 		inset: 0;
 		display: flex;
@@ -18,13 +19,22 @@
 	}
 
 	&__content {
-		display: block;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		gap: 1rem;
 		width: 80%; // Adjust to be a percentage of screen width
-		max-width: 400px; // Set max-width for classic modal look
-		background: rgba(255, 255, 255, 0.8); // Semi-transparent white
+		max-width: 25rem; // Set max-width for classic modal look
+		background: rgb(230, 230, 237);
+		background: linear-gradient(
+			90deg,
+			rgba(224, 224, 229, 0.8) 0%,
+			rgba(255, 255, 255, 0.8) 50%,
+			rgba(224, 224, 229, 0.8) 100%
+		);
 		padding: 1.5rem;
-		border-radius: 12px; // Rounded corners for a modern feel
-		box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); // Subtle shadow effect
+		border-radius: 0.75rem; // Rounded corners for a modern feel
+		box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
 		text-align: center;
 		position: relative;
 		opacity: 0; // Initially hidden for fade-in effect
@@ -33,16 +43,16 @@
 	}
 
 	&__title {
-		font-size: 24px;
+		font-size: 1.6rem;
 		font-weight: bold;
 		color: #333;
-		margin-bottom: 16px;
+		margin-bottom: 1rem;
 	}
 
 	&__text {
-		font-size: 16px;
+		font-size: 1.4rem;
 		color: #666;
-		margin-bottom: 24px;
+		margin-bottom: 1.5rem;
 	}
 
 	&__btn-wrapper {
@@ -57,7 +67,7 @@
 	// Divider moved below buttons and spans the full width
 	&__btn-divider {
 		width: 100%;
-		border-top: 1px solid rgba(31, 17, 17, 0.15); // Lighter divider line
+		border-top: 0.0625rem solid rgba(31, 17, 17, 0.15); // Lighter divider line
 		position: absolute;
 		bottom: 0; // Aligns the divider to the bottom
 		left: 0;
@@ -67,6 +77,7 @@
 	&__right-btn {
 		text-align: center;
 		font-size: 0.8rem;
+		text-shadow: 0.125rem 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
 		background: #e53b3b;
 		color: white;
 		border: none;
@@ -93,6 +104,18 @@
 		background: #367e30;
 		&:hover {
 			background: #2b684f;
+		}
+	}
+	&__input {
+		margin: auto;
+		border: 0.1rem solid grayscale($color: #cdcaca);
+		border-radius: 1.25rem;
+		max-height: 2.2rem;
+		width: 80%;
+		padding: 0.5rem 1rem 0.5rem 1rem;
+		&:focus {
+			outline: none;
+			border: 0.1rem solid grayscale($color: #a7a7a7);
 		}
 	}
 }

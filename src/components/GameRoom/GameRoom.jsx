@@ -22,13 +22,15 @@ const GameRoom = ({
 			<h4>{`Players in: ${
 				game?.playerId?.length ? game?.playerId?.length : ""
 			}/${game.maxPlayers}`}</h4>
-			{game.gameStatus !== "waiting" && <h4>Game is in progress ...</h4>}
+
 			<div className="game-room__player-name-container">
 				{game?.playerId?.map((id, i) => {
 					const name = users?.find((user) => user.id === id)?.name;
 					if (name) return <p key={i}>{name}</p>;
 				})}
 			</div>
+			{game.gameStatus !== "waiting" && <h4>Game is in progress ...</h4>}
+
 			{joinGameConditions(game) && (
 				<button
 					className="btn btn--lobby"

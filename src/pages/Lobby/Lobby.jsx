@@ -23,6 +23,7 @@ const Lobby = () => {
 
 	const navigate = useNavigate();
 	const handleEnterGame = (navigateTo, game) => {
+		toggleFalseEnterGame();
 		navigateTo(`/${game.gameId}`);
 	};
 
@@ -219,7 +220,7 @@ const Lobby = () => {
 			>
 				<div>
 					<h2 className="popup__title">Enter game♣️</h2>
-					<p className="popup__text">Have a good time!♥️</p>
+					<p className="popup__text">Have fun!!♥️</p>
 				</div>
 			</Popup>
 			{user && !joined && (

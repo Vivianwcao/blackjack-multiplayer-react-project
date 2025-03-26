@@ -1,11 +1,12 @@
 .game {
+	color: white;
+	padding: 0.8rem;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	align-items: center;
-	gap: 2rem;
+	gap: 1rem;
 	&__dealer-container {
-		border: 0.2rem solid rgb(29, 127, 255);
 		display: flex;
 		flex-direction: row;
 		justify-content: center;
@@ -13,32 +14,65 @@
 		// gap: 0.6rem;
 		width: 80%;
 		padding: 0.5rem;
+		background: linear-gradient(
+			90deg,
+			rgba(224, 224, 229, 0.3) 0%,
+			rgba(255, 255, 255, 0.3) 50%,
+			rgba(224, 224, 229, 0.3) 100%
+		);
+		border-radius: 0.75rem; // Rounded corners for a modern feel
+		box-shadow: 0rem 0.25rem 0.625rem rgba(13, 13, 13, 0.4); // Subtle shadow effect
+		text-align: center;
+	}
+	&__dealer-container-wrapper {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}
 	&__opponents-container {
 		@extend .game__dealer-container;
-		border: 0.2rem solid black;
+	}
+	&__opponents-container-wrapper {
+		@extend .game__dealer-container-wrapper;
+	}
+	&__opponent-wrapper {
+		@extend .game__dealer-container;
+		width: auto;
+		margin: 0.15rem;
 	}
 
 	&__me-container {
 		@extend .game__dealer-container;
-		border: 0.2rem solid rgb(222, 69, 94);
-		background-color: pink;
 	}
 	&__control-board {
 		@extend .game__dealer-container;
-		border: 0.2rem dashed rgb(81, 169, 37);
-		width: 50%;
+		//border: 0.2rem dashed rgb(81, 169, 37);
+		background: linear-gradient(
+			90deg,
+			rgba(113, 31, 3, 0.5) 0%,
+			rgba(255, 151, 151, 0.5) 50%,
+			rgba(140, 51, 0, 0.5) 100%
+		);
+		width: 70%;
 	}
 	&__card {
+		z-index: 0;
+		opacity: 0; // Initially hidden for fade-in effect
+		transform: scale(0.9); // Slightly smaller to scale up to normal size
+		animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
+		box-shadow: 0rem 0.25rem 0.625rem rgba(13, 13, 13, 0.6); // Subtle shadow effect
+
+		margin: 0.2rem;
 		width: 20vw;
 		&--me {
 			width: 20vw;
 		}
 		&--dealer {
-			width: 14vw;
+			width: 16vw;
 		}
 		&--opponent {
-			width: 10vw;
+			width: 8vw;
 		}
 	}
 }
