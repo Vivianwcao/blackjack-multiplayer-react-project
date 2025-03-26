@@ -60,7 +60,7 @@ const Game = () => {
 	}, [game?.playerId]);
 
 	const nav = useNavigate();
-	const timerToggleOpenPop = 2000; //time before pop-up is triggered.
+	const timerToggleOpenPop = 3500; //time before pop-up is triggered.
 	const timerPlayerMove = 60000; //60 secs for the current player to make a move
 
 	//Toggle functions
@@ -285,10 +285,16 @@ const Game = () => {
 			} else {
 				//if next player exists
 				//add a initial timestamp to currentPlayer at the beginning of his turn
-				const res = await fbGame.updatePlayer(updatedCurrentPlayer.playerRef, {
-					playerTurnTimestamp: Date.now(),
-				});
-				console.log(res);
+
+				if (!updatedCurrentPlayer.playerTurnTimestamp) {
+					const res = await fbGame.updatePlayer(
+						updatedCurrentPlayer.playerRef,
+						{
+							playerTurnTimestamp: Date.now(),
+						}
+					);
+					console.log(res);
+				}
 			}
 		} catch (err) {
 			console.log(err);
@@ -391,13 +397,19 @@ const Game = () => {
 
 	const removeInactiveCurrentPlayer = () => {
 		if (!currentPlayer?.playerTurnTimestamp) return;
-		if (Date.now() - currentPlayer.playerTurnTimestamp > timerPlayerMove) {
+		const waitTime = Date.now() - currentPlayer.playerTurnTimestamp;
+		//console.log("WAIT TIME: ", waitTime);
+		if (waitTime > timerPlayerMove) {
 			//remove inactive player
 			fbGame
 				.removePlayerFromGame(currentPlayer.playerRef, game.gameRef)
 				.catch((err) => console.log(err));
 		} else {
-			showToastCenter("The current player is still active");
+			showToastCenter(
+				`The current player is still active. Please try again in ${Math.ceil(
+					(timerPlayerMove - waitTime) / 1000
+				)} seconds.`
+			);
 		}
 	};
 
@@ -407,8 +419,8 @@ const Game = () => {
 		if (updatedGame.gameStatus !== "dealerTurn") return;
 
 		//create local copies
-		let tempCardsList = updatedGame.dealer;
-		let localScore = cardsCalculator.calculateHand(tempCardsList);
+		let localDealerHand = updatedGame.dealer; //initial hand (list of two cards)
+		let localScore = cardsCalculator.calculateHand(localDealerHand); //initial score
 
 		console.log("@@@@@@@@, ", gameRef.current.dealer);
 
@@ -416,15 +428,15 @@ const Game = () => {
 		try {
 			while (localScore <= 16) {
 				//must hit
-				const { cards } = await cardMachine.drawSingleCard(updatedGame.deckId);
-				tempCardsList.push(...cards);
-				localScore += cardsCalculator.calculateHand(cards);
+				const { cards } = await cardMachine.drawSingleCard(updatedGame.deckId); //draw one card
+				localDealerHand.push(...cards);
+				localScore = cardsCalculator.calculateHand(localDealerHand); //update localScore. score is primitive so over-write old value.
 			}
-			console.log("OOOOOOOOOOOO", tempCardsList);
+			console.log("OOOOOOOOOOOO", localDealerHand);
 			//check dealer busted
 			if (localScore > 21) {
 				const res = await fbGame.updateGame(gameDocRef.current, {
-					dealer: tempCardsList,
+					dealer: localDealerHand,
 					gameStatus: "gameOver",
 					dealerisBusted: true,
 				});
@@ -432,7 +444,7 @@ const Game = () => {
 			} else if (localScore >= 17) {
 				//including exactly 21 -> must stand
 				const res = fbGame.updateGame(gameDocRef.current, {
-					dealer: tempCardsList,
+					dealer: localDealerHand,
 					gameStatus: "gameOver",
 				});
 				console.log(res);
@@ -474,7 +486,9 @@ const Game = () => {
 				</div>
 			);
 		} else if (me?.status === "busted") {
-			return <div className="popup__text">You're busted!</div>;
+			return (
+				<div className="popup__text">You're busted! You lost ${me.bet}.</div>
+			);
 		}
 
 		if (game.gameStatus === "gameOver") {
