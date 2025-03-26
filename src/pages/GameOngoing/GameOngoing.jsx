@@ -780,8 +780,8 @@ const GameOngoing = () => {
 				<div className="game__opponents-container-wrapper">
 					<h3>Players</h3>
 					<div className="game__opponents-container">
-						{opponents?.map((player) => (
-							<div className="game__opponent-wrapper-wrapper">
+						{opponents?.map((player, i) => (
+							<div className="game__opponent-wrapper-wrapper" key={i}>
 								<h5>{users?.find((user) => user.id === player.id)?.name}</h5>
 								<div className="game__opponent-wrapper">
 									{player?.hand?.map(({ image, code }, i) => (
