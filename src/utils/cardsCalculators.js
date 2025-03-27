@@ -11,7 +11,8 @@ export const calculateHand = (handList) => {
 			total += 11;
 		}
 	}
-	if (aceCount && total > 21) {
+	if (aceCount === 0) return total;
+	if (total > 21) {
 		for (let i = 0; i < aceCount; i++) {
 			if (total - 11 + 1 <= 21) {
 				total = total - 11 + 1;

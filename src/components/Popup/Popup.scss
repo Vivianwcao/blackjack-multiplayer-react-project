@@ -1,3 +1,4 @@
+@use "sass:color";
 // popup
 .popup {
 	&__overlay {
@@ -78,7 +79,11 @@
 		text-align: center;
 		font-size: 0.8rem;
 		text-shadow: 0.125rem 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
-		background: #e53b3b;
+		background: radial-gradient(
+			circle at top,
+			rgb(214, 32, 32) 0%,
+			#b90808 50%
+		);
 		color: white;
 		border: none;
 		padding: 0.75rem 0.85rem;
@@ -90,7 +95,11 @@
 		box-shadow: 0rem 0.25rem 0.375rem rgba(0, 0, 0, 0.3);
 
 		&:hover {
-			background: #bb0101;
+			background: radial-gradient(
+				circle at top,
+				rgb(186, 28, 28) 0%,
+				#9a0707 50%
+			);
 			box-shadow: 0rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4); // Hover effect for close button
 			transform: translateY(-0.0313rem); // Floating effect
 		}
@@ -101,21 +110,29 @@
 		}
 	}
 	&__right-btn {
-		background: #367e30;
+		background: radial-gradient(
+			circle at top,
+			rgb(71, 166, 23) 0%,
+			#098c09 50%
+		);
 		&:hover {
-			background: #2b684f;
+			background: radial-gradient(
+				circle at top,
+				rgb(58, 136, 18) 0%,
+				#077707 50%
+			);
 		}
 	}
 	&__input {
 		margin: auto;
-		border: 0.1rem solid grayscale($color: #cdcaca);
+		border: 0.1rem solid color.grayscale(#cdcaca);
 		border-radius: 1.25rem;
 		max-height: 2.2rem;
 		width: 80%;
 		padding: 0.5rem 1rem 0.5rem 1rem;
 		&:focus {
 			outline: none;
-			border: 0.1rem solid grayscale($color: #a7a7a7);
+			border: 0.1rem solid color.grayscale(#a7a7a7);
 		}
 	}
 }

@@ -68,10 +68,10 @@ button {
 	&--game {
 		@extend .btn;
 		width: 10rem;
-		background: #9207a4;
+		background: radial-gradient(circle at top, #b916b9 0%, #940cac 50%);
 
 		&:hover {
-			background: #7b1295;
+			background: radial-gradient(circle at top, #b211c4 0%, #800c9d 50%);
 		}
 
 		&-remove-player-btn {
@@ -89,10 +89,10 @@ button {
 	&--gameOnGoing {
 		@extend .btn;
 		width: 10rem;
-		background: #988d34;
+		background: radial-gradient(circle at top, #c2b223 0%, #978606 50%);
 
 		&:hover {
-			background: #7f7424;
+			background: radial-gradient(circle at top, #968a1b 0%, #756805 50%);
 		}
 	}
 
@@ -127,10 +127,18 @@ button {
 	}
 	&--quit {
 		@extend .btn;
-		background: #920707;
+		background: radial-gradient(
+			circle at top,
+			rgb(181, 29, 29) 0%,
+			#990606 50%
+		);
 		width: auto;
 		&:hover {
-			background: #7a0c15;
+			background: radial-gradient(
+				circle at top,
+				rgb(175, 23, 23) 0%,
+				#7f0404 50%
+			);
 		}
 	}
 
@@ -138,9 +146,17 @@ button {
 	&--lobby {
 		@extend .btn;
 		width: 12rem;
-		background: #c21a1a;
+		background: radial-gradient(
+			circle at top,
+			rgb(181, 29, 29) 0%,
+			#990606 50%
+		);
 		&:hover {
-			background: #8a1616;
+			background: radial-gradient(
+				circle at top,
+				rgb(175, 23, 23) 0%,
+				#790404 50%
+			);
 		}
 	}
 }
