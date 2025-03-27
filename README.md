@@ -1,24 +1,25 @@
-# Project Title
+# ♥️Blackjack Royale multi-player online game♥️
 
-## Overview
+
+## ♠️Overview
 
 This is an online multiplayer Blackjack game where players can log in with Google, and either start a new game or join an existing one on the lobby page. Each game includes two players and a dealer (the computer), with the potential to expand to more players in the future. Multiple games can run at the same time in separate rooms, allowing different groups to play without interfering with each other. Firestore database handles real-time updates, making the gameplay smooth and interactive.
 
-### Problem Space
+### ♠️Problem Space
 
 Most online card games run on dedicated servers, which can be slow and hard to maintain. This game uses Firestore’s real-time database instead, making it lightweight, fast, and easy to play with friends—no server setup needed.
 
 I also plan to add features my family and friends love, like double bet, insurance, and split hands, to make it even more fun.
 
-### User Profile
+### ♠️User Profile
 
 Casual Blackjack players who want to play online with friends.
 Anyone looking for a quick and simple multiplayer game—no downloads or complicated setups.
 Players who want a clean, easy-to-use interface while still having control over the game, just like in a real casino.
 
-### Features
+### ♠️Features
 
-Core Functionality
+#### **Core Functionality**
 
 - Google Authentication – Players can log in using their Google accounts.
 - Lobby Page – Players can create a new game or join an existing one.
@@ -32,28 +33,28 @@ Core Functionality
 - Authentication Management – Users must log in to create or join games. Only players in a specific game can view and participate.
 - Game Expansion Potential – Future support for 5+ players per game, additional third-party login options, and more game features.
 
-## Implementation
+## ♠️Implementation
 
-### Tech Stack
+### ♠️Tech Stack
 
-Frontend: React.js using Vite, axios,
-Database: Firestore real-time database
-Authentication: Firebase Google Auth
-Styling: SCSS/SASS
-Hosting: GitHub Pages / Netlify
+- **Frontend:** React.js using Vite, axios,
+- **Database:** Firestore real-time database
+- **Authentication:** Firebase Google Auth
+- **Styling:** SCSS/SASS
+- **Hosting:** GitHub Pages / Netlify
 
-### APIs
+### ♠️APIs
 
-Deck of Cards API – Manages and shuffles cards.
-Firebase Authentication API – Handles Google login.
-Firestore Database – Stores and syncs game data in real time.
+- [**Deck of Cards API**](https://deckofcardsapi.com/) – Manages and shuffles cards.
+- **Firebase Authentication API** – Handles Google login.
+- **Firestore Database** – Stores and syncs game data in real time.
 
-### Sitemap
+### ♠️Sitemap
 
-Lobby Page: Players see available games, create a new one or join an existing one.
-Game Room: Players will play the game here.
+- **Lobby Page:** Players see available games, create a new one or join an existing one.
+- **Game Room:** Players will play the game here.
 
-### Mockups
+### ♠️Mockups
 
 ### Desktop view:
 
@@ -71,25 +72,25 @@ Game Room: Players will play the game here.
 ![mobile-game3](https://github.com/user-attachments/assets/1c991119-7098-4a5a-b302-cb0111bf2668)
 ![mobile-game1](https://github.com/user-attachments/assets/2ff51c24-e57c-4010-a290-4c823b20f2dc)
 
-### Data
+### ♠️Data
 
-Firestore Collections and Documents
-There are two main collections: Games and Users, along with a Players sub-collection.
+- **Firestore Collections and Documents**
+  - There are two main collections: **Games and Users**, along with a **Players sub-collection**.
 
-1. Games Collection → Stores the game state, players, deck, and turn information in each game document.
-2. Players Sub-Collection (inside each game document) → Tracks player-specific data such as their hand, score, and turn status.
-3. Users Collection → Stores user information retrieved from the chosen login provider.
+1. **Games Collection** → Stores the game state, players, deck, and turn information in each game document.
+2. **Players Sub-Collection** (inside each game document) → Tracks player-specific data such as their hand, score, and turn status.
+3. **Users Collection** → Stores user information retrieved from the chosen login provider.
 
-Firestore Database Structure
-/games/{gameId} → Stores game metadata (status, players, whose turn it is, etc.).
-/games/{gameId}/players/{playerId} → Stores individual player data (hand, actions, score).
-/games/{gameId}/deck → Stores the current deck state.
+#### Firestore Database Structure (examples)
+**/games/{gameId}** → Stores game metadata (status, players, whose turn it is, etc.).  
+**/games/{gameId}/players/{playerId}** → Stores individual player data (hand, actions, score).  
+**/games/{gameId}/deck** → Stores the current deck state.  
 
-### Endpoints
+### ♠️Endpoints
 
-- No server will be used for this project.
+- No server is used for this project.
 
-## Roadmap
+## ♠️Roadmap
 
 Setup Project & Firebase
 Implement Authentication & Lobby page
@@ -97,7 +98,7 @@ Implement Game page which links with the lobby page after the user joins a game,
 Game Logic & Firestore Real-Time Updates UI Design, Improvements Testing, Bug Fixes
 Deployment & Final Review
 
-## Future Implementations
+## ♠️Future Implementations
 
 Implementing a regular email sign-up and sign-in pop-up form.
 Expanding support for more than 5 players per game.
