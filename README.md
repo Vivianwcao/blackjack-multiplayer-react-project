@@ -55,7 +55,21 @@ Game Room: Players will play the game here.
 
 ### Mockups
 
-More is coming ...
+### Desktop view:
+
+![lobby1](https://github.com/user-attachments/assets/32c2dfc2-a19b-4d91-9021-db2730b229ac)
+![lobby2](https://github.com/user-attachments/assets/e47e2e31-d895-4b73-aa67-ea7bb2ac6544)
+![lobby3](https://github.com/user-attachments/assets/0adc7434-e6c4-4f3a-8ccc-990ffc245139)
+![game1](https://github.com/user-attachments/assets/b987a0f0-0d7c-474f-9cbf-4bbdc1a782e5)
+![game2](https://github.com/user-attachments/assets/a5b82c51-6d3f-46f9-b864-b5ec6cf6c5ec)
+![game4](https://github.com/user-attachments/assets/298ecba7-0f73-475e-8e2a-843f77762184)
+![game3](https://github.com/user-attachments/assets/ea0e6cff-d520-49bb-89c9-1e612f2de0ae)
+
+### Mobile view:
+![mobile-lobby1](https://github.com/user-attachments/assets/671948e2-01e1-4a84-a5fe-b7651a832a50)
+![mobile-game2](https://github.com/user-attachments/assets/c8a09fe3-b995-43a8-855d-b40e5eb288fc)
+![mobile-game3](https://github.com/user-attachments/assets/1c991119-7098-4a5a-b302-cb0111bf2668)
+![mobile-game1](https://github.com/user-attachments/assets/2ff51c24-e57c-4010-a290-4c823b20f2dc)
 
 ### Data
 
