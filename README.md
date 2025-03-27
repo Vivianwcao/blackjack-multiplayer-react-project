@@ -1,4 +1,4 @@
-# ♠️♥️ Blackjack Royale multi-player online game ♥️♠️
+# ♥️Blackjack Royale multi-player online game♥️
 
 
 ## ♠️Overview
@@ -45,7 +45,7 @@ Players who want a clean, easy-to-use interface while still having control over 
 
 ### ♠️APIs
 
-- **Deck of Cards API** – Manages and shuffles cards.
+- [**Deck of Cards API**](https://deckofcardsapi.com/) – Manages and shuffles cards.
 - **Firebase Authentication API** – Handles Google login.
 - **Firestore Database** – Stores and syncs game data in real time.
 
