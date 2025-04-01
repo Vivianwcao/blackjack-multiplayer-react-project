@@ -7,6 +7,7 @@ import Game from "./pages/Game/Game";
 import GameOngoing from "./pages/GameOngoing/GameOngoing";
 import { GameProvider } from "./components/GameProvider";
 import Banner from "./components/Banner/Banner";
+import Footer from "./components/Footer/Footer";
 import "./pages/style.scss";
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
 				/>
 			</Routes>
 			{/* </GameProvider> */}
+			<Footer />
 		</BrowserRouter>
 	);
 };
