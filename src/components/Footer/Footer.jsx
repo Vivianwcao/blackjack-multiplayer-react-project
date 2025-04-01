@@ -24,7 +24,7 @@ const Footer = () => {
 				</a>
 			</FooterLogos>
 			<Footertext>
-				&#10084; Vivian Cao &#128522; 2025
+				&#10084; Vivian Cao &#128522; {new Date().getFullYear()}
 				<br></br>Icons made by Freepik from{" "}
 				<a
 					href="https://www.flaticon.com/authors/freepik"
