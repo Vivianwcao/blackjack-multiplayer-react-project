@@ -4,7 +4,7 @@
 
 ## ♠️Overview
 
-This is an online multiplayer Blackjack game where players can log in with Google, and either start a new game or join an existing one on the lobby page. Each game includes two players and a dealer (the computer), with the potential to expand to more players in the future. Multiple games can run at the same time in separate rooms, allowing different groups to play without interfering with each other. Firestore database handles real-time updates, making the gameplay smooth and interactive.
+This is an online multiplayer Blackjack game where players can log in with Gmail or Outlook account, and either start a new game or join an existing one on the lobby page. Each game includes two players and a dealer (the computer), with the potential to expand to more players in the future. Multiple games can run at the same time in separate rooms, allowing different groups to play without interfering with each other. Firestore database handles real-time updates, making the gameplay smooth and interactive.
 
 ### ♠️Problem Space
 
