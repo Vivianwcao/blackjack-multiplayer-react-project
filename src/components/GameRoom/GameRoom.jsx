@@ -13,7 +13,9 @@ const GameRoom = ({
 	const { user, users } = useAuth();
 
 	return (
-		<div className="game-room">
+		<div
+			className={game?.isOngoing ? "game-room game-room--ongoing" : "game-room"}
+		>
 			<h3>
 				{game?.isOngoing
 					? "Open Table Blackjack Game"

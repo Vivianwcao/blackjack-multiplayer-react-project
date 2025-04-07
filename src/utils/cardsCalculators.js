@@ -12,13 +12,9 @@ export const calculateHand = (handList) => {
 		}
 	}
 	if (aceCount === 0) return total;
-	if (total > 21) {
-		for (let i = 0; i < aceCount; i++) {
-			if (total > 21) {
-				total = total - 11 + 1;
-				break;
-			}
-		}
+	while (total > 21 && aceCount > 0) {
+		total = total - 11 + 1;
+		aceCount -= 1;
 	}
 	console.log("Total hand equals to: ", total);
 	return total;

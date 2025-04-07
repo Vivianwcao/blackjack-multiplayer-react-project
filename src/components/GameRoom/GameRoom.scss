@@ -4,10 +4,10 @@
 .game-room {
 	z-index: 0;
 	background: linear-gradient(
-		90deg,
-		rgba(207, 207, 213, 0.7) 0%,
-		rgba(255, 255, 255, 0.7) 50%,
-		rgba(207, 207, 213, 0.7) 100%
+		150deg,
+		rgba(221, 221, 221, 0.65) 0%,
+		rgba(254, 254, 254, 0.65) 50%,
+		rgba(230, 231, 230, 0.65) 100%
 	);
 	box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
 
@@ -30,6 +30,7 @@
 
 	@include tablet {
 		width: 100%;
+		min-width: 11rem;
 	}
 
 	&__player-name-container {
@@ -40,5 +41,13 @@
 		justify-content: center;
 		align-items: center;
 		gap: 1rem;
+	}
+	&--ongoing {
+		background: linear-gradient(
+			150deg,
+			rgba(145, 143, 142, 0.65) 0%,
+			rgba(255, 255, 255, 0.65) 40%,
+			rgba(116, 114, 113, 0.65) 100%
+		);
 	}
 }

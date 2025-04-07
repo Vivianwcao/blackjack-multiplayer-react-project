@@ -1,14 +1,15 @@
-import React from "react";
 import styled from "styled-components";
 
 export const FooterContainer = styled.div`
 	// background: rgba(172,176,153,.6);
-	padding: 20px;
+	padding: 1.25rem;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	width: 100%;
+	width: 80%;
+	min-width: 20rem;
+	margin: auto;
 `;
 
 export const FooterLogos = styled.div`
@@ -16,16 +17,15 @@ export const FooterLogos = styled.div`
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	width: 130px;
-	height: 50px;
-	z-index: 1;
+	width: 8.125rem;
+	height: 3.125rem;
 `;
 
 export const Logo = styled.img`
-	width: 26px;
+	width: 1.625rem;
 `;
 export const Footertext = styled.p`
-	font-size: 12px;
+	font-size: 0.75rem;
 	color: white;
 	text-align: center;
 `;
