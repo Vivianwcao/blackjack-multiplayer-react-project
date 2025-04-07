@@ -6,7 +6,7 @@
 	background: linear-gradient(
 		150deg,
 		rgba(221, 221, 221, 0.65) 0%,
-		rgba(254, 254, 254, 0.65) 50%,
+		rgba(254, 254, 254, 0.7) 50%,
 		rgba(230, 231, 230, 0.65) 100%
 	);
 	box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
@@ -46,7 +46,9 @@
 		background: linear-gradient(
 			150deg,
 			rgba(145, 143, 142, 0.65) 0%,
-			rgba(255, 255, 255, 0.65) 40%,
+			rgba(191, 190, 190, 0.65) 20%,
+			rgba(255, 255, 255, 0.65) 50%,
+			rgba(178, 178, 178, 0.65) 80%,
 			rgba(116, 114, 113, 0.65) 100%
 		);
 	}
