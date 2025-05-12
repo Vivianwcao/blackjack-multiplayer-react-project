@@ -11,7 +11,7 @@ import {
 	increment,
 } from "firebase/firestore";
 import { toast, Slide } from "react-toastify";
-import { DefaultDetail } from "../../components/Popup/defaultDetail";
+import { DefaultDetail } from "../../components/Popup/DefaultDetail";
 import Popup from "../../components/Popup/Popup";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { DefaultDetail } from "../../components/Popup/defaultDetail";
+import { DefaultDetail } from "../../components/Popup/DefaultDetail";
 import Popup from "../../components/Popup/Popup";
 import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection } from "firebase/firestore";
