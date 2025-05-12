@@ -84,8 +84,12 @@ const Banner = () => {
 					{/* <button className="btn btn--sign-in-github" onClick={handleGithubSignIn}>
 							Sign in with github
 						</button> */}
-					{/* <button className="btn btn--sign-in"  onClick={handleSignUp}>Email Sign up</button>
-						<button className="btn btn--sign-in"  onClick={handleSignIn}>Email Sign in</button> */}
+					<button className="btn btn--sign-in" onClick={handleSignUp}>
+						Email Sign up
+					</button>
+					<button className="btn btn--sign-in" onClick={handleSignIn}>
+						Email Sign in
+					</button>
 				</div>
 			)}
 		</div>
