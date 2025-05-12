@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { DefaultDetail } from "../../components/Popup/defaultDetail";
 import Popup from "../../components/Popup/Popup";
 import { useAuth } from "../../Firebase/FirebaseAuthentification/AuthProvider";
 import { onSnapshot, collection } from "firebase/firestore";
@@ -211,17 +212,18 @@ const Lobby = () => {
 			>
 				generate an ongoing game for test purposes
 			</button> */}
-			<Popup
-				isOpen={popEnterGame}
-				handleBtnLeft={() => handleLeaveGame(joined)}
-				handleBtnRight={() => handleEnterGame(navigate, joined)}
-				btnLeftText="Leave Game"
-				btnRightText="Enter Game !"
-			>
-				<div>
-					<h2 className="popup__title">Enter game♣️</h2>
-					<p className="popup__text">Have fun!!♥️</p>
-				</div>
+			<Popup isOpen={popEnterGame}>
+				<DefaultDetail
+					handleBtnLeft={() => handleLeaveGame(joined)}
+					handleBtnRight={() => handleEnterGame(navigate, joined)}
+					btnLeftText="Leave Game"
+					btnRightText="Enter Game !"
+				>
+					<div>
+						<h2 className="popup__title">Enter game♣️</h2>
+						<p className="popup__text">Have fun!!♥️</p>
+					</div>
+				</DefaultDetail>
 			</Popup>
 			{user && !joined && (
 				<div className="lobby__btn-wrapper">

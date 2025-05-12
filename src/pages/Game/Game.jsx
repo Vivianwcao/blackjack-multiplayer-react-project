@@ -11,6 +11,7 @@ import {
 	increment,
 } from "firebase/firestore";
 import { toast, Slide } from "react-toastify";
+import { DefaultDetail } from "../../components/Popup/defaultDetail";
 import Popup from "../../components/Popup/Popup";
 import useToggle from "../../utils/hooks/useToggle";
 import * as cardMachine from "../../utils/api-helper/cardMachine";
@@ -651,45 +652,42 @@ const Game = () => {
 		nav("/")
 	) : (
 		<div className="game">
-			<Popup
-				isOpen={popBet}
-				handleBtnRight={handleAddBet}
-				btnRightText="Confirm"
-			>
-				<h2 className="popup__title">Place a bet</h2>
-				<input
-					className="popup__input"
-					ref={betRef}
-					placeholder="Enter a bet ..."
-					type="number"
-					min="1"
-				/>
+			<Popup isOpen={popBet}>
+				<DefaultDetail handleBtnRight={handleAddBet} btnRightText="Confirm">
+					<h2 className="popup__title">Place a bet</h2>
+					<input
+						className="popup__input"
+						ref={betRef}
+						placeholder="Enter a bet ..."
+						type="number"
+						min="1"
+					/>
+				</DefaultDetail>
 			</Popup>
-			<Popup
-				isOpen={popGameOver}
-				handleBtnLeft={handleQuitGame}
-				btnLeftText="Leave Game"
-			>
-				<div>
-					<h2 className="popup__title">Blackjack result</h2>
-					<div className="popup__text">
-						My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
+			<Popup isOpen={popGameOver}>
+				<DefaultDetail handleBtnLeft={handleQuitGame} btnLeftText="Leave Game">
+					<div>
+						<h2 className="popup__title">Blackjack result</h2>
+						<div className="popup__text">
+							My score: {me?.hand && cardsCalculator.calculateHand(me?.hand)}
+						</div>
+						<div className="popup__text">
+							Dealer score:{" "}
+							{game?.dealer && cardsCalculator.calculateHand(game?.dealer)}
+						</div>
+						{me?.hand && game?.dealer && displayResult(me, game)}
 					</div>
-					<div className="popup__text">
-						Dealer score:{" "}
-						{game?.dealer && cardsCalculator.calculateHand(game?.dealer)}
-					</div>
-					{me?.hand && game?.dealer && displayResult(me, game)}
-				</div>
+				</DefaultDetail>
 			</Popup>
-			<Popup
-				isOpen={popQuitGame}
-				handleBtnLeft={toggleFalseQuitGame}
-				handleBtnRight={handleQuitGame}
-				btnLeftText="Cancel"
-				btnRightText="Quit Game"
-			>
-				<h2 className="popup__title">Going back to lobby</h2>
+			<Popup isOpen={popQuitGame}>
+				<DefaultDetail
+					handleBtnLeft={toggleFalseQuitGame}
+					handleBtnRight={handleQuitGame}
+					btnLeftText="Cancel"
+					btnRightText="Quit Game"
+				>
+					<h2 className="popup__title">Going back to lobby</h2>
+				</DefaultDetail>
 			</Popup>
 			{console.log("* ~ * ~ * ~ * ~ * re-render * ~ * ~ * ~ * ~ * in game")}
 			{console.log(players)}

@@ -6,10 +6,12 @@ import {
 } from "../../Firebase/FirebaseAuthentification/signInPartners/googleSignIn";
 import { handleMicrosoftSignIn } from "../../Firebase/FirebaseAuthentification/signInPartners/MicrosoftSignIn";
 import {
-	handleSignIn,
-	handleSignUp,
+	handleEmailSignIn,
+	handleEmailSignUp,
 } from "../../Firebase/FirebaseAuthentification/signInPartners/emailSignIn";
 import { handleGithubSignIn } from "../../Firebase/FirebaseAuthentification/signInPartners/githubSignIn";
+import Popup from "../Popup/Popup";
+import useToggle from "../../utils/hooks/useToggle";
 import ProfilePhoto from "../ProfilePhoto/ProfilePhoto";
 import "../../pages/style.scss";
 import "./Banner.scss";
@@ -17,6 +19,9 @@ import "./Banner.scss";
 const Banner = () => {
 	const { user, users } = useAuth();
 	const me = users?.find((u) => u.id === user?.uid);
+	const [popAuth, popAuthOpen, popAuthClose] = useToggle(false);
+
+	const handleSignIn = () => {};
 
 	return (
 		<div className="banner">
@@ -84,11 +89,8 @@ const Banner = () => {
 					{/* <button className="btn btn--sign-in-github" onClick={handleGithubSignIn}>
 							Sign in with github
 						</button> */}
-					<button className="btn btn--sign-in" onClick={handleSignUp}>
-						Email Sign up
-					</button>
 					<button className="btn btn--sign-in" onClick={handleSignIn}>
-						Email Sign in
+						Sign in
 					</button>
 				</div>
 			)}

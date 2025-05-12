@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const mockDeck = "b7u5yr1uqy1z";
+const mockDeck = "xkuyg2ayd4gr";
 
 //get a deck
 export const newDeck = async (numOfDecks) => {
