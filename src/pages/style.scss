@@ -183,20 +183,20 @@ button {
 		width: 12rem;
 		background: radial-gradient(
 			circle at top,
-			rgb(181, 29, 29) 0%,
+			rgb(223, 46, 46) 0%,
 			#990606 50%
 		);
 		&:hover {
 			background: radial-gradient(
 				circle at top,
-				rgb(175, 23, 23) 0%,
+				rgb(205, 27, 27) 0%,
 				#860505 50%
 			);
 		}
 		&:active {
 			background: radial-gradient(
 				circle at top,
-				rgb(182, 24, 24) 0%,
+				rgb(180, 24, 24) 0%,
 				#6d0202 50%
 			);
 		}

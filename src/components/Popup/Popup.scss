@@ -81,7 +81,7 @@
 		text-shadow: 0.125rem 0.125rem 0.125rem rgba(0, 0, 0, 0.1);
 		background: radial-gradient(
 			circle at top,
-			rgb(214, 32, 32) 0%,
+			rgb(253, 39, 39) 0%,
 			#b90808 50%
 		);
 		color: white;
@@ -97,7 +97,7 @@
 		&:hover {
 			background: radial-gradient(
 				circle at top,
-				rgb(186, 28, 28) 0%,
+				rgb(220, 39, 39) 0%,
 				#9a0707 50%
 			);
 			box-shadow: 0rem 0.3rem 0.5rem rgba(0, 0, 0, 0.4); // Hover effect for close button
@@ -107,7 +107,7 @@
 		&:active {
 			background: radial-gradient(
 				circle at top,
-				rgb(170, 23, 23) 0%,
+				rgb(211, 30, 30) 0%,
 				#790202 50%
 			);
 			transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
@@ -117,20 +117,20 @@
 	&__right-btn {
 		background: radial-gradient(
 			circle at top,
-			rgb(71, 166, 23) 0%,
+			rgb(91, 202, 35) 0%,
 			#098c09 50%
 		);
 		&:hover {
 			background: radial-gradient(
 				circle at top,
-				rgb(58, 136, 18) 0%,
+				rgb(75, 175, 25) 0%,
 				#077707 50%
 			);
 		}
 		&:active {
 			background: radial-gradient(
 				circle at top,
-				rgb(54, 130, 16) 0%,
+				rgb(74, 175, 23) 0%,
 				#045604 50%
 			);
 		}
