@@ -7,9 +7,7 @@ const Popup = ({ isOpen, onClose, children }) => {
 		<div className="popup__overlay">
 			<div className="popup__content">
 				{onClose && (
-					<button className="popup__close" onClick={onClose}>
-						<RiCloseLargeLine />
-					</button>
+					<RiCloseLargeLine className="popup__close-icon" onClick={onClose} />
 				)}
 				{children}
 			</div>

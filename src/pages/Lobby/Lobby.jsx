@@ -51,6 +51,7 @@ const Lobby = () => {
 
 	//UI add/leave/join game buttons toggle
 	const joined = useMemo(() => userJoinedGame(user?.uid), [user, gamesList]);
+	const ongoingGame = gamesList.some((game) => game.isOngoing);
 
 	const handleCreateNewGame = async (
 		maxPlayers,
@@ -205,13 +206,6 @@ const Lobby = () => {
 				userLobby.current
 			)}
 
-			{/* <button
-				className="btn btn--lobby"
-				hidden={false}
-				onClick={() => handleCreateNewGame(5, true, "b7u5yr1uqy1z")}
-			>
-				generate an ongoing game for test purposes
-			</button> */}
 			<Popup isOpen={popEnterGame}>
 				<DefaultDetail
 					handleBtnLeft={() => handleLeaveGame(joined)}
@@ -231,26 +225,35 @@ const Lobby = () => {
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(1)}
 					>
-						Single player game
+						1 player game
 					</button>
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(2)}
 					>
-						Two-player game
+						2 player game
 					</button>
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(3)}
 					>
-						Three-player game
+						3 player game
 					</button>
 					<button
 						className="btn btn--lobby"
 						onClick={() => handleCreateNewGame(4)}
 					>
-						Four-player game
+						4 player game
 					</button>
+					{!ongoingGame && (
+						<button
+							className="btn btn--lobby btn--ongoing"
+							hidden={false}
+							onClick={() => handleCreateNewGame(5, true, "xkuyg2ayd4gr")}
+						>
+							Ongoing game of 5
+						</button>
+					)}
 				</div>
 			)}
 			<div className="lobby__game-room-container">
