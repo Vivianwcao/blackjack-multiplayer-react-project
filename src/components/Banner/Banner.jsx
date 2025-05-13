@@ -24,7 +24,7 @@ const Banner = () => {
 			{user ? (
 				<div className="banner__content-wrapper">
 					<div className="banner__profile-wrapper">
-						<h1>♠️Welcome {user?.displayName}!</h1>
+						<h1>Welcome {user?.displayName}!</h1>
 						<ProfilePhoto src={me?.photo} />
 					</div>
 					<p>

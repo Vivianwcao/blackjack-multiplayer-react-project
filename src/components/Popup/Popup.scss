@@ -105,6 +105,11 @@
 		}
 
 		&:active {
+			background: radial-gradient(
+				circle at top,
+				rgb(170, 23, 23) 0%,
+				#790202 50%
+			);
 			transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
 			box-shadow: 0rem 0.125rem 0.35rem rgba(0, 0, 0, 0.4); // Reduced shadow when pressed
 		}
@@ -120,6 +125,13 @@
 				circle at top,
 				rgb(58, 136, 18) 0%,
 				#077707 50%
+			);
+		}
+		&:active {
+			background: radial-gradient(
+				circle at top,
+				rgb(54, 130, 16) 0%,
+				#045604 50%
 			);
 		}
 	}

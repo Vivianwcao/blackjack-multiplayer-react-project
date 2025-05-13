@@ -59,6 +59,7 @@ button {
 	}
 
 	&:active {
+		background: #a40101;
 		color: rgb(232, 232, 232);
 		transform: translateY(0.0625rem) scale(0.995); // Shrink and sink on press
 		box-shadow: 0.2rem 0.15rem 0.5rem rgba(0, 0, 0, 0.5); // Reduced shadow when pressed
@@ -71,7 +72,10 @@ button {
 		background: radial-gradient(circle at top, #db2fea 0%, #9337be 50%);
 
 		&:hover {
-			background: radial-gradient(circle at top, #bd27cb 0%, #7f388f 50%);
+			background: radial-gradient(circle at top, #bd27cb 0%, #7c3d8a 50%);
+		}
+		&:active {
+			background: radial-gradient(circle at top, #a61fb3 0%, #663271 50%);
 		}
 
 		&-remove-player-btn {
@@ -92,7 +96,10 @@ button {
 		background: radial-gradient(circle at top, #d1b82b 0%, #988202 50%);
 
 		&:hover {
-			background: radial-gradient(circle at top, #b9a325 0%, #897503 50%);
+			background: radial-gradient(circle at top, #b9a325 0%, #806d02 50%);
+		}
+		&:active {
+			background: radial-gradient(circle at top, #9d8b22 0%, #685803 50%);
 		}
 	}
 
@@ -132,13 +139,19 @@ button {
 		padding-right: 1rem;
 		background: #c71c1c;
 		&:hover {
-			background: #a91824;
+			background: #a50613;
+		}
+		&:active {
+			background: #87000b;
 		}
 	}
 	&--sign-in {
 		background: #43a605;
 		&:hover {
 			background: #2c9403;
+		}
+		&:active {
+			background: #237802;
 		}
 	}
 	&--quit {
@@ -153,6 +166,13 @@ button {
 				circle at top,
 				rgb(175, 23, 23) 0%,
 				#7f0404 50%
+			);
+		}
+		&:active {
+			background: radial-gradient(
+				circle at top,
+				rgb(157, 17, 17) 0%,
+				#670202 50%
 			);
 		}
 	}
@@ -170,7 +190,14 @@ button {
 			background: radial-gradient(
 				circle at top,
 				rgb(175, 23, 23) 0%,
-				#790404 50%
+				#860505 50%
+			);
+		}
+		&:active {
+			background: radial-gradient(
+				circle at top,
+				rgb(182, 24, 24) 0%,
+				#6d0202 50%
 			);
 		}
 	}
@@ -187,6 +214,13 @@ button {
 				circle at top,
 				rgb(163, 134, 21) 0%,
 				#735d02 50%
+			);
+		}
+		&:active {
+			background: radial-gradient(
+				circle at top,
+				rgb(143, 118, 16) 0%,
+				#5d4b00 50%
 			);
 		}
 	}

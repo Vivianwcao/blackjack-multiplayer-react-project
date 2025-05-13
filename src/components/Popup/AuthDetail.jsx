@@ -53,8 +53,8 @@ export const AuthDetail = () => {
 			<Toggle
 				isOn={signUp}
 				setIsOn={handleToggle}
-				onLabel={"Sign in"}
-				offLabel={"Sign up"}
+				onLabel={"Sign Up"}
+				offLabel={"Sign In"}
 			/>
 			<div className="auth__email-container"></div>
 		</div>
