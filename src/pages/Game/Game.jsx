@@ -660,6 +660,7 @@ const Game = () => {
 						ref={betRef}
 						placeholder="Enter a bet ..."
 						type="number"
+						inputMode="numeric"
 						min="1"
 					/>
 				</DefaultDetail>
