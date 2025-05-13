@@ -10,7 +10,7 @@ export const DefaultDetail = ({
 	btnRightText,
 }) => {
 	return (
-		<div className="popup__content">
+		<div>
 			{children}
 			<div className="popup__btn-wrapper">
 				{handleBtnLeft && (
