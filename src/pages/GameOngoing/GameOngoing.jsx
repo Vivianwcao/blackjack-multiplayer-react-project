@@ -748,6 +748,7 @@ const GameOngoing = () => {
 						placeholder="Enter a bet ..."
 						type="number"
 						inputMode="numeric"
+						pattern="[0-9]*"
 						min="1"
 					/>
 				</DefaultDetail>
