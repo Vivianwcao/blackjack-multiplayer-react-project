@@ -70,7 +70,7 @@ const FormSignUp = ({ handleSubmit }) => {
 			</div>
 			<div className="form__error_message">{errorMsg}</div>
 			<button type="submit" className="btn--form">
-				SIGN UP
+				Create Account
 			</button>
 		</form>
 	);

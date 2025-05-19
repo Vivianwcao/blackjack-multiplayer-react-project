@@ -51,7 +51,7 @@ const FormSignIn = ({ handleSubmit }) => {
 			</div>
 			<div className="form__error_message">{errorMsg}</div>
 			<button type="submit" className="btn--form">
-				Login
+				Sign in
 			</button>
 		</form>
 	);

@@ -21,7 +21,7 @@ export const AuthDetail = () => {
 	return (
 		<div className="popup__content">
 			<h3 className="popup__title popup__title--auth">
-				{signUp ? "Register with" : "Login with"}
+				{signUp ? "Register with" : "Sign in with"}
 			</h3>
 			<div className="popup__partners-container">
 				<button
@@ -68,8 +68,8 @@ export const AuthDetail = () => {
 				<Toggle
 					isOn={signUp}
 					setIsOn={handleToggle}
-					onLabel={"SIGN UP"}
-					offLabel={"LOG IN"}
+					onLabel={"REGISTER"}
+					offLabel={"SIGN IN"}
 				/>
 			</div>
 			<div className="popup__form-container">

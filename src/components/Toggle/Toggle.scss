@@ -5,7 +5,7 @@ $font-header: "Montserrat", sans-serif; // Header font@use "style" as *;
 
 .toggle {
 	position: relative;
-	width: 5.25rem;
+	width: 5.35rem;
 	height: 1.375rem;
 	border-radius: 0.9375rem;
 	background-color: #ccc;
@@ -17,7 +17,7 @@ $font-header: "Montserrat", sans-serif; // Header font@use "style" as *;
 	align-items: center;
 	justify-content: center;
 	color: white;
-	font-size: 0.625rem;
+	font-size: 0.55rem;
 	font-weight: 600;
 	&--on {
 		background-color: rgb(90, 139, 213);
@@ -43,7 +43,7 @@ $font-header: "Montserrat", sans-serif; // Header font@use "style" as *;
 		box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.4);
 		z-index: 1;
 		&--on {
-			transform: translateX(3.88rem);
+			transform: translateX(4rem);
 		}
 	}
 }
