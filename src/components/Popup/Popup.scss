@@ -33,7 +33,7 @@
 		animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
 
 		&--auth {
-			background: hwb(240 98% 0% / 0.85);
+			background: hwb(240 98% 0% / 1);
 			max-width: 20rem;
 			border-radius: 0.3rem;
 			transform: scale(0.9); // Slightly smaller to scale up to normal size
@@ -179,6 +179,13 @@
 			outline: none;
 			border: 0.1rem solid color.grayscale(#a7a7a7);
 		}
+	}
+	&__partners-container {
+		display: flex;
+		justify-content: center;
+		gap: 1rem;
+		padding: 0.6rem 0;
+		border-bottom: 0.1rem solid rgb(232, 232, 232);
 	}
 }
 
