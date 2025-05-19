@@ -74,7 +74,7 @@ export const AuthDetail = () => {
 			</div>
 			<div className="popup__form-container">
 				{signUp ? (
-					<FormSignUp />
+					<FormSignUp handleSubmit={handleEmailSignUp} />
 				) : (
 					<FormSignIn handleSubmit={handleEmailSignIn} />
 				)}

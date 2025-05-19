@@ -21,14 +21,14 @@ const FormSignIn = ({ handleSubmit }) => {
 		}
 	};
 	return (
-		<div>
-			<form onSubmit={formHandler} className="form">
-				<input
-					type="email"
-					placeholder="Email"
-					className="form__email"
-					ref={emailRef}
-				/>
+		<form onSubmit={formHandler} className="form">
+			<input
+				type="email"
+				placeholder="Email"
+				className="form__email"
+				ref={emailRef}
+			/>
+			<div className="form__password-container">
 				<input
 					type={isPassword ? "password" : "text"}
 					placeholder="Password"
@@ -41,12 +41,12 @@ const FormSignIn = ({ handleSubmit }) => {
 				>
 					<FaEye />
 				</div>
-				<div className="form__error_message">{errorMsg}</div>
-				<button type="submit" className="btn--form">
-					Login
-				</button>
-			</form>
-		</div>
+			</div>
+			<div className="form__error_message">{errorMsg}</div>
+			<button type="submit" className="btn--form">
+				Login
+			</button>
+		</form>
 	);
 };
 
