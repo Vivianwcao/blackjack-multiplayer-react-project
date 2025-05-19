@@ -42,7 +42,7 @@ const FormSignUp = ({ handleSubmit }) => {
 			<div className="form__password-container">
 				<input
 					type={isPassword ? "password" : "text"}
-					placeholder="Password"
+					placeholder="Password (min 6 characters)"
 					className="form__password"
 					ref={passwordRef}
 				></input>
@@ -57,7 +57,7 @@ const FormSignUp = ({ handleSubmit }) => {
 			<div className="form__password-container">
 				<input
 					type={isPassword2 ? "password" : "text"}
-					placeholder="Password"
+					placeholder="Repeat Password (min 6 characters)"
 					className="form__password"
 					ref={passwordRef2}
 				/>
