@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 		//Create new user -> firestore db Users collection
 		const userData = {
 			id: user.uid,
-			name: user.displayName,
+			name: user.displayName ? user.displayName : user.email.split("@")[0],
 			email: user.email,
 			photo: user.photoURL,
 			metadata: {

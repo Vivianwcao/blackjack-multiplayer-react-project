@@ -9,7 +9,7 @@ const FormSignUp = ({ handleSubmit }) => {
 	const [isPassword, setIsPassword] = useState(true);
 	const [isPassword2, setIsPassword2] = useState(true);
 	const [errorMsg, setErrorMsg] = useState("");
-	const formHandler = (e) => {
+	const formHandler = async (e) => {
 		e.preventDefault();
 		let email = emailRef.current.value.trim();
 		let password = passwordRef.current.value.trim();
@@ -19,11 +19,16 @@ const FormSignUp = ({ handleSubmit }) => {
 		} else if (password !== password2) {
 			setErrorMsg("Passwords don't match");
 		} else {
-			setErrorMsg("");
-			emailRef.current.value = "";
-			passwordRef.current.value = "";
-			passwordRef2.current.value = "";
-			handleSubmit(email, password);
+			try {
+				await handleSubmit(email, password);
+				setErrorMsg("");
+				emailRef.current.value = "";
+				passwordRef.current.value = "";
+				passwordRef2.current.value = "";
+			} catch (err) {
+				//console.log(err.message);
+				setErrorMsg(err.message);
+			}
 		}
 	};
 	return (

@@ -8,16 +8,23 @@ const FormSignIn = ({ handleSubmit }) => {
 	const passwordRef = useRef(null);
 	const [errorMsg, setErrorMsg] = useState("");
 	const [isPassword, setIsPassword] = useState(true);
-	const formHandler = (e) => {
+	const formHandler = async (e) => {
 		e.preventDefault();
+		let email = emailRef.current.value.trim();
+		let password = passwordRef.current.value.trim();
 		console.log(emailRef.current.value, passwordRef.current.value);
-		if (!emailRef.current.value.length || !passwordRef.current.value.length) {
+		if (!email.length || !password.length) {
 			setErrorMsg("Invalid input(s)");
 		} else {
-			setErrorMsg("");
-			emailRef.current.value = "";
-			passwordRef.current.value = "";
-			handleSubmit(emailRef.current.value, passwordRef.current.value);
+			try {
+				await handleSubmit(email, password);
+				setErrorMsg("");
+				emailRef.current.value = "";
+				passwordRef.current.value = "";
+			} catch (err) {
+				//console.log(err.message);
+				setErrorMsg(err.message);
+			}
 		}
 	};
 	return (
