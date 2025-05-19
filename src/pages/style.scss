@@ -130,7 +130,7 @@ button {
 	// App Button
 	&--sign-in-google {
 		@extend .btn;
-		border-radius: 100%;
+		border-radius: 2rem;
 		background: #e24141;
 		padding: 1rem 1.15rem;
 		box-shadow: none;
