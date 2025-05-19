@@ -41,7 +41,7 @@ const Banner = () => {
 				</div>
 			) : (
 				<div className="btn-wrapper">
-					<Popup isOpen={popAuthState} onClose={popAuthClose}>
+					<Popup name="auth" isOpen={popAuthState} onClose={popAuthClose}>
 						<AuthDetail></AuthDetail>
 					</Popup>
 

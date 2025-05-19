@@ -65,6 +65,30 @@ button {
 		box-shadow: 0.2rem 0.15rem 0.5rem rgba(0, 0, 0, 0.5); // Reduced shadow when pressed
 	}
 
+	//form button
+	&--form {
+		@extend .btn;
+		margin: 0rem;
+		padding: 0.9rem;
+		border-radius: 0.25rem;
+		background: hwb(213 17% 0% / 0.825);
+		transition: none;
+		box-shadow: none;
+		&:hover {
+			color: rgb(235, 235, 235);
+			background: hwb(213 15% 13% / 0.825);
+			transform: none;
+			box-shadow: none;
+		}
+
+		&:active {
+			background: hwb(213 12% 23% / 0.825);
+			color: rgb(232, 232, 232);
+			transform: none;
+			box-shadow: none;
+		}
+	}
+
 	// Game Button
 	&--game {
 		@extend .btn;
@@ -106,22 +130,21 @@ button {
 	// App Button
 	&--sign-in-google {
 		@extend .btn;
-		width: 14rem;
+		border-radius: 100%;
 		background: #e24141;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-		gap: 0.5rem;
+		padding: 1rem 1.15rem;
+		box-shadow: none;
 		&:hover {
-			background: #b23641;
+			background: #e86772;
+			transform: none;
+			box-shadow: none;
 		}
 	}
 	&--sign-in-microsoft {
 		@extend .btn--sign-in-google;
 		background: #3c72ee;
 		&:hover {
-			background: #4363b3;
+			background: #5a82e6;
 		}
 	}
 	&--sign-out,

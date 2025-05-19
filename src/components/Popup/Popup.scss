@@ -19,28 +19,34 @@
 		animation: fadeIn 0.3s ease forwards; // Fade in animation
 	}
 
+	&__frame {
+		background: hwb(240 98% 0% / 0.8);
+		position: relative;
+		text-align: center;
+		padding: 1.5rem;
+		width: 80%; // Adjust to be a percentage of screen width
+		max-width: 22rem; // Set max-width for classic modal look
+		border-radius: 0.75rem;
+		box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
+		opacity: 0; // Initially hidden for fade-in effect
+		transform: scale(0.9); // Slightly smaller to scale up to normal size
+		animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
+
+		&--auth {
+			background: hwb(240 98% 0% / 0.85);
+			max-width: 20rem;
+			border-radius: 0.3rem;
+			transform: scale(0.9); // Slightly smaller to scale up to normal size
+			animation: bounceIn 0.4s ease;
+			animation-fill-mode: both;
+		}
+	}
+
 	&__content {
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
-		gap: 0rem;
-		width: 80%; // Adjust to be a percentage of screen width
-		max-width: 25rem; // Set max-width for classic modal look
-		background: rgb(230, 230, 237);
-		background: linear-gradient(
-			90deg,
-			rgba(224, 224, 229, 0.8) 0%,
-			rgba(255, 255, 255, 0.8) 50%,
-			rgba(224, 224, 229, 0.8) 100%
-		);
-		padding: 1.5rem;
-		border-radius: 0.75rem; // Rounded corners for a modern feel
-		box-shadow: 0.65rem 0.425rem 0.425rem rgba(0, 0, 0, 0.2); // Subtle shadow effect
-		text-align: center;
-		position: relative;
-		opacity: 0; // Initially hidden for fade-in effect
-		transform: scale(0.9); // Slightly smaller to scale up to normal size
-		animation: scaleFadeIn 0.3s ease forwards, fadeIn 0.3s ease forwards; // Fade in and scale-up animation
+		gap: 0.75rem;
 	}
 
 	&__title {
@@ -48,12 +54,23 @@
 		font-weight: bold;
 		color: #333;
 		margin-bottom: 1rem;
+
+		&--auth {
+			font-size: 1.1rem;
+			font-weight: 400;
+			margin-bottom: 0;
+			text-align: left;
+		}
 	}
 
 	&__text {
 		font-size: 1.4rem;
 		color: #666;
 		margin-bottom: 1.5rem;
+	}
+
+	&__toggle {
+		align-self: center;
 	}
 
 	&__btn-wrapper {
@@ -137,7 +154,10 @@
 	}
 
 	&__close-icon {
-		width: 20px;
+		position: absolute;
+		right: 0.7rem;
+		top: 0.85rem;
+		width: 1.25rem;
 		align-self: flex-end;
 		color: #000000;
 		opacity: 0.4;
@@ -201,5 +221,21 @@
 	to {
 		opacity: 0;
 		transform: scale(0.9); // Shrink while fading out
+	}
+}
+@keyframes bounceIn {
+	0% {
+		opacity: 0;
+		transform: translateY(-50%);
+	}
+	// 60% {
+	// 	transform: translateY(30px);
+	// }
+	// 80% {
+	// 	transform: translateY(20px);
+	// }
+	100% {
+		opacity: 1;
+		transform: translateY(0);
 	}
 }

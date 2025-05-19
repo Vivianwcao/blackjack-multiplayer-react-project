@@ -13,7 +13,7 @@ export const handleEmailSignUp = async (email, password) => {
 		);
 		console.log("User signed up:", userCredential.user);
 	} catch (error) {
-		console.error("Error signing up:", error.message);
+		console.error("Error signing up:", error.code, error.message);
 	}
 };
 
@@ -26,6 +26,6 @@ export const handleEmailSignIn = async (email, password) => {
 		);
 		console.log("User signed in:", userCredential.user);
 	} catch (error) {
-		console.error("Error signing in:", error.message);
+		console.error("Error signing in:", error.code, error.message);
 	}
 };

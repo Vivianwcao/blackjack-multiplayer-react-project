@@ -1,0 +1,39 @@
+form input {
+	outline: none;
+	border: none;
+	border-radius: 0.225rem;
+	padding: 0.8rem;
+	text-align: left;
+	box-shadow: inset 0 0.1rem 0.1rem rgba(0, 0, 0, 0.2);
+}
+.form {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	&__view_icon {
+		color: rgba(0, 0, 0, 0.364);
+		position: absolute;
+		right: 0.6rem;
+		bottom: 5.4rem;
+		cursor: pointer;
+		&:hover,
+		&:active {
+			transform: scale(1.05);
+			color: rgba(0, 0, 0, 0.51);
+		}
+		&--on {
+			@extend .form__view_icon;
+			color: rgb(72, 72, 72);
+			transform: scale(1.1);
+		}
+	}
+	&__password {
+		padding-right: 2.1rem;
+	}
+	&__error_message {
+		// border: 0.1rem solid red;
+		height: 1.5rem;
+		color: rgb(171, 31, 31);
+	}
+}
