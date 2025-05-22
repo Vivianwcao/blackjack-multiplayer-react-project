@@ -148,6 +148,18 @@ button {
 			background: #5a82e6;
 		}
 	}
+	&--mock {
+		@extend .btn--sign-in-google;
+		width: 4.5rem;
+		font-size: 0.75rem;
+		background: hsl(0, 0%, 24%);
+		border-radius: 0.75rem;
+		padding: 0.5rem;
+		animation: glow 1.5s ease-in-out infinite alternate;
+		&:hover {
+			background: hsl(0, 0%, 35%);
+		}
+	}
 	&--sign-out,
 	&--sign-in,
 	&--quit {
@@ -258,4 +270,12 @@ button {
 	width: 100%;
 	gap: 0.25rem;
 	position: relative;
+}
+@keyframes glow {
+	0% {
+		text-shadow: 0 0 5px #00ffea55, 0 0 5px #00ffc36e, 0 0 5px #00ffe576;
+	}
+	100% {
+		text-shadow: 0 0 5px #ff00e64b, 0 0 5px #ff00e654, 0 0 5px #ff00f757;
+	}
 }

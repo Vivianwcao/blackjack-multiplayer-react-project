@@ -26,7 +26,10 @@ const Banner = () => {
 					<div className="banner__profile-wrapper">
 						<h1>
 							Welcome{" "}
-							{user?.displayName ? user?.displayName : user.email.split("@")[0]}
+							{user?.displayName
+								? user?.displayName
+								: user.email.split("@")[0].charAt(0).toUpperCase() +
+								  user.email.split("@")[0].slice(1)}
 							!
 						</h1>
 						<ProfilePhoto src={me?.photo} />
