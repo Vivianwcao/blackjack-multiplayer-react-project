@@ -164,7 +164,6 @@ button {
 	&--sign-in,
 	&--quit {
 		@extend .btn;
-		width: 14rem;
 		display: flex;
 		flex-direction: row;
 		justify-content: center;
@@ -182,6 +181,8 @@ button {
 		}
 	}
 	&--sign-in {
+		padding: 0.75rem 0.85rem;
+		align-self: center;
 		background: #43a605;
 		&:hover {
 			background: #2c9403;
@@ -277,5 +278,57 @@ button {
 	}
 	100% {
 		text-shadow: 0 0 5px #ff00e64b, 0 0 5px #ff00e654, 0 0 5px #ff00f757;
+	}
+}
+
+// display new mock accounts on login popup
+.typewriter {
+	color: black;
+	display: inline-block;
+	font-family: monospace;
+	white-space: nowrap;
+	overflow: hidden;
+	// border-right: 2px solid black; /* cursor */
+	width: 0;
+	animation: typing 3s steps(28) forwards, blink 0.7s step-end infinite,
+		glow 1.5s ease-in-out infinite alternate;
+
+	&--banner {
+		@extend .typewriter;
+		animation: typing2 10s steps(100) forwards, blink 0.7s step-end infinite,
+			glow 1.5s ease-in-out infinite alternate;
+		animation-iteration-count: infinite;
+		color: white;
+		font-size: 0.7rem;
+	}
+}
+
+@keyframes typing {
+	from {
+		width: 0;
+	}
+	to {
+		width: 28ch; /* number of characters */
+	}
+}
+@keyframes typing2 {
+	from {
+		width: 0;
+	}
+	to {
+		width: 55ch; /* number of characters */
+	}
+}
+@keyframes blink {
+	50% {
+		border-color: transparent;
+	}
+}
+@keyframes glow {
+	0% {
+		text-shadow: 0 0 5px #8af8ef, 0 0 5px #84ffe2, 0 0 5px #96fff4;
+	}
+	100% {
+		text-shadow: 0 0 5px hwb(306 54% 0%), 0 0 5px #ff92f4, 0 0 5px #ff86fb;
 	}
 }

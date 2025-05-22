@@ -47,14 +47,17 @@ const Banner = () => {
 					</div>
 				</div>
 			) : (
-				<div className="btn-wrapper">
+				<div className="banner__content-wrapper">
+					<button className="btn btn--sign-in" onClick={popAuthOpen}>
+						Sign in
+					</button>
 					<Popup name="auth" isOpen={popAuthState} onClose={popAuthClose}>
 						<AuthDetail></AuthDetail>
 					</Popup>
 
-					<button className="btn btn--sign-in" onClick={popAuthOpen}>
-						Sign in
-					</button>
+					<p className="typewriter--banner">
+						New! Mock accounts now available. No signup needed
+					</p>
 				</div>
 			)}
 		</div>

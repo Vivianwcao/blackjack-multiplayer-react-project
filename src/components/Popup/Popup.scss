@@ -254,39 +254,3 @@
 		transform: translateY(0);
 	}
 }
-
-// display new mock accounts on login popup
-.typewriter {
-	color: black;
-	display: inline-block;
-	font-family: monospace;
-	white-space: nowrap;
-	overflow: hidden;
-	// border-right: 2px solid black; /* cursor */
-	width: 0;
-	animation: typing 3s steps(28) forwards, blink 0.7s step-end infinite,
-		glow 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes typing {
-	from {
-		width: 0;
-	}
-	to {
-		width: 28ch; /* number of characters */
-	}
-}
-
-@keyframes blink {
-	50% {
-		border-color: transparent;
-	}
-}
-@keyframes glow {
-	0% {
-		text-shadow: 0 0 5px #00ffea55, 0 0 5px #00ffc36e, 0 0 5px #00ffe576;
-	}
-	100% {
-		text-shadow: 0 0 5px #ff00e64b, 0 0 5px #ff00e654, 0 0 5px #ff00f757;
-	}
-}
